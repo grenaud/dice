@@ -8,6 +8,10 @@
 #ifndef libnuc_h
 #define libnuc_h
 
+/* #define DEBUGL1 */
+/* #define DEBUGL2 */
+/* #define DEBUGL3 */
+
 using namespace std;
 
 
@@ -27,15 +31,20 @@ typedef struct{
 // 
 inline long double qterm(int i,long double r,long double e,long double y){
 
+#ifdef DEBUGL1
+    cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
+#endif
+
+    long double toreturn;
     if(i == 2){          //True genotype is homozygous ancestral
-        return  (        r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)                     );
+        toreturn=  (        r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)                     );
     }else{ 
         if(i == 1){      //True genotype is heterozygous
-            return (     r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)/2.0 + (1.0-r)*e/2.0 );
+	    toreturn= (     r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)/2.0 + (1.0-r)*e/2.0 );
         }else{
 
             if(i == 0){  // True genotype is homozygous derived
-                return ( r*y*(1.0-e) + r*(1.0-y)*e                       + (1.0-r)*e     );
+		toreturn= ( r*y*(1.0-e) + r*(1.0-y)*e                       + (1.0-r)*e     );
             }else{
 		cerr<<"Internal error, wrong genotype term in qterm() "<<i<<endl;
 		exit(1);
@@ -43,37 +52,71 @@ inline long double qterm(int i,long double r,long double e,long double y){
 	}
     }
 
+#ifdef DEBUGL1
+    cout<<"qterm end\t"<<toreturn<<endl;
+#endif
+
+    return toreturn;
 }
 
 // Binomial probability of sampling ancestral and derived reads given q term
 inline long double Pad_given_irey(int a,int d,int i,long double r,long double e,long double y){
-    long double qtermA = qterm(i,r,e,y);
-    return  ( (long double)(nChoosek(a+d,d)) ) * (powl(qtermA,d))* (1-powl(qtermA,a) )  ; //defined in lib gab
+#ifdef DEBUGL2
+    //cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
+    cout<<"Pad_given_irey begin\t"<< a<<"\t"<<d<<"\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
+#endif
+
+
+    long double qtermA   = qterm(i,r,e,y);
+    long double toreturn = ( (long double)(nChoosek(a+d,d)) ) * (powl(qtermA,d))* (powl(1.0-qtermA,a) )  ; //defined in lib gab
+
+#ifdef DEBUGL2
+    cout<<"Pad_given_irey res\ta="<< a<<"\t"<<d<<"\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;    
+    cout<< (long double)(nChoosek(a+d,d)) <<"\t"<<(powl(qtermA,d)) <<"\t"<< (1.0-powl(qtermA,a)) <<endl;
+    cout<<"Comb= "<<( (long double)(nChoosek(a+d,d)) )<<endl;
+    cout<<qtermA<<endl;
+    cout<<toreturn<<endl;
+#endif
+
+    return toreturn;
 }
 
 
 
 // Probability of ancient genotype given anchor population frequency and drift parameters   
 inline long double Pgeno_given_ytau(int i,long double y,long double tau_C,long double tau_A){
+    long double toreturn;
+#ifdef DEBUGL2
+    //cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
+    cout<<"Pgeno_given_ytau begin\t"<< i<<"\t"<<y<<"\t"<<tau_C<<"\t"<<tau_A<<endl;
+#endif
 
     if(i == 0){           // Homozygous ancestral
-        return (     1 - y*exp(      -1.0*tau_C)         - (0.5*y)*exp(-1.0*tau_A - 1.0*tau_C) + y*(y-0.5)*exp(-1.0*tau_A - 3.0*tau_C) );
+        toreturn= (     1 - y*exp(      -1.0*tau_C)         - (0.5*y)*exp(-1.0*tau_A - 1.0*tau_C) + y*(y-0.5)*exp(-1.0*tau_A - 3.0*tau_C) );
     }else{
         if(i == 1){      // Heterozygous
-            return (     y*exp(-1.0*tau_A-tau_C)   + y*(1.0-2.0*y)*exp(-1.0*tau_A - 3.0*tau_C)                                         );
+            toreturn= (     y*exp(-1.0*tau_A-tau_C)   + y*(1.0-2.0*y)*exp(-1.0*tau_A - 3.0*tau_C)                                         );
         }else{
             if(i == 2){  // Homozygous derived
-                return ( y*exp(-1.0*      tau_C)         - (0.5*y)*exp(-1.0*tau_A - 1.0*tau_C) + y*(y-0.5)*exp(-1.0*tau_A - 3.0*tau_C) );
+                toreturn= ( y*exp(-1.0*      tau_C)         - (0.5*y)*exp(-1.0*tau_A - 1.0*tau_C) + y*(y-0.5)*exp(-1.0*tau_A - 3.0*tau_C) );
             }else{
                 cerr<<"Internal error, wrong genotype term in Pgeno_given_ytau() "<<i<<endl;
                 exit(1);
             }
         }
     }
+
+#ifdef DEBUGL2
+    //cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
+    cout<<"Pgeno_given_ytau begin\t"<< i<<"\t"<<y<<"\t"<<tau_C<<"\t"<<tau_A<<endl;
+#endif
+    return toreturn;
+
 }
 
 // Sum over each of the 3 types of genotypes for two-population method (no admixture)
 inline long double Pad_given_reytau(int a,int d,long double r,long double e,long double y,long double freqcont,long double tau_C,long double tau_A){
+
     double long sumResult=0.0;
     for(int i=0;i<=2;i++){
         sumResult += Pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);
@@ -93,11 +136,14 @@ long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double 
     if(contequalanchor){
         long double sumterm=0.0;
         for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
+
 	    //result <- sum(apply(table,1,function(x){
 	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
-	    sumterm += log(Pad_given_reytau(tableData->at(indexSite).ancCount,
+	    long double toaddToSum= log(Pad_given_reytau(tableData->at(indexSite).ancCount,
 					    tableData->at(indexSite).derCount,
 					    r,e,tableData->at(indexSite).panelFreq,tableData->at(indexSite).panelFreq,tau_C,tau_A))*tableData->at(indexSite).num;
+	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreq<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
+	    sumterm+=toaddToSum;
 	}
 	return sumterm;
 	// }))
