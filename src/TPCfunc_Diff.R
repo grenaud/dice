@@ -21,7 +21,7 @@ Pgeno_given_ytau <- function(i,y,tau_C,tau_A){
 
 # q term for binomial sampling from true genotype, to incorporate contamination and error rates
 qterm <- function(i,r,e,y){
-    # True genotype is homozygous ancestral
+    # True genotype is homozygous derived
     if(i == 2){
         result <- r*y*(1-e) + r*(1-y)*e + (1-r)*(1-e)
     }
@@ -29,7 +29,7 @@ qterm <- function(i,r,e,y){
     else if(i == 1){
         result <- r*y*(1-e) + r*(1-y)*e + (1-r)*(1-e)/2 + (1-r)*e/2
     }
-    # True genotype is homozygous derived
+    # True genotype is homozygous ancestral
     else if(i == 0){
         result <- r*y*(1-e) + r*(1-y)*e + (1-r)*e
     }

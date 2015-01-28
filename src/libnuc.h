@@ -36,14 +36,14 @@ inline long double qterm(int i,long double r,long double e,long double y){
 #endif
 
     long double toreturn;
-    if(i == 2){          //True genotype is homozygous ancestral
+    if(i == 2){          //True genotype is homozygous derived
         toreturn=  (        r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)                     );
     }else{ 
         if(i == 1){      //True genotype is heterozygous
 	    toreturn= (     r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)/2.0 + (1.0-r)*e/2.0 );
         }else{
 
-            if(i == 0){  // True genotype is homozygous derived
+            if(i == 0){  // True genotype is homozygous ancestral
 		toreturn= ( r*y*(1.0-e) + r*(1.0-y)*e                       + (1.0-r)*e     );
             }else{
 		cerr<<"Internal error, wrong genotype term in qterm() "<<i<<endl;
