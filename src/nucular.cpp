@@ -49,10 +49,10 @@ int main (int argc, char *argv[]) {
    }
 
    //long double 
-   long double e     = 0.02228953;
-   long double r     = 0.33323844;
-   long double tau_C = 0.41876066;
-   long double tau_A = 0.71627768;
+   long double e     = 0.001105315;
+   long double r     =  0.038809028;
+   long double tau_C = 0.531137046;
+   long double tau_A =  0.560341912;
    cout<<LogFinalTwoP(dataToAdd,e,r,tau_C,tau_A,true)<<endl;
 
    return 0;
