@@ -35,10 +35,10 @@ int main (int argc, char *argv[]) {
 	   }
 
 	   freqSite toaddF;
-	   toaddF.ancCount  = destringify<int>         (fields[0]);
-	   toaddF.derCount  = destringify<int>         (fields[1]);
-	   toaddF.panelFreq = destringify<long double >(fields[2]);
-	   toaddF.num       = destringify<int>         (fields[3]);
+	   toaddF.ancCount      = destringify<int>         (fields[0]);
+	   toaddF.derCount      = destringify<int>         (fields[1]);
+	   toaddF.panelFreqCont = destringify<long double >(fields[2]);
+	   toaddF.num           = destringify<int>         (fields[3]);
 	   dataToAdd->push_back(toaddF);
 
        }

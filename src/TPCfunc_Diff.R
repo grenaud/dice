@@ -105,11 +105,12 @@ Pad_given_reytau_dadi_threeP <- function(a,d,r,e,y,z,freqcont,DadiTable,numhumy,
 
 # Call python script to obtain dadi table for three-population method
 GetDadiTableThreeP <- function(tau_C,tau_A,admixrate,admixtime,innerdriftY,innerdriftZ,nC,nB,nA){
-    daditable <- system(paste("python ","Dadi_three_pop_admix.py -c ",tau_C," -a ",tau_A," -x ",admixrate," -t ",admixtime," -y ",innerdriftY," -z ",innerdriftZ," -m ",nC," -n ",nA," -b ",nB,sep=""),intern=T)
-    daditable <- as.numeric(daditable)
-    daditable <- matrix(daditable,ncol=(nA+1),byrow=FALSE)
-    daditable <- t(apply(daditable,1,function(x) { return( x / sum(x)) }))
-    return(daditable)
+  print(paste("python ","Dadi_three_pop_admix.py -c ",tau_C," -a ",tau_A," -x ",admixrate," -t ",admixtime," -y ",innerdriftY," -z ",innerdriftZ," -m ",nC," -n ",nA," -b ",nB,sep=""));
+  daditable <- system(paste("python ","Dadi_three_pop_admix.py -c ",tau_C," -a ",tau_A," -x ",admixrate," -t ",admixtime," -y ",innerdriftY," -z ",innerdriftZ," -m ",nC," -n ",nA," -b ",nB,sep=""),intern=T)
+  daditable <- as.numeric(daditable)
+  daditable <- matrix(daditable,ncol=(nA+1),byrow=FALSE)
+  daditable <- t(apply(daditable,1,function(x) { return( x / sum(x)) }))
+  return(daditable)
 }
 
 

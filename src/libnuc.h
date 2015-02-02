@@ -20,7 +20,8 @@ using namespace std;
 typedef struct{
     int ancCount;
     int derCount;     
-    long double panelFreq;
+    long double panelFreqCont;
+    long double panelFreqAdmx;
     int num;
 } freqSite;
 
@@ -141,8 +142,48 @@ long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double 
 	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
 	    long double toaddToSum= log(Pad_given_reytau(tableData->at(indexSite).ancCount,
 					    tableData->at(indexSite).derCount,
-					    r,e,tableData->at(indexSite).panelFreq,tableData->at(indexSite).panelFreq,tau_C,tau_A))*tableData->at(indexSite).num;
-	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreq<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
+					    r,e,tableData->at(indexSite).panelFreqCont,tableData->at(indexSite).panelFreqCont,tau_C,tau_A))*tableData->at(indexSite).num;
+	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
+	    sumterm+=toaddToSum;
+	}
+	return sumterm;
+	// }))
+    }else{
+	// Case where the anchor population is different from the putative contaminant population
+	// Anchor population frequencies are in third column of data file
+	//Putative contaminant population frequencies are in fourth columnn of data file
+	//TODO
+        //          result <- sum(apply(table,1,function(x){
+        //          sumterm <- log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[4],tau_C,tau_A))*x[5]
+        //                   return(sumterm)
+        // }))
+	return 0;
+	
+    }
+
+//     print(result)
+//     if(is.na(result)){return(-1000000000000000)}
+//     else{return(result)}
+}
+
+
+
+
+//  Log final posterior for three populations
+long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,bool contequalanchor){
+//     print(c(e,r,tau_C,tau_A))
+
+	// Case where the anchor population is the same as the putative contaminant population (3rd column of data file)
+    if(contequalanchor){
+        long double sumterm=0.0;
+        for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
+
+	    //result <- sum(apply(table,1,function(x){
+	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
+	    long double toaddToSum= log(Pad_given_reytau(tableData->at(indexSite).ancCount,
+					    tableData->at(indexSite).derCount,
+					    r,e,tableData->at(indexSite).panelFreqCont,tableData->at(indexSite).panelFreqCont,tau_C,tau_A))*tableData->at(indexSite).num;
+	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
 	    sumterm+=toaddToSum;
 	}
 	return sumterm;
