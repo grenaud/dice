@@ -27,5 +27,5 @@ nucularMCMC:	nucularMCMC.o ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
-	rm -f nucular.o nucular
+	rm -f nucular.o nucular nucularMCMC.o nucularMCMC
 
