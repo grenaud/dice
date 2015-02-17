@@ -19,48 +19,152 @@ using namespace std;
 
 
 int main (int argc, char *argv[]) {
+    string   outLog  = "/dev/stdout";
+    ofstream outLogFP;
+    bool twoPopMode   = false;
+    bool threePopMode = false;
+    double step = 1000;
+    int maxChains = 100000;
+    const string usage=string("\t"+string(argv[0])+
+                              " [options]  [input file]"+"\n\n"+
+
+                              "\t\t"+"-2p" +"\t\t\t"+"Use 2pop mode (default: none)"+"\n"+
+                              "\t\t"+"-3p" +"\t\t\t"+"Use 3pop mode (default: none)"+"\n"+
+
+                              "\t\t"+"-o  [output log]" +"\t"+"Output log (default: stdout)"+"\n"+
+			      
+                              "\n\tComputation options:\n"+
+                              "\t\t"+"-s  [step]" +"\t\t"+"MCMC interval space step (default: "+stringify(step)+")"+"\n"+
+                              "\t\t"+"-c  [#chains]" +"\t\t"+"Max. number of Markov chains (default: "+stringify(maxChains)+")"+"\n"+
+
+                              "");
+
+
+    if( (argc== 1) ||
+        (argc== 2 && string(argv[1]) == "-h") ||
+        (argc== 2 && string(argv[1]) == "-help") ||
+        (argc== 2 && string(argv[1]) == "--help") ){
+        cout<<"Usage:"<<endl;
+        cout<<""<<endl;
+        cout<<usage<<endl;
+        return 1;
+    }
+
+    int lastOpt=1;
+    for(int i=1;i<(argc);i++){ //all but the last 3 args
+	if(string(argv[i])[0] != '-'  ){
+	    lastOpt=i;
+	    break;
+	}
+
+        if(string(argv[i]) == "-2p" ){
+	    twoPopMode   = true;
+            continue;
+        }
+
+        if(string(argv[i]) == "-3p" ){
+            threePopMode = true;
+            continue;
+        }
+
+	if( string(argv[i]) == "-o"  ){
+            outLog=string(argv[i+1]);
+            i++;
+            continue;
+        }
+
+        if(string(argv[i]) == "-s"  ){
+            step = destringify<double>(argv[i+1]);
+            i++;
+            continue;
+        }
+
+
+        if(string(argv[i]) == "-c"  ){
+            maxChains = destringify<int>(argv[i+1]);
+            i++;
+            continue;
+        }
+
+
+        cerr<<"Wrong option "<<string(argv[i])<<endl;
+        return 1;
+    }
+
+
+    outLogFP.open(outLog.c_str());
+
+    if (!outLogFP.is_open()){
+        cerr << "Unable to write to output file "<<outLog<<endl;
+        return 1;
+    }
+
+
+    if(twoPopMode == false && threePopMode==false){
+	cerr<<"Either specify -2p or -3p "<<endl;
+        return 1;
+    }
+
+    cout<<lastOpt<<endl;
 
    string line;
    igzstream myFile;
-   string filename = string(argv[1]);
+   string filename = string(argv[lastOpt+0]);
    myFile.open(filename.c_str(), ios::in);
    vector<freqSite> * dataToAdd =  new vector<freqSite>();
 
 
    bool firstIteration  = true;
-   bool twoPopMode  = false;
-   bool threePopMode = false;
+   bool has4Cols        = false;
+   bool has5Cols        = false;
 
    if (myFile.good()){
        getline (myFile,line);//header
        while ( getline (myFile,line)){
 	   vector<string> fields = allTokens(line,'\t');
-	   if(fields.size() != 4 &&
-	      fields.size() != 5){
-	       cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
-	       exit(1);
-	   }
+	   // if(fields.size() != 4 &&
+	   //    fields.size() != 5){
+	   //     cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
+	   //     exit(1);
+	   // }
 	   
 	   if(firstIteration){
-	       twoPopMode   =  ( fields.size() == 4 );
-	       threePopMode =  ( fields.size() == 5 );
+	       has4Cols =  ( fields.size() == 4 );
+	       has5Cols =  ( fields.size() == 5 );
+	       if(has4Cols == false && 
+		  has5Cols == false ){
+		   cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
+		   exit(1);
+	       }
 	       firstIteration=false;
 	   }
 
 	   freqSite toaddF;
 
 	   if(twoPopMode){
+	       if(has5Cols){
+		   cerr<<"Line "<<line<<" does not contain 4  but "<<fields.size()<<" fields"<<endl;
+		   exit(1);
+	       }
 	       toaddF.ancCount      = destringify<int>         (fields[0]);
 	       toaddF.derCount      = destringify<int>         (fields[1]);
 	       toaddF.panelFreqCont = destringify<long double >(fields[2]);
 	       toaddF.num           = destringify<int>         (fields[3]);
 	   }else{
 	       if(threePopMode){
-		   toaddF.ancCount      = destringify<int>         (fields[0]);
-		   toaddF.derCount      = destringify<int>         (fields[1]);
-		   toaddF.panelFreqCont = destringify<long double >(fields[2]);
-		   toaddF.panelFreqAdmx = destringify<long double >(fields[3]);
-		   toaddF.num           = destringify<int>         (fields[4]);
+		   if(has5Cols){
+		       toaddF.ancCount      = destringify<int>         (fields[0]);
+		       toaddF.derCount      = destringify<int>         (fields[1]);
+		       toaddF.panelFreqCont = destringify<long double >(fields[2]);
+		       toaddF.panelFreqAdmx = destringify<long double >(fields[3]);
+		       toaddF.num           = destringify<int>         (fields[4]);
+		   }else{ //4 cols
+		       toaddF.ancCount      = destringify<int>         (fields[0]);
+		       toaddF.derCount      = destringify<int>         (fields[1]);
+		       toaddF.panelFreqCont = destringify<long double >(fields[2]);
+		       toaddF.panelFreqAdmx = destringify<long double >(fields[2]);
+		       toaddF.num           = destringify<int>         (fields[3]);
+		   }
 	       }else{
 		   cerr<<"Line "<<line<<" does not contain 4 or 5 fields"<<endl;
 		   exit(1);
@@ -142,14 +246,15 @@ int main (int argc, char *argv[]) {
    }else{
        x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,true);
    }
+   outLogFP<<"llik"<<"\terror"<<"\tContRate"<<"\t<<tau_C"<<"\t<<tau_A"<<"\tadmixrate"<<"\tadmixtime"<<endl;
 
-   for(unsigned int chain=0;chain<100000;chain++){
-       cout<<"current "<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<endl;
-       long double partition=1000.0;
+   for(int chain=0;chain<maxChains;chain++){
+       outLogFP<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<endl;
+       long double partition= (long double)(step);
 
        //e
        long double facte = fmod((long double)(randomProb()), (eupper-elower)/partition );
-       cout<<facte<<endl;
+       //cout<<facte<<endl;
        if(randomBool()){
             e_i_1=e_i+facte;
         }else{
@@ -207,8 +312,8 @@ int main (int argc, char *argv[]) {
 
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
 
-       cout<< "new   "<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
-       cout<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\t"<<(x_i_1l-x_il)<<endl;
+       //cout<< "new   "<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
+       //cout<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\t"<<(x_i_1l-x_il)<<endl;
 
        if( (long double)(randomProb()) < acceptance){
 	   e_i           =  e_i_1;
@@ -219,14 +324,15 @@ int main (int argc, char *argv[]) {
 	   admixtime_i   =  admixtime_i_1;
 	   x_il      = x_i_1l;
 
-	   cout<<"new state"<<endl;
+	   //cout<<"new state"<<endl;
        }else{
-	   cout<<"reject"<<endl;
+	   //cout<<"reject"<<endl;
        }
 
-       cout<<endl;
+       // cout<<endl;
        //break;
    }
+   outLogFP.close();
 
    return 0;
 }
