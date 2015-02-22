@@ -1,10 +1,11 @@
 
-CXX      = g++   
+CXX      = g++ -g 
+
 
 BAMTOOLS= $(realpath ../bamtools/)
 LIBGAB= $(realpath ../libgab/)
 
-CXXFLAGS = -Wall -lm -O3 -lz -I${LIBGAB} -I${LIBGAB}/gzstream/  -c
+CXXFLAGS = -Wall -lm -O3 -lz -std=c++0x -I${LIBGAB} -I${LIBGAB}/gzstream/  -c
 LDFLAGS  = -lz
 
 
