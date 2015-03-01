@@ -28,6 +28,13 @@ int main (int argc, char *argv[]) {
     int maxChains = 100000;
 
 
+    //Constants
+    long double innerdriftY =   0.16;
+    long double innerdriftZ =   0.16;
+    long double nC          =  20.0 ;
+    long double nB          =  20.0 ;
+    
+
 
     // Set lower boundaries for optimization algorithm
     long double elower         = 0.00001;
@@ -74,6 +81,13 @@ int main (int argc, char *argv[]) {
 			      "\t\t"+"-aR    [admR]" +"\t\t"+"Admixture time     (default: random)"+"\n"+
 			      "\t\t"+"-aT    [admT]" +"\t\t"+"Admixture rate     (default: random)"+"\n"+
 			      
+			      "\n\tPopulation specific constants:\n"+
+			      "\t\t"+"-idy     [drift]" +"\t\t"+"Inner drift Y (default: "+stringify(innerdriftY)+")"+"\n"+
+			      "\t\t"+"-idz     [drift]" +"\t\t"+"Inner drift Z (default: "+stringify(innerdriftZ)+")"+"\n"+
+			      "\t\t"+"-nc      [num c]"   +"\t\t"+"Number nC (default: "+stringify(nC)+")"+"\n"+
+			      "\t\t"+"-nb      [num b]"   +"\t\t"+"Number nB (default: "+stringify(nB)+")"+"\n"+
+
+
                               "");
 
 
@@ -93,6 +107,30 @@ int main (int argc, char *argv[]) {
 	    lastOpt=i;
 	    break;
 	}
+
+        if(string(argv[i]) == "-nc"  ){
+	    nC  = destringify<long double>(argv[i+1]);
+            i++;
+            continue;
+        }
+
+        if(string(argv[i]) == "-nb"  ){
+	    nB  = destringify<long double>(argv[i+1]);
+            i++;
+            continue;
+        }
+
+        if(string(argv[i]) == "-idy"  ){
+	    innerdriftY  = destringify<long double>(argv[i+1]);
+            i++;
+            continue;
+        }
+
+        if(string(argv[i]) == "-idz"  ){
+	    innerdriftZ  = destringify<long double>(argv[i+1]);
+            i++;
+            continue;
+        }
 
         if(string(argv[i]) == "-aT"  ){
 	    admixtime_i  = destringify<double>(argv[i+1]);
@@ -259,13 +297,6 @@ int main (int argc, char *argv[]) {
        cerr << "Internal error, cannot have two and three pops at once"<<endl;
        return 1;
    }
-
-
-   //Constants
-   long double innerdriftY =   0.16;
-   long double innerdriftZ =   0.16;
-   long double nC          =  20.0 ;
-   long double nB          =  20.0 ;
 
 
 
