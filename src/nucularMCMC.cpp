@@ -101,6 +101,8 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
+    string cwdProg=getCWD(argv[0]);
+
     int lastOpt=1;
     for(int i=1;i<(argc);i++){ //all but the last 3 args
 	if(string(argv[i])[0] != '-'  ){
@@ -327,7 +329,7 @@ int main (int argc, char *argv[]) {
    if(twoPopMode){
        x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,true);
    }else{
-       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,true);
+       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,true);
    }
    outLogFP<<"chain"<<"\tllik"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance"<<endl;
    int accept=0;
@@ -454,7 +456,7 @@ int main (int argc, char *argv[]) {
        if(twoPopMode){
 	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                          true);
        }else{
-	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,true);
+	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,true);
        }
 
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );

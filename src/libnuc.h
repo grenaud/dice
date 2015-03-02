@@ -166,13 +166,18 @@ inline string ld2string(long double i){
 }
 
 
-inline vector< vector<long double>  * > * getDadiTableThreeP(long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,long double nA){
-    string cmd = "python  Dadi_three_pop_admix.py -c "+ld2string(tau_C)+" -a "+ld2string(tau_A)+" -x "+ld2string(admixrate)+" -t "+ld2string(admixtime)+" -y "+ld2string(innerdriftY)+" -z "+ld2string(innerdriftZ)+" -m "+ld2string(nC)+" -n "+ld2string(nA)+" -b "+ld2string(nB)+" ";
-    cout<<cmd<<endl;
+inline vector< vector<long double>  * > * getDadiTableThreeP(long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,long double nA,const string & cwdProg){
+    string cmd = "python  "+cwdProg+"/Dadi_three_pop_admix.py -c "+ld2string(tau_C)+" -a "+ld2string(tau_A)+" -x "+ld2string(admixrate)+" -t "+ld2string(admixtime)+" -y "+ld2string(innerdriftY)+" -z "+ld2string(innerdriftZ)+" -m "+ld2string(nC)+" -n "+ld2string(nA)+" -b "+ld2string(nB)+" ";
+    cerr<<cmd<<endl;
     string values = runCmdAndCaptureSTDOUTandSTDERR(cmd);
     
     vector<string>       numberS   = allTokens(values,'\n');
     vector<long double>  numbersLD;
+
+    if(numberS[0] == "Traceback (most recent call last):"){
+	cerr<<"An error has occurred, do you have all the python dependencies ? ex: dadi and numpy"<<endl<<"error:"<<endl<<values<<endl;
+	exit(1);
+    }
 
     for(unsigned int i=0;i<numberS.size();i++){
 
@@ -278,7 +283,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 
 //  Log final posterior for three populations
-inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,bool contequalanchor){
+inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor){
     //     print(c(e,r,tau_C,tau_A))
 
     if( (e < 0)     || 
@@ -290,14 +295,15 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
     }else{
         long double nA = 2.0;
 	vector< vector<long double> * > * dadiTable= getDadiTableThreeP(tau_C,
-								    tau_A,
-								    admixrate,
-								    admixtime,
-								    innerdriftY,
-								    innerdriftZ,
-								    nC,
-								    nB,
-								    nA);
+									tau_A,
+									admixrate,
+									admixtime,
+									innerdriftY,
+									innerdriftZ,
+									nC,
+									nB,
+									nA,
+									cwdProg);
 	//cout<<"after getDadiTableThreeP"<<endl;
 	long double sumterm=0.0;
 	if(contequalanchor){
