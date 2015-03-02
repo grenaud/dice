@@ -1,2 +1,0 @@
-Anc	Der	PanelFreqA	PanelFreqB	Num
-0	11	0.25	0.65	1
