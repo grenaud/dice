@@ -22,6 +22,7 @@ typedef struct{
     int derCount;     
     long double panelFreqCont;
     long double panelFreqAdmx;
+    long double panelFreqAnchor;
     int num;
 } freqSite;
 
@@ -256,28 +257,35 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 							  tableData->at(indexSite).derCount,
 							  r,e,
 							  tableData->at(indexSite).panelFreqCont,
-							  tableData->at(indexSite).panelFreqCont,tau_C,tau_A))*tableData->at(indexSite).num;
+							  tableData->at(indexSite).panelFreqCont,
+							  tau_C,tau_A))*tableData->at(indexSite).num;
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
 	    sumterm+=toaddToSum;
 	}
 	return sumterm;
 	// }))
     }else{
-	// Case where the anchor population is different from the putative contaminant population
-	// Anchor population frequencies are in third column of data file
-	//Putative contaminant population frequencies are in fourth columnn of data file
-	//TODO
-        //          result <- sum(apply(table,1,function(x){
-        //          sumterm <- log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[4],tau_C,tau_A))*x[5]
-        //                   return(sumterm)
-        // }))
-	return 0;
+        long double sumterm=0.0;
+
+	for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
+
+	    //result <- sum(apply(table,1,function(x){
+	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
+	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
+							  tableData->at(indexSite).derCount,
+							  r,e,
+							  tableData->at(indexSite).panelFreqCont,
+							  tableData->at(indexSite).panelFreqAnchor,
+							  tau_C,
+							  tau_A))*tableData->at(indexSite).num;
+	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
+	    sumterm+=toaddToSum;
+	}
+	return sumterm;
+
 	
     }
 
-//     print(result)
-//     if(is.na(result)){return(-1000000000000000)}
-//     else{return(result)}
 }
 
 

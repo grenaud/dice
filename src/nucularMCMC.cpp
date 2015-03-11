@@ -18,6 +18,22 @@
 using namespace std;
 
 
+pair<long double,long double> paramsComma(string tosplit){
+    vector<string> s=allTokens(tosplit,',');
+    if(s.size() != 2){
+	cerr<<"No single comma was found in parameter "<<tosplit<<endl;
+	exit(1);
+    }
+
+    pair<long double,long double> t =  make_pair<long double,long double>(destringify<long double>(s[0]),destringify<long double>(s[1]));
+
+    if(t.second<t.first){
+	cerr<<"The second parameter must be greater than the first "<<tosplit<<endl;
+	exit(1);
+    }
+    return t;
+}
+
 
 int main (int argc, char *argv[]) {
     string   outLog  = "/dev/stdout";
@@ -64,22 +80,30 @@ int main (int argc, char *argv[]) {
     const string usage=string("\t"+string(argv[0])+
                               " [options]  [input file]"+"\n\n"+
 
-                              "\t\t"+"-2p" +"\t\t\t"+"Use 2pop mode (default: none)"+"\n"+
-                              "\t\t"+"-3p" +"\t\t\t"+"Use 3pop mode (default: none)"+"\n"+
+                              "\t\t"+"-2p" +"\t\t\t\t"+"Use 2pop mode (default: none)"+"\n"+
+                              "\t\t"+"-3p" +"\t\t\t\t"+"Use 3pop mode (default: none)"+"\n"+
 
-                              "\t\t"+"-o     [output log]" +"\t"+"Output log (default: stdout)"+"\n"+
+                              "\t\t"+"-o     [output log]" +"\t\t"+"Output log (default: stdout)"+"\n"+
 			      
                               "\n\tComputation options:\n"+
-                              "\t\t"+"-s     [step]" +"\t\t"+"MCMC interval space step (default: "+stringify(step)+")"+"\n"+
-                              "\t\t"+"-c     [#chains]" +"\t"+"Max. number of Markov chains (default: "+stringify(maxChains)+")"+"\n"+
+                              "\t\t"+"-s     [step]" +"\t\t\t"+"MCMC interval space step (default: "+stringify(step)+")"+"\n"+
+                              "\t\t"+"-c     [#chains]" +"\t\t"+"Max. number of Markov chains (default: "+stringify(maxChains)+")"+"\n"+
 
                               "\n\tStarting values:\n"+
-			      "\t\t"+"-e     [error]"+"\t\t"+"Error rate         (default: random)"+"\n"+
-			      "\t\t"+"-r     [cont]" +"\t\t"+"Contamination rate (default: random)"+"\n"+
-			      "\t\t"+"-tA    [tauA]" +"\t\t"+"Tau Archaic        (default: random)"+"\n"+
-			      "\t\t"+"-tC    [tauC]" +"\t\t"+"Tau Contaminant    (default: random)"+"\n"+
-			      "\t\t"+"-aR    [admR]" +"\t\t"+"Admixture time     (default: random)"+"\n"+
-			      "\t\t"+"-aT    [admT]" +"\t\t"+"Admixture rate     (default: random)"+"\n"+
+			      "\t\t"+"-e0     [error]"+"\t\t\t"+"Error rate         (default: random)"+"\n"+
+			      "\t\t"+"-r0     [cont]" +"\t\t\t"+"Contamination rate (default: random)"+"\n"+
+			      "\t\t"+"-tA0    [tauA]" +"\t\t\t"+"Tau Archaic        (default: random)"+"\n"+
+			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau Contaminant    (default: random)"+"\n"+
+			      "\t\t"+"-aR0    [admR]" +"\t\t\t"+"Admixture time     (default: random)"+"\n"+
+			      "\t\t"+"-aT0    [admT]" +"\t\t\t"+"Admixture rate     (default: random)"+"\n"+
+                              
+			      "\n\tRange for parameter values:\n"+
+			      "\t\t"+"-e     el,eh"+"\t\t\t"+"Error rate range          (default: "+stringify(elower)         +","+stringify(eupper)+" )"+"\n"+
+			      "\t\t"+"-r     rl,rh" +"\t\t\t"+"Contamination rate range  (default: "+stringify(rlower)         +","+stringify(rupper)+" )"+"\n"+
+			      "\t\t"+"-tA    tauAl,tauAh" +"\t\t"+"Tau Archaic range         (default: "+stringify(tau_Alower)     +","+stringify(tau_Aupper)+"   )"+"\n"+
+			      "\t\t"+"-tC    tauCl,tauCh" +"\t\t"+"Tau Contaminant range     (default: "+stringify(tau_Clower)     +","+stringify(tau_Cupper)+"   )"+"\n"+
+			      "\t\t"+"-aR    admRl,admRh" +"\t\t"+"Admixture time range      (default: "+stringify(admixratelower) +","+stringify(admixrateupper)+" )"+"\n"+
+			      "\t\t"+"-aT    admTl,admTh" +"\t\t"+"Admixture rate range      (default: "+stringify(admixtimelower) +","+stringify(admixtimeupper)+" )"+"\n"+
 			      
 			      "\n\tPopulation specific constants:\n"+
 			      "\t\t"+"-idy     [drift]" +"\t\t"+"Inner drift Y (default: "+stringify(innerdriftY)+")"+"\n"+
@@ -134,42 +158,94 @@ int main (int argc, char *argv[]) {
             continue;
         }
 
-        if(string(argv[i]) == "-aT"  ){
+        if(string(argv[i]) == "-aT0"  ){
 	    admixtime_i  = destringify<double>(argv[i+1]);
             i++;
             continue;
         }
 
-        if(string(argv[i]) == "-aR"  ){
+	if(string(argv[i]) == "-aT"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     admixtimelower = t.first;
+	     admixtimeupper = t.second;	     
+             i++;
+             continue;
+         }
+
+
+        if(string(argv[i]) == "-aR0"  ){
 	    admixrate_i  = destringify<double>(argv[i+1]);
             i++;
             continue;
         }
 
+         if(string(argv[i]) == "-aR"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     admixratelower = t.first;
+	     admixrateupper = t.second;	     
+             i++;
+             continue;
+         }
 
-        if(string(argv[i]) == "-tC"  ){
+
+        if(string(argv[i]) == "-tC0"  ){
 	    tau_C_i = destringify<double>(argv[i+1]);
             i++;
             continue;
         }
 
-        if(string(argv[i]) == "-tA"  ){
+         if(string(argv[i]) == "-tC"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     tau_Clower = t.first;
+	     tau_Cupper = t.second;	     
+             i++;
+             continue;
+         }
+
+        if(string(argv[i]) == "-tA0"  ){
 	    tau_A_i = destringify<double>(argv[i+1]);
             i++;
             continue;
         }
 
-        if(string(argv[i]) == "-e"  ){
+         if(string(argv[i]) == "-tA"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     tau_Alower = t.first;
+	     tau_Aupper = t.second;	     
+             i++;
+             continue;
+         }
+
+
+        if(string(argv[i]) == "-e0"  ){
 	    e_i = destringify<double>(argv[i+1]);
             i++;
             continue;
         }
 
-        if(string(argv[i]) == "-r"  ){
+         if(string(argv[i]) == "-e"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     elower = t.first;
+	     eupper = t.second;	     
+             i++;
+             continue;
+         }
+
+        if(string(argv[i]) == "-r0"  ){
 	    r_i = destringify<double>(argv[i+1]);
             i++;
             continue;
         }
+
+
+         if(string(argv[i]) == "-r"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     rlower = t.first;
+	     rupper = t.second;	     
+             i++;
+             continue;
+         }
+
 
 
         if(string(argv[i]) == "-2p" ){
@@ -258,13 +334,19 @@ int main (int argc, char *argv[]) {
 
 	   if(twoPopMode){
 	       if(has5Cols){
-		   cerr<<"Line "<<line<<" does not contain 4  but "<<fields.size()<<" fields"<<endl;
-		   exit(1);
+		   // cerr<<"Line "<<line<<" does not contain 4  but "<<fields.size()<<" fields"<<endl;
+		   // exit(1);
+		   toaddF.ancCount          = destringify<int>         (fields[0]);
+		   toaddF.derCount          = destringify<int>         (fields[1]);
+		   toaddF.panelFreqCont     = destringify<long double >(fields[2]);
+		   toaddF.panelFreqAnchor   = destringify<long double >(fields[3]);
+		   toaddF.num               = destringify<int>         (fields[4]);
+	       }else{
+		   toaddF.ancCount          = destringify<int>         (fields[0]);
+		   toaddF.derCount          = destringify<int>         (fields[1]);
+		   toaddF.panelFreqCont     = destringify<long double >(fields[2]);
+		   toaddF.num               = destringify<int>         (fields[3]);
 	       }
-	       toaddF.ancCount      = destringify<int>         (fields[0]);
-	       toaddF.derCount      = destringify<int>         (fields[1]);
-	       toaddF.panelFreqCont = destringify<long double >(fields[2]);
-	       toaddF.num           = destringify<int>         (fields[3]);
 	   }else{
 	       if(threePopMode){
 		   if(has5Cols){
@@ -354,7 +436,7 @@ int main (int argc, char *argv[]) {
        e_i_1      = distribution_e(dre);
        // e_i_1      = e_i;
 
-       if(e_i_1 <= 0     ||  e_i_1 >= 1     ){
+       if(e_i_1 <= elower     ||  e_i_1 >= eupper     ){
 	   e_i_1      = e_i;
 	   //chain--;
 	   //continue;
@@ -365,16 +447,18 @@ int main (int argc, char *argv[]) {
        // r_i_1      = r_i;
 
 
-       if(r_i_1 <= 0     ||  r_i_1 >= 1     ){
+       if(r_i_1 <= rlower     ||  r_i_1 >= rupper     ){
 	   r_i_1      = r_i;
 	   //chain--;
 	   //continue;
        }
+       // cout<<tau_Aupper<<endl;
+       // cout<<tau_Cupper<<endl;
 
        normal_distribution<double> distribution_tau_C(tau_C_i, (tau_Cupper-tau_Clower)/partition  );
        tau_C_i_1  = distribution_tau_C(dre);
 
-       if(tau_C_i_1 <= 0 ||  tau_C_i_1 >= 1 ){
+       if(tau_C_i_1 <= tau_Clower ||  tau_C_i_1 >= tau_Cupper ){
 	   tau_C_i_1  = tau_C_i;
 	   //chain--;
 	   //continue;
@@ -383,7 +467,7 @@ int main (int argc, char *argv[]) {
        normal_distribution<double> distribution_tau_A(tau_A_i, (tau_Aupper-tau_Alower)/partition  );
        tau_A_i_1  = distribution_tau_A(dre);
      
-       if(tau_A_i_1 <= 0 ||  tau_A_i_1 >= 1 ){
+       if(tau_A_i_1 <= tau_Alower ||  tau_A_i_1 >= tau_Aupper ){
 	   tau_A_i_1  = tau_A_i;
 	   //chain--;
 	   //continue;
