@@ -308,6 +308,7 @@ int main (int argc, char *argv[]) {
    bool firstIteration  = true;
    bool has4Cols        = false;
    bool has5Cols        = false;
+   bool has6Cols        = false;
 
    if (myFile.good()){
        getline (myFile,line);//header
@@ -322,6 +323,8 @@ int main (int argc, char *argv[]) {
 	   if(firstIteration){
 	       has4Cols =  ( fields.size() == 4 );
 	       has5Cols =  ( fields.size() == 5 );
+	       has6Cols =  ( fields.size() == 6 );
+
 	       if(has4Cols == false && 
 		  has5Cols == false ){
 		   cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
@@ -333,6 +336,7 @@ int main (int argc, char *argv[]) {
 	   freqSite toaddF;
 
 	   if(twoPopMode){
+
 	       if(has5Cols){
 		   // cerr<<"Line "<<line<<" does not contain 4  but "<<fields.size()<<" fields"<<endl;
 		   // exit(1);
@@ -342,25 +346,37 @@ int main (int argc, char *argv[]) {
 		   toaddF.panelFreqAnchor   = destringify<long double >(fields[3]);
 		   toaddF.num               = destringify<int>         (fields[4]);
 	       }else{
-		   toaddF.ancCount          = destringify<int>         (fields[0]);
-		   toaddF.derCount          = destringify<int>         (fields[1]);
-		   toaddF.panelFreqCont     = destringify<long double >(fields[2]);
-		   toaddF.num               = destringify<int>         (fields[3]);
+		   if(has4Cols){
+		       toaddF.ancCount          = destringify<int>         (fields[0]);
+		       toaddF.derCount          = destringify<int>         (fields[1]);
+		       toaddF.panelFreqCont     = destringify<long double >(fields[2]); //anchor is the contaminant
+		       toaddF.num               = destringify<int>         (fields[3]);
+		   }else{
+		       cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
+		       exit(1);
+		   }
 	       }
+
 	   }else{
 	       if(threePopMode){
 		   if(has5Cols){
-		       toaddF.ancCount      = destringify<int>         (fields[0]);
-		       toaddF.derCount      = destringify<int>         (fields[1]);
-		       toaddF.panelFreqCont = destringify<long double >(fields[2]);
-		       toaddF.panelFreqAdmx = destringify<long double >(fields[3]);
-		       toaddF.num           = destringify<int>         (fields[4]);
-		   }else{ //4 cols
-		       toaddF.ancCount      = destringify<int>         (fields[0]);
-		       toaddF.derCount      = destringify<int>         (fields[1]);
-		       toaddF.panelFreqCont = destringify<long double >(fields[2]);
-		       toaddF.panelFreqAdmx = destringify<long double >(fields[2]);
-		       toaddF.num           = destringify<int>         (fields[3]);
+		       toaddF.ancCount        = destringify<int>         (fields[0]);
+		       toaddF.derCount        = destringify<int>         (fields[1]);
+		       toaddF.panelFreqCont   = destringify<long double >(fields[2]); //w and y Contaminant is the admixing population
+		       toaddF.panelFreqAnchor = destringify<long double >(fields[3]); //z anchor 
+		       toaddF.num             = destringify<int>         (fields[4]); //count
+		   }else{ //6 cols
+		       if(has6Cols){
+			   toaddF.ancCount        = destringify<int>         (fields[0]);
+			   toaddF.derCount        = destringify<int>         (fields[1]);
+			   toaddF.panelFreqAdmx   = destringify<long double >(fields[2]); //y recipient admixing
+			   toaddF.panelFreqAnchor = destringify<long double >(fields[3]); //z anchor
+			   toaddF.panelFreqCont   = destringify<long double >(fields[4]); //w contamination freq
+			   toaddF.num             = destringify<int>         (fields[5]); 
+		       }else{
+			   cerr<<"Line "<<line<<" does not contain 5 or 6 fields but "<<fields.size()<<" fields"<<endl;
+			   exit(1);
+		       }
 		   }
 	       }else{
 		   cerr<<"Line "<<line<<" does not contain 4 or 5 fields"<<endl;
@@ -538,9 +554,9 @@ int main (int argc, char *argv[]) {
        }
 
        if(twoPopMode){
-	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                          true);
+	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols );
        }else{
-	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,true);
+	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols );
        }
 
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );

@@ -320,12 +320,13 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 	    for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
 		//cout<<"LogFinalThreeP1 "<<indexSite<<endl;
 		long double toaddToSum=0;
+
 		toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
 							      tableData->at(indexSite).derCount,
 							      r,
 							      e,
 							      tableData->at(indexSite).panelFreqCont,
-							      tableData->at(indexSite).panelFreqAdmx ,
+							      tableData->at(indexSite).panelFreqAnchor ,
 							      tableData->at(indexSite).panelFreqCont,
 							      dadiTable,
 							      nC,
@@ -350,7 +351,29 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
         // Contaminant population frequencies would be in the fifth column of data file        
         else{
 	    //TODO
-	    exit(1);
+	    //exit(1);
+
+	    for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
+		//cout<<"LogFinalThreeP1 "<<indexSite<<endl;
+		long double toaddToSum=0;
+
+		//int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz
+		//int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz
+
+		toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
+							      tableData->at(indexSite).derCount,
+							      r,
+							      e,
+							      tableData->at(indexSite).panelFreqAdmx,
+							      tableData->at(indexSite).panelFreqAnchor ,
+							      tableData->at(indexSite).panelFreqCont,
+							      dadiTable,
+							      nC,
+							      nB)
+					     ) * tableData->at(indexSite).num;
+		//cout<<"LogFinalThreeP2 "<<indexSite<<endl;
+		sumterm+=toaddToSum;
+	    }
 	}
 
 
