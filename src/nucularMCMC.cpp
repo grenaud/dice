@@ -326,8 +326,9 @@ int main (int argc, char *argv[]) {
 	       has6Cols =  ( fields.size() == 6 );
 
 	       if(has4Cols == false && 
-		  has5Cols == false ){
-		   cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
+		  has5Cols == false &&
+		  has6Cols == false ){
+		   cerr<<"Line "<<line<<" does not contain 4, 5 or 6 fields but "<<fields.size()<<" fields"<<endl;
 		   exit(1);
 	       }
 	       firstIteration=false;
