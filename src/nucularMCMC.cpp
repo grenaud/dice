@@ -343,8 +343,8 @@ int main (int argc, char *argv[]) {
 		   // exit(1);
 		   toaddF.ancCount          = destringify<int>         (fields[0]);
 		   toaddF.derCount          = destringify<int>         (fields[1]);
-		   toaddF.panelFreqCont     = destringify<long double >(fields[2]);
-		   toaddF.panelFreqAnchor   = destringify<long double >(fields[3]);
+		   toaddF.panelFreqAnchor   = destringify<long double >(fields[2]);
+		   toaddF.panelFreqCont     = destringify<long double >(fields[3]);
 		   toaddF.num               = destringify<int>         (fields[4]);
 	       }else{
 		   if(has4Cols){
