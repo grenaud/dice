@@ -274,8 +274,8 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
 							  tableData->at(indexSite).derCount,
 							  r,e,
-							  tableData->at(indexSite).panelFreqCont,
 							  tableData->at(indexSite).panelFreqAnchor,
+							  tableData->at(indexSite).panelFreqCont,
 							  tau_C,
 							  tau_A))*tableData->at(indexSite).num;
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;

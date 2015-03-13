@@ -29,4 +29,3 @@ nucularMCMC:	nucularMCMC.o ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
 
 clean :
 	rm -f nucular.o nucular nucularMCMC.o nucularMCMC
-
