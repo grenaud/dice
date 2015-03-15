@@ -169,7 +169,7 @@ inline string ld2string(long double i){
 
 inline vector< vector<long double>  * > * getDadiTableThreeP(long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,long double nA,const string & cwdProg){
     string cmd = "python  "+cwdProg+"/Dadi_three_pop_admix.py -c "+ld2string(tau_C)+" -a "+ld2string(tau_A)+" -x "+ld2string(admixrate)+" -t "+ld2string(admixtime)+" -y "+ld2string(innerdriftY)+" -z "+ld2string(innerdriftZ)+" -m "+ld2string(nC)+" -n "+ld2string(nA)+" -b "+ld2string(nB)+" ";
-    cerr<<cmd<<endl;
+    //cerr<<cmd<<endl;
     string values = runCmdAndCaptureSTDOUTandSTDERR(cmd);
     
     vector<string>       numberS   = allTokens(values,'\n');
@@ -293,7 +293,8 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 //  Log final posterior for three populations
 inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor){
     //     print(c(e,r,tau_C,tau_A))
-
+    //cout<<cwdProg<<"\t"<<contequalanchor<<endl;
+    //exit(1);
     if( (e < 0)     || 
 	(r < 0)     || 
 	(tau_C < 0) || 
@@ -332,6 +333,14 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 							      nC,
 							      nB)
 					     ) * tableData->at(indexSite).num;
+		/* cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t" */
+		/*     <<"\t"<<r */
+		/*     <<"\t"<<e */
+		/*     <<"\t"<<tableData->at(indexSite).panelFreqCont */
+		/*     <<"\t"<<tableData->at(indexSite).panelFreqAnchor  */
+		/*     <<"\t"<<tableData->at(indexSite).panelFreqCont  */
+		/*     <<"\t"<<nC */
+		/*     <<"\t"<<nB<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl; */
 		//cout<<"LogFinalThreeP2 "<<indexSite<<endl;
 		sumterm+=toaddToSum;
 	    }

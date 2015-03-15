@@ -392,8 +392,8 @@ int main (int argc, char *argv[]) {
        cerr << "Unable to open file "<<filename<<endl;
        return 1;
    }
-   // cerr<<"done"<<endl;
-
+   //cout<<"done\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
+   //return 1;
    if( twoPopMode  == threePopMode ){
        cerr << "Internal error, cannot have two and three pops at once"<<endl;
        return 1;
@@ -426,9 +426,9 @@ int main (int argc, char *argv[]) {
    long double x_i_1l;
 
    if(twoPopMode){
-       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,true);
+       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,has4Cols);
    }else{
-       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,true);
+       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols);
    }
    outLogFP<<"chain"<<"\tllik"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance"<<endl;
    int accept=0;
@@ -553,7 +553,7 @@ int main (int argc, char *argv[]) {
 	       admixtime_i_1=admixtime_i-factadmixtime;
 	   }
        }
-
+       //cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
        if(twoPopMode){
 	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols );
        }else{
@@ -563,7 +563,9 @@ int main (int argc, char *argv[]) {
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
 
        //cout<< "new   "<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
-       // cout<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<endl;
+       //outLogFP<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<"\t"<<acceptance<<endl;
+
+       //outLogFP<<chain<<"p\t"<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
 
        if( (long double)(randomProb()) < acceptance){
 	   e_i           =  e_i_1;
@@ -574,9 +576,9 @@ int main (int argc, char *argv[]) {
 	   admixtime_i   =  admixtime_i_1;
 	   x_il      = x_i_1l;
 	   accept++;
-	   // cout<<"new state"<<endl;
+	   //outLogFP<<"new state"<<endl;
        }else{
-	   //cout<<"reject"<<endl;
+	   //outLogFP<<"reject"<<endl;
        }
 
        // cout<<endl;
