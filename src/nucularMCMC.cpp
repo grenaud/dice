@@ -68,13 +68,19 @@ int main (int argc, char *argv[]) {
     long double admixrateupper = 0.5;
     long double admixtimeupper = 0.11;
 
-    //vector Variables
-    long double e_i         = randomLongDouble(elower,         eupper);
-    long double r_i         = randomLongDouble(rlower,         rupper);
-    long double tau_C_i     = randomLongDouble(tau_Clower,     tau_Cupper);
-    long double tau_A_i     = randomLongDouble(tau_Alower,     tau_Aupper);
-    long double admixrate_i = randomLongDouble(admixratelower, admixrateupper);
-    long double admixtime_i = randomLongDouble(admixtimelower, admixtimeupper);
+    long double e_i         ;
+    long double r_i         ;
+    long double tau_C_i     ;
+    long double tau_A_i     ;
+    long double admixrate_i ;
+    long double admixtime_i ;
+
+    bool e_i_0         = false;
+    bool r_i_0         = false;
+    bool tau_C_i_0     = false;
+    bool tau_A_i_0     = false;
+    bool admixrate_i_0 = false;
+    bool admixtime_i_0 = false;
 
 
     const string usage=string("\t"+string(argv[0])+
@@ -160,6 +166,7 @@ int main (int argc, char *argv[]) {
 
         if(string(argv[i]) == "-aT0"  ){
 	    admixtime_i  = destringify<double>(argv[i+1]);
+	    admixtime_i_0=true;
             i++;
             continue;
         }
@@ -175,6 +182,7 @@ int main (int argc, char *argv[]) {
 
         if(string(argv[i]) == "-aR0"  ){
 	    admixrate_i  = destringify<double>(argv[i+1]);
+	    admixrate_i_0=true;
             i++;
             continue;
         }
@@ -190,6 +198,7 @@ int main (int argc, char *argv[]) {
 
         if(string(argv[i]) == "-tC0"  ){
 	    tau_C_i = destringify<double>(argv[i+1]);
+	    tau_C_i_0=true;
             i++;
             continue;
         }
@@ -204,6 +213,7 @@ int main (int argc, char *argv[]) {
 
         if(string(argv[i]) == "-tA0"  ){
 	    tau_A_i = destringify<double>(argv[i+1]);
+	    tau_A_i_0=true;
             i++;
             continue;
         }
@@ -219,6 +229,7 @@ int main (int argc, char *argv[]) {
 
         if(string(argv[i]) == "-e0"  ){
 	    e_i = destringify<double>(argv[i+1]);
+	    e_i_0=true;
             i++;
             continue;
         }
@@ -233,6 +244,7 @@ int main (int argc, char *argv[]) {
 
         if(string(argv[i]) == "-r0"  ){
 	    r_i = destringify<double>(argv[i+1]);
+	    r_i_0=true;
             i++;
             continue;
         }
@@ -400,13 +412,31 @@ int main (int argc, char *argv[]) {
    }
 
 
+    //vector Variables
+   if(!e_i_0)
+       e_i       = randomLongDouble(elower,         eupper);
 
-   long double e_i_1;
-   long double r_i_1;
-   long double tau_C_i_1;
-   long double tau_A_i_1;
-   long double admixrate_i_1;
-   long double admixtime_i_1;
+   if(!r_i_0)
+     r_i         = randomLongDouble(rlower,         rupper);
+
+   if(!tau_C_i_0)
+     tau_C_i     = randomLongDouble(tau_Clower,     tau_Cupper);
+
+   if(!tau_A_i_0)
+     tau_A_i     = randomLongDouble(tau_Alower,     tau_Aupper);
+
+   if(!admixrate_i_0)
+     admixrate_i = randomLongDouble(admixratelower, admixrateupper);
+
+   if(!admixtime_i_0)
+     admixtime_i = randomLongDouble(admixtimelower, admixtimeupper);
+
+    long double e_i_1;
+    long double r_i_1;
+    long double tau_C_i_1;
+    long double tau_A_i_1;
+    long double admixrate_i_1;
+    long double admixtime_i_1;
 
    //to test
 
@@ -449,7 +479,7 @@ int main (int argc, char *argv[]) {
         // admixtime_i_1 = randomLongDouble(admixtimelower, admixtimeupper);
 
        //e
-       normal_distribution<double> distribution_e(e_i,     (eupper-elower)/partition  );
+       normal_distribution<long double> distribution_e(e_i,     (eupper-elower)/partition  );
        e_i_1      = distribution_e(dre);
        // e_i_1      = e_i;
 
@@ -459,7 +489,7 @@ int main (int argc, char *argv[]) {
 	   //continue;
        }
 
-       normal_distribution<double> distribution_r(r_i,     (rupper-rlower)/partition  );
+       normal_distribution<long double> distribution_r(r_i,     (rupper-rlower)/partition  );
        r_i_1      = distribution_r(dre);
        // r_i_1      = r_i;
 
@@ -472,7 +502,7 @@ int main (int argc, char *argv[]) {
        // cout<<tau_Aupper<<endl;
        // cout<<tau_Cupper<<endl;
 
-       normal_distribution<double> distribution_tau_C(tau_C_i, (tau_Cupper-tau_Clower)/partition  );
+       normal_distribution<long double> distribution_tau_C(tau_C_i, (tau_Cupper-tau_Clower)/partition  );
        tau_C_i_1  = distribution_tau_C(dre);
 
        if(tau_C_i_1 <= tau_Clower ||  tau_C_i_1 >= tau_Cupper ){
@@ -481,13 +511,11 @@ int main (int argc, char *argv[]) {
 	   //continue;
        }
 
-       normal_distribution<double> distribution_tau_A(tau_A_i, (tau_Aupper-tau_Alower)/partition  );
+       normal_distribution<long double> distribution_tau_A(tau_A_i, (tau_Aupper-tau_Alower)/partition  );
        tau_A_i_1  = distribution_tau_A(dre);
      
        if(tau_A_i_1 <= tau_Alower ||  tau_A_i_1 >= tau_Aupper ){
 	   tau_A_i_1  = tau_A_i;
-	   //chain--;
-	   //continue;
        }
 
 
@@ -538,20 +566,35 @@ int main (int argc, char *argv[]) {
        if(!twoPopMode){
 
 	   //admix_rate  
-	   long double factadmixrate = fmod( (long double)(randomProb()), (admixrateupper-admixratelower)/partition);
-	   if(randomBool()){
-	       admixrate_i_1=admixrate_i+factadmixrate;
-	   }else{
-	       admixrate_i_1=admixrate_i-factadmixrate;
+
+	   normal_distribution<long double> distribution_admixrate(admixrate_i, (admixrateupper-admixratelower)/partition  );
+	   admixrate_i_1  = distribution_admixrate(dre);
+     
+	   if(admixrate_i_1 <= admixratelower ||  admixrate_i_1 >= admixrateupper ){
+	       admixrate_i_1  = admixrate_i;
 	   }
 
-	   //admix_time  
-	   long double factadmixtime = fmod( (long double)(randomProb()), (admixtimeupper-admixtimelower)/partition);
-	   if(randomBool()){
-	       admixtime_i_1=admixtime_i+factadmixtime;
-	   }else{
-	       admixtime_i_1=admixtime_i-factadmixtime;
+	   normal_distribution<long double> distribution_admixtime(admixtime_i, (admixtimeupper-admixtimelower)/partition  );
+	   admixtime_i_1  = distribution_admixtime(dre);
+     
+	   if(admixtime_i_1 <= admixtimelower ||  admixtime_i_1 >= admixtimeupper ){
+	       admixtime_i_1  = admixtime_i;
 	   }
+	   
+	   // long double factadmixrate = fmod( (long double)(randomProb()), (admixrateupper-admixratelower)/partition);
+	   // if(randomBool()){
+	   //     admixrate_i_1=admixrate_i+factadmixrate;
+	   // }else{
+	   //     admixrate_i_1=admixrate_i-factadmixrate;
+	   // }
+
+	   //admix_time  
+	   // long double factadmixtime = fmod( (long double)(randomProb()), (admixtimeupper-admixtimelower)/partition);
+	   // if(randomBool()){
+	   //     admixtime_i_1=admixtime_i+factadmixtime;
+	   // }else{
+	   //     admixtime_i_1=admixtime_i-factadmixtime;
+	   // }
        }
        //cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
        if(twoPopMode){
