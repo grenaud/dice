@@ -13,6 +13,7 @@
 #endif
   
 
+// #define DEBUGMST
 
 
 //GLOBAL CONSTANTS
@@ -50,6 +51,8 @@
 #include "utils.h"
 #include "miscfunc.h"
 #include "ReconsReferenceBAM.h"
+#include "MistarParser.h"
+#include "mistarOperations.h"
 
 using namespace BamTools;
 using namespace std;
@@ -1571,6 +1574,8 @@ public:
 		  Fasta * fastaReference,
 		  // vector<singlePosInfo> * infoPPos,
 		  // const int sizeGenome,
+		  vector<MistarParser * > * vectorOfMP,
+		  unsigned int coordFirst,
 		  const bool ignoreMQ
 		  // const long double contaminationPrior,
 		  //const bool singleCont
@@ -1580,10 +1585,23 @@ public:
     , m_fastaReference(fastaReference)
     // , m_infoPPos(infoPPos)
     // , sizeGenome(sizeGenome)
+    , m_vectorOfMP(vectorOfMP)
     , ignoreMQ(ignoreMQ)
     // , contaminationPrior(contaminationPrior)
     // , singleCont(singleCont)
   { 
+     
+    
+    initFiles(*vectorOfMP,
+	      // atLeastOneHasData,
+	      hasData,
+	      popSizePerFile,
+	      vecAlleleRecords,
+	      chr1,
+	      coordFirst);
+
+    hasCoordinate = vector<bool>(m_vectorOfMP->size(),true);//dummy value
+
 
   }
   ~MyPileupVisitor(void) { }
@@ -1641,7 +1659,7 @@ public:
 	if(b == 'N')
 	    continue;	    
 
-	cout<<i<<"\t"<<b<<"\t"<<referenceBase<<"\t"<<int(q)<<endl;
+
 	// BEGIN DEAMINATION COMPUTATION
 	//zero base distance to the 5p/3p end
 	int dist5p=-1;
@@ -1702,14 +1720,134 @@ public:
 	// END DEAMINATION COMPUTATION
 
 
-      //}//end, no insert
+	
+	// vector<bool> hasData;
+	// vector<AlleleRecords *> vecAlleleRecords;
+	// vector<bool>  hasCoordinate (m_vectorOfMP->size(),true);//dummy value
+	bool stayLoop=true;
+
+
+	while(stayLoop){
+
+#ifdef DEBUGMST
+	    cout<<"posAlign "<<posAlign<<endl;
+#endif
+
+	    bool allHaveCoordinate=true;
+
+	    for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+		//cout<<"hasData["<<i<<"]"<<hasData[i]<<endl;
+		if(hasData[i]){		
+		    if(posAlign  != vecAlleleRecords[i]->coordinate){
+			allHaveCoordinate=false;
+		    }
+		}else{
+		    stayLoop=false;
+		    break;
+		}
+	    }
+
+	
+	    //we print
+	    if(allHaveCoordinate){
+#ifdef DEBUGMST
+		cout<<"same posAlign "<<posAlign<<endl;
+#endif
+
+		cout<<"i="<<i<<"\t"<<posAlign<<"\t"<<b<<"\t"<<referenceBase<<"\t"<<int(q)<<endl;	    
+		printAllele(*m_vectorOfMP,
+			    hasData,
+			    hasCoordinate,
+			    popSizePerFile,
+			    vecAlleleRecords,
+			    chr1,
+			    posAlign,
+			    false);
+
+
+		// 	seekdata:
+		allHaveCoordinate=false;
+	    
+		for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+		 
+		    if(!hasData[i] ){
+			cerr<<"Invalid state"<<endl;
+			exit(1);
+		    }
+		    hasData[i]  =  m_vectorOfMP->at(i)->hasData();
+		    if(hasData[i]){
+			vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
+		    }else{
+			stayLoop=false;
+			break;
+		    }
+		
+		}
+
+
+		// //all have add getData called, we need to reposition to the maximum coord
+		// bool needToSetCoord=true;
+		// for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+		
+		//     if(needToSetCoord){
+		// 	posAlign  = vecAlleleRecords[i]->coordinate;
+		// 	needToSetCoord=false;
+		//     }else{
+		// 	posAlign  = max(posAlign,vecAlleleRecords[i]->coordinate);
+		//     }
+
+		// }
+
+		continue;
+
+	    }else{
+		// cerr<<"Invalid state"<<endl;
+		// return 1;  
+	    
+	    
+		for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+#ifdef DEBUGMST
+		    cout<<"coord["<<i<<"] "<< vecAlleleRecords[i]->coordinate<<endl;
+#endif
+
+		     if(posAlign  < vecAlleleRecords[i]->coordinate){ //The BAM file is behind the MST files
+			 // posAlign = vecAlleleRecords[i]->coordinate;
+			 // continue;
+			 stayLoop=false;
+			 break;
+		     }
+
+		    if(posAlign == vecAlleleRecords[i]->coordinate){ //fine
+		    }
+
+		    if(posAlign >  vecAlleleRecords[i]->coordinate){ //running behind
+			hasData[i]  =   m_vectorOfMP->at(i)->hasData();
+			if(hasData[i]){
+			    vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
+			}else{
+			    stayLoop=false;
+			    break;
+			}
+		    }
+		
+		}
+
+	    
+	    }//end different coord
+
+	
+	}//end stay loop
+
+
+
+	//}//end, no insert
     }//end for each read
 	
 
 
 
 
-
+    // cout<<"end visit"<<endl;
 
 
 
@@ -1717,8 +1855,17 @@ public:
   }//end visit()
         
 private:
+
+    vector<bool> hasData;
+    vector<int> popSizePerFile;
+    vector<AlleleRecords *> vecAlleleRecords;
+    string chr1;
+    unsigned int coordCurrent;
+    vector<bool>  hasCoordinate;
+
     RefVector m_references;
     Fasta * m_fastaReference;
+    vector<MistarParser * > * m_vectorOfMP;
     // vector<singlePosInfo> * m_infoPPos;
     // int sizeGenome;
     bool ignoreMQ;
@@ -2127,13 +2274,18 @@ int main (int argc, char *argv[]) {
 	return 1;	
     }
 
+
     vector<string>  filesAlFreq;
-    string fastaFile    = string(argv[lastOpt-3]);//fasta file
-    string bamfiletopen = string(argv[lastOpt-2]);//bam file
+    string fastaFile    = string(argv[lastOpt]);//fasta file
+    string bamfiletopen = string(argv[lastOpt+1]);//bam file
     //string fastaFile    = string(argv[argc-2]);//fasta file
-    string region       = string(argv[lastOpt-1]);//fasta file
+    string region       = string(argv[lastOpt+2]);//fasta file
 
-
+    cout<<lastOpt<<endl;
+    cout<<fastaFile<<endl;
+    cout<<bamfiletopen<<endl;
+    cout<<region<<endl;
+   
     for(int i=(lastOpt+3);i<(argc);i++){ //all but the last 3 args
 	//cout<<"cont "<<string(argv[i])<<endl;
 	filesAlFreq.push_back(string(argv[i]));	
@@ -2286,12 +2438,33 @@ int main (int argc, char *argv[]) {
 	exit(1);
     }
 
+
+
+    vector<MistarParser * > vectorOfMP;
+    for(int i=(lastOpt+3);i<(argc);i++){ 
+	// if(i==1 && string(argv[i]) == "-f"){
+	//     force=true;
+	//     continue;
+	// }
+	//cout<<"MP "<<string(argv[i])<<endl;
+	if(!isFile(string(argv[i])+".tbi")){
+	    cerr<<"Error: The allele count file must be tabix indexed: "<<string(argv[i])<<".tbi file not found"<<endl;
+	    return 1;	
+	}
+
+	MistarParser * mp = new MistarParser(string(argv[i]),(string(argv[i])+".tbi"),tokens[0], destringify<int>(tokens2[0]) ,  destringify<int>(tokens2[1]));
+	vectorOfMP.push_back(mp);
+    }    
+
+    // for(unsigned int i=0;i<vectorOfMP.size();i++){ 
+    // 	vectorOfMP[i]->repositionIterator(tokens[0], destringify<int>(tokens2[0]) ,  destringify<int>(tokens2[1]));
+    // }
+
+
     int id = reader.GetReferenceID(tokens[0]);
 
     BamRegion regionbam (id, destringify<int>(tokens2[0]) , id, destringify<int>(tokens2[1]));
-
-     
-
+    
     reader.SetRegion(regionbam);
 
 
@@ -2304,7 +2477,7 @@ int main (int argc, char *argv[]) {
 
 
 
-    MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,ignoreMQ);
+    MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,&vectorOfMP,destringify<unsigned int>(tokens2[0]),  ignoreMQ);
     PileupEngine pileup;
     pileup.AddVisitor(cv);
 
@@ -2312,9 +2485,8 @@ int main (int argc, char *argv[]) {
     BamAlignment al;
     unsigned int numReads=0;
     cerr<<"Reading BAM file ..."<<endl;
-
     while ( reader.GetNextAlignment(al) ) {
-	cerr<<al.Name<<endl;
+	//cerr<<"name:\t"<<al.Name<<endl;
 	numReads++;
 	if(numReads !=0 && (numReads%100000)==0){
 	    cerr<<"Read "<<thousandSeparator(numReads)<<" reads"<<endl;
