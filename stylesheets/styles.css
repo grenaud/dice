@@ -720,7 +720,7 @@ dt {
   font-size: 14px;
 }
 #header nav li a {
-  color: black;
+  color: #787878;
   border: 1px solid #5d910b;
   background: #ffcc00;
   -moz-border-radius: 2px;
