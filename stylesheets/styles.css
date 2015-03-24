@@ -720,7 +720,7 @@ dt {
   font-size: 14px;
 }
 #header nav li a {
-  color: white;
+  color: black;
   border: 1px solid #5d910b;
   background: #ffcc00;
   -moz-border-radius: 2px;
@@ -742,6 +742,7 @@ dt {
   text-align: center;
 }
 #header nav li a:hover {
+  color: white;
   background: #d6ab00;
   background-color: #d6ab00;
   border: 1px solid #527f0e;
