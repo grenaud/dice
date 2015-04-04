@@ -1632,129 +1632,259 @@ public:
     }
 
 
-    //re-iterate over each read to compute the likelihood for each insert (or pair of inserts)
-    for(unsigned int i=0;i<pileupData.PileupAlignments.size();i++){				
+    // BEGIN READING ALLELE FREQ
 
+    bool stayLoop=true;
+    bool samePos=false;
 
-		
-	if( !pileupData.PileupAlignments[i].IsCurrentDeletion &&
-	    pileupData.PileupAlignments[i].IsNextInsertion &&
-	    (pileupData.PileupAlignments[i].InsertionLength>0)){ //has insertion		    
-	    continue;//ignore
-	}
-
-	if( pileupData.PileupAlignments[i].IsCurrentDeletion &&
-	    pileupData.PileupAlignments[i].IsNextInsertion &&
-	    (pileupData.PileupAlignments[i].InsertionLength == 0)){ //has deletion
-	    continue;
-	}
-
-	//base that was read
-	char b   = pileupData.PileupAlignments[i].Alignment.QueryBases[pileupData.PileupAlignments[i].PositionInAlignment];
-	//quality score
-	char q   = pileupData.PileupAlignments[i].Alignment.Qualities[pileupData.PileupAlignments[i].PositionInAlignment]-offsetQual;
-	int  m   = int(pileupData.PileupAlignments[i].Alignment.MapQuality);
-	
-	//skip unresolved
-	if(b == 'N')
-	    continue;	    
-
-
-	// BEGIN DEAMINATION COMPUTATION
-	//zero base distance to the 5p/3p end
-	int dist5p=-1;
-	int dist3p=-1;
-
-	if( pileupData.PileupAlignments[i].Alignment.IsReverseStrand() ){
-	    dist5p = pileupData.PileupAlignments[i].Alignment.QueryBases.size() - pileupData.PileupAlignments[i].PositionInAlignment-1;
-	    dist3p = pileupData.PileupAlignments[i].PositionInAlignment;
-	}else{
-	    dist5p = pileupData.PileupAlignments[i].PositionInAlignment;
-	    dist3p = pileupData.PileupAlignments[i].Alignment.QueryBases.size() - pileupData.PileupAlignments[i].PositionInAlignment-1;
-	}
-		    		    
-	probSubstition * probSubMatchToUseEndo = &defaultSubMatch ;
-	probSubstition * probSubMatchToUseCont = &defaultSubMatch ;
-
-
-	if(dist5p <= (int(sub5p.size()) -1)){
-	    probSubMatchToUseEndo = &sub5p[  dist5p ];			
-
-	}
-
-	if(dist5p <= (int(sub5pC.size()) -1)){
-	    probSubMatchToUseCont = &sub5pC[ dist5p ];
-	}
-		    
-	if(dist3p <= (int(sub3p.size()) -1)){
-	    probSubMatchToUseEndo = &sub3p[  dist3p ];
-	}
-		    
-	if(dist3p <= (int(sub3pC.size()) -1)){
-	    probSubMatchToUseCont = &sub3pC[ dist3p ];
-	}
-
-	//we have substitution probabilities for both... take the closest
-	if(dist5p <= (int(sub5p.size()) -1) &&
-	   dist3p <= (int(sub3p.size()) -1) ){
-		    
-	    if(dist5p < dist3p){
-		probSubMatchToUseEndo = &sub5p[  dist5p ];
-	    }else{
-		probSubMatchToUseEndo = &sub3p[  dist3p ];
-	    }
-		    
-	}
-
-	if(dist5p <= (int(sub5pC.size()) -1) &&
-	   dist3p <= (int(sub3pC.size()) -1) ){
-		    
-	    if(dist5p < dist3p){
-		probSubMatchToUseCont = &sub5pC[ dist5p ];
-	    }else{
-		probSubMatchToUseCont = &sub3pC[ dist3p ];
-	    }
-		    
-	}
-
-	// END DEAMINATION COMPUTATION
-
-
-	
-	// vector<bool> hasData;
-	// vector<AlleleRecords *> vecAlleleRecords;
-	// vector<bool>  hasCoordinate (m_vectorOfMP->size(),true);//dummy value
-	bool stayLoop=true;
-
-
-	while(stayLoop){
+    while(stayLoop){
 
 #ifdef DEBUGMST
-	    cout<<"posAlign "<<posAlign<<endl;
+	cout<<"posAlign "<<posAlign<<"\t"<<pileupData.PileupAlignments.size()<<endl;
 #endif
 
-	    bool allHaveCoordinate=true;
+	bool allHaveCoordinate=true;
 
+	for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+	    //cout<<"hasData["<<i<<"]"<<hasData[i]<<endl;
+	    if(hasData[i]){		
+		if(posAlign  != vecAlleleRecords[i]->coordinate){
+		    allHaveCoordinate=false;
+		}
+	    }else{
+		stayLoop=false;
+		break;
+	    }
+	}
+
+	
+	//we print
+	if(allHaveCoordinate){
+#ifdef DEBUGMST
+	    cout<<"same posAlign "<<posAlign<<endl;
+#endif
+
+	    samePos=true;
+	    // printAllele(*m_vectorOfMP,
+	    // 		hasData,
+	    // 		hasCoordinate,
+	    // 		popSizePerFile,
+	    // 		vecAlleleRecords,
+	    // 		chr1,
+	    // 		posAlign,
+	    // 		false);
+
+
+	    // 	seekdata:
+	    allHaveCoordinate=false;
+	    stayLoop=false;
+	    break;
+
+	    if(0)
 	    for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
-		//cout<<"hasData["<<i<<"]"<<hasData[i]<<endl;
-		if(hasData[i]){		
-		    if(posAlign  != vecAlleleRecords[i]->coordinate){
-			allHaveCoordinate=false;
-		    }
+		 
+		if(!hasData[i] ){
+		    cerr<<"Invalid state"<<endl;
+		    exit(1);
+		}
+		hasData[i]  =  m_vectorOfMP->at(i)->hasData();
+		if(hasData[i]){
+		    vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
 		}else{
 		    stayLoop=false;
 		    break;
 		}
+		
 	    }
 
-	
-	    //we print
-	    if(allHaveCoordinate){
+
+	    // //all have add getData called, we need to reposition to the maximum coord
+	    // bool needToSetCoord=true;
+	    // for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+		
+	    //     if(needToSetCoord){
+	    // 	posAlign  = vecAlleleRecords[i]->coordinate;
+	    // 	needToSetCoord=false;
+	    //     }else{
+	    // 	posAlign  = max(posAlign,vecAlleleRecords[i]->coordinate);
+	    //     }
+
+	    // }
+
+	    continue;
+
+	}else{
+	    // cerr<<"Invalid state"<<endl;
+	    // return 1;  
+	    
+	    
+	    for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
 #ifdef DEBUGMST
-		cout<<"same posAlign "<<posAlign<<endl;
+		cout<<"coord["<<i<<"] "<< vecAlleleRecords[i]->coordinate<<endl;
 #endif
 
-		cout<<"i="<<i<<"\t"<<posAlign<<"\t"<<b<<"\t"<<referenceBase<<"\t"<<int(q)<<endl;	    
+		if(posAlign  < vecAlleleRecords[i]->coordinate){ //The BAM file is behind the MST files
+		    // posAlign = vecAlleleRecords[i]->coordinate;
+		    // continue;
+		    stayLoop=false;
+		    break;
+		}
+
+		if(posAlign == vecAlleleRecords[i]->coordinate){ //fine
+		}
+
+		if(posAlign >  vecAlleleRecords[i]->coordinate){ //running behind
+		    hasData[i]  =   m_vectorOfMP->at(i)->hasData();
+		    if(hasData[i]){
+			vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
+		    }else{
+			stayLoop=false;
+			break;
+		    }
+		}
+		
+	    }
+
+	    
+	}//end different coord
+
+	
+    }//end stay loop
+    // END READING ALLELE FREQ
+
+    vector<singleBase> singleBaseVec;
+
+    if(samePos){
+
+	//re-iterate over each read to compute the likelihood for each insert (or pair of inserts)
+	for(unsigned int i=0;i<pileupData.PileupAlignments.size();i++){				
+
+
+		
+	    if( !pileupData.PileupAlignments[i].IsCurrentDeletion &&
+		pileupData.PileupAlignments[i].IsNextInsertion &&
+		(pileupData.PileupAlignments[i].InsertionLength>0)){ //has insertion		    
+		continue;//ignore
+	    }
+
+	    if( pileupData.PileupAlignments[i].IsCurrentDeletion &&
+		pileupData.PileupAlignments[i].IsNextInsertion &&
+		(pileupData.PileupAlignments[i].InsertionLength == 0)){ //has deletion
+		continue;
+	    }
+
+	    //base that was read
+	    char b   = pileupData.PileupAlignments[i].Alignment.QueryBases[pileupData.PileupAlignments[i].PositionInAlignment];
+	    //quality score
+	    char q   = pileupData.PileupAlignments[i].Alignment.Qualities[pileupData.PileupAlignments[i].PositionInAlignment]-offsetQual;
+	    int  m   = int(pileupData.PileupAlignments[i].Alignment.MapQuality);
+	
+	    //skip unresolved
+	    if(b == 'N')
+		continue;	    
+
+	    // vector<singleBase> singleBaseVec;
+	    singleBase sb;
+	    //cout<<"i="<<i<<"\t"<<posAlign<<"\t"<<b<<"\t"<<referenceBase<<"\t"<<int(q)<<endl;	    
+	    sb.b    = b;
+	    sb.bq   = int(q);
+	    sb.mpq  = m;
+	    singleBaseVec.push_back(sb);
+
+	    // BEGIN DEAMINATION COMPUTATION
+	    //zero base distance to the 5p/3p end
+	    int dist5p=-1;
+	    int dist3p=-1;
+
+	    if( pileupData.PileupAlignments[i].Alignment.IsReverseStrand() ){
+		dist5p = pileupData.PileupAlignments[i].Alignment.QueryBases.size() - pileupData.PileupAlignments[i].PositionInAlignment-1;
+		dist3p = pileupData.PileupAlignments[i].PositionInAlignment;
+	    }else{
+		dist5p = pileupData.PileupAlignments[i].PositionInAlignment;
+		dist3p = pileupData.PileupAlignments[i].Alignment.QueryBases.size() - pileupData.PileupAlignments[i].PositionInAlignment-1;
+	    }
+		    		    
+	    probSubstition * probSubMatchToUseEndo = &defaultSubMatch ;
+	    probSubstition * probSubMatchToUseCont = &defaultSubMatch ;
+
+
+	    if(dist5p <= (int(sub5p.size()) -1)){
+		probSubMatchToUseEndo = &sub5p[  dist5p ];			
+
+	    }
+
+	    if(dist5p <= (int(sub5pC.size()) -1)){
+		probSubMatchToUseCont = &sub5pC[ dist5p ];
+	    }
+		    
+	    if(dist3p <= (int(sub3p.size()) -1)){
+		probSubMatchToUseEndo = &sub3p[  dist3p ];
+	    }
+		    
+	    if(dist3p <= (int(sub3pC.size()) -1)){
+		probSubMatchToUseCont = &sub3pC[ dist3p ];
+	    }
+
+	    //we have substitution probabilities for both... take the closest
+	    if(dist5p <= (int(sub5p.size()) -1) &&
+	       dist3p <= (int(sub3p.size()) -1) ){
+		    
+		if(dist5p < dist3p){
+		    probSubMatchToUseEndo = &sub5p[  dist5p ];
+		}else{
+		    probSubMatchToUseEndo = &sub3p[  dist3p ];
+		}
+		    
+	    }
+
+	    if(dist5p <= (int(sub5pC.size()) -1) &&
+	       dist3p <= (int(sub3pC.size()) -1) ){
+		    
+		if(dist5p < dist3p){
+		    probSubMatchToUseCont = &sub5pC[ dist5p ];
+		}else{
+		    probSubMatchToUseCont = &sub3pC[ dist3p ];
+		}
+		    
+	    }
+
+	    // END DEAMINATION COMPUTATION
+
+
+	
+	    // vector<bool> hasData;
+	    // vector<AlleleRecords *> vecAlleleRecords;
+	    // vector<bool>  hasCoordinate (m_vectorOfMP->size(),true);//dummy value
+
+
+
+
+
+	
+
+	
+	}//end for each read
+	
+
+	// if(samePos && 
+	// (pileupData.PileupAlignments.size()>0)){
+	// 	cout<<samePos<<endl;
+	if(    (pileupData.PileupAlignments.size()>0) ){
+	    vector<double> derFreq;
+
+	    bool populatedFreq= populateFreqVec(*m_vectorOfMP,
+						hasData,
+						hasCoordinate,
+						popSizePerFile,
+						vecAlleleRecords,
+						chr1,
+						posAlign,
+						&derFreq,
+						false);
+	    if(populatedFreq){
+
+
+
 		printAllele(*m_vectorOfMP,
 			    hasData,
 			    hasCoordinate,
@@ -1763,89 +1893,20 @@ public:
 			    chr1,
 			    posAlign,
 			    false);
-
-
-		// 	seekdata:
-		allHaveCoordinate=false;
-	    
-		for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
-		 
-		    if(!hasData[i] ){
-			cerr<<"Invalid state"<<endl;
-			exit(1);
-		    }
-		    hasData[i]  =  m_vectorOfMP->at(i)->hasData();
-		    if(hasData[i]){
-			vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
-		    }else{
-			stayLoop=false;
-			break;
-		    }
 		
+		if(vecAlleleRecords[0]->ref !=  referenceBase){
+		    cerr<<"Error: the reference allele differs at  "<<chr1<<":"<<posAlign<<" allele count says : "<<vecAlleleRecords[0]->ref<<" bam file says "<<referenceBase<<endl;
+		    exit(1);
 		}
-
-
-		// //all have add getData called, we need to reposition to the maximum coord
-		// bool needToSetCoord=true;
-		// for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
-		
-		//     if(needToSetCoord){
-		// 	posAlign  = vecAlleleRecords[i]->coordinate;
-		// 	needToSetCoord=false;
-		//     }else{
-		// 	posAlign  = max(posAlign,vecAlleleRecords[i]->coordinate);
-		//     }
-
-		// }
-
-		continue;
-
-	    }else{
-		// cerr<<"Invalid state"<<endl;
-		// return 1;  
-	    
-	    
-		for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
-#ifdef DEBUGMST
-		    cout<<"coord["<<i<<"] "<< vecAlleleRecords[i]->coordinate<<endl;
-#endif
-
-		     if(posAlign  < vecAlleleRecords[i]->coordinate){ //The BAM file is behind the MST files
-			 // posAlign = vecAlleleRecords[i]->coordinate;
-			 // continue;
-			 stayLoop=false;
-			 break;
-		     }
-
-		    if(posAlign == vecAlleleRecords[i]->coordinate){ //fine
-		    }
-
-		    if(posAlign >  vecAlleleRecords[i]->coordinate){ //running behind
-			hasData[i]  =   m_vectorOfMP->at(i)->hasData();
-			if(hasData[i]){
-			    vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
-			}else{
-			    stayLoop=false;
-			    break;
-			}
-		    }
-		
+		cout<<vectorToString(derFreq,"\t")<<endl;
+		for(unsigned int k=0;k<singleBaseVec.size();k++){
+		    cout<<"\t"<<singleBaseVec[k].b<<"\t"<<singleBaseVec[k].bq;
 		}
+		cout<<endl<<endl;
+	    }
+	}
 
-	    
-	    }//end different coord
-
-	
-	}//end stay loop
-
-
-
-	//}//end, no insert
-    }//end for each read
-	
-
-
-
+    }//samePos
 
     // cout<<"end visit"<<endl;
 
@@ -2048,7 +2109,7 @@ int main (int argc, char *argv[]) {
 
     const string usage=string("\nThis program takes an aligned BAM file for a mitonchondria and calls a\nconsensus for the endogenous material\n\n\t"+
 			      string(argv[0])+			      
-			      " [options] [fasta file] [bam file] [region to use] [freq for pop1] [freq for pop2] ... "+"\n\n"+
+			      " [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... "+"\n\n"+
 			      
 			      "The BAM file has to be indexed and the region has to be in chr:start-end format\n\n"+
 			      "\n\tOutput options:\n"+	
@@ -2279,15 +2340,16 @@ int main (int argc, char *argv[]) {
     string fastaFile    = string(argv[lastOpt]);//fasta file
     string bamfiletopen = string(argv[lastOpt+1]);//bam file
     //string fastaFile    = string(argv[argc-2]);//fasta file
-    string region       = string(argv[lastOpt+2]);//fasta file
+    string regionStr       = string(argv[lastOpt+2]);//fasta file
+
 
     cout<<lastOpt<<endl;
     cout<<fastaFile<<endl;
     cout<<bamfiletopen<<endl;
-    cout<<region<<endl;
+    cout<<regionStr<<endl;
    
     for(int i=(lastOpt+3);i<(argc);i++){ //all but the last 3 args
-	//cout<<"cont "<<string(argv[i])<<endl;
+	cout<<"cont "<<string(argv[i])<<endl;
 	filesAlFreq.push_back(string(argv[i]));	
     }
 
@@ -2409,7 +2471,7 @@ int main (int argc, char *argv[]) {
 
 
 
-    cout<<"test\t"<<bamfiletopen<<"\t"<<region<<endl;
+    cout<<"test\t"<<bamfiletopen<<"\t"<<regionStr<<endl;
 
      
     BamReader reader;
@@ -2425,19 +2487,71 @@ int main (int argc, char *argv[]) {
     }
 
     const RefVector  references = reader.GetReferenceData();
+    vector<region> regionVec;
 
-    vector<string> tokens  = allTokens(region,':');
-    if(tokens.size() != 2){
-	cerr << "Invalid format for region:  " <<region<< endl;
-	 exit(1);
+    if(isFile(regionStr)){
+	
+	
+	igzstream regionFP;
+
+	regionFP.open(regionStr.c_str(), ios::in);
+
+	//    unsigned int counterCont=0;
+	if (regionFP.good()){
+	    vector<string> fields;
+	    string line;
+	
+	    while(getline (regionFP,line)){
+		region toadd; 
+		vector<string> tokens  = allTokens(line,':');
+		if(tokens.size() != 2){
+		    cerr << "Invalid format for line:  " <<line<< endl;
+		    exit(1);
+		}
+
+		vector<string> tokens2 = allTokens(tokens[1],'-');
+		if(tokens2.size() != 2){
+		    cerr << "Invalid format for line:  " <<line<< endl;
+		    exit(1);
+		}
+
+		toadd.id         =                   tokens[0];
+		toadd.leftCoord  = destringify<int>(tokens2[0]);
+		toadd.rightCoord = destringify<int>(tokens2[1]);
+		regionVec.push_back(toadd);
+	    }
+		             	              
+	    regionFP.close();
+	}else{
+	    cerr << "Unable to open file "<<regionStr<<endl;
+	    exit(1);
+	}
+
+
+    }else{
+	region toadd; 
+	vector<string> tokens  = allTokens(regionStr,':');
+	if(tokens.size() != 2){
+	    cerr << "Invalid format for region:  " <<regionStr<< endl;
+	    exit(1);
+	}
+
+	vector<string> tokens2 = allTokens(tokens[1],'-');
+	if(tokens2.size() != 2){
+	    cerr << "Invalid format for region:  " <<regionStr<< endl;
+	    exit(1);
+	}
+
+	toadd.id         =                   tokens[0];
+	toadd.leftCoord  = destringify<int>(tokens2[0]);
+	toadd.rightCoord = destringify<int>(tokens2[1]);
+	regionVec.push_back(toadd);
     }
 
-    vector<string> tokens2 = allTokens(tokens[1],'-');
-    if(tokens2.size() != 2){
-	cerr << "Invalid format for region:  " <<region<< endl;
-	exit(1);
+    if(regionVec.size() == 0){
+	cerr<<"Error: at least one region must be defined"<<endl;
+	return 1;	
     }
-
 
 
     vector<MistarParser * > vectorOfMP;
@@ -2452,20 +2566,22 @@ int main (int argc, char *argv[]) {
 	    return 1;	
 	}
 
-	MistarParser * mp = new MistarParser(string(argv[i]),(string(argv[i])+".tbi"),tokens[0], destringify<int>(tokens2[0]) ,  destringify<int>(tokens2[1]));
+	MistarParser * mp = new MistarParser(string(argv[i]),(string(argv[i])+".tbi"),regionVec[0].id,regionVec[0].leftCoord,regionVec[0].rightCoord);
 	vectorOfMP.push_back(mp);
     }    
-
+    
+    if(vectorOfMP.size() == 0){
+	cerr<<"Error: File with allele frequencies must be defined"<<endl;
+	return 1;	
+    }
+    
     // for(unsigned int i=0;i<vectorOfMP.size();i++){ 
     // 	vectorOfMP[i]->repositionIterator(tokens[0], destringify<int>(tokens2[0]) ,  destringify<int>(tokens2[1]));
     // }
 
 
-    int id = reader.GetReferenceID(tokens[0]);
 
-    BamRegion regionbam (id, destringify<int>(tokens2[0]) , id, destringify<int>(tokens2[1]));
-    
-    reader.SetRegion(regionbam);
+
 
 
     Fasta fastaReference;
@@ -2473,40 +2589,51 @@ int main (int argc, char *argv[]) {
 	cerr << "ERROR: failed to open fasta file " <<fastaFile<<" and index " << fastaFile<<".fai"<<endl;
 	exit(1);
     }
+
+
+    for(unsigned int regionIdx=0;regionIdx<regionVec.size();regionIdx++){
+	int id = reader.GetReferenceID( regionVec[regionIdx].id );
+
+	BamRegion regionbam ( id , regionVec[regionIdx].leftCoord , regionVec[regionIdx].rightCoord );    
+	reader.SetRegion(regionbam);
+
+	for(unsigned int mstIndex=0;mstIndex<vectorOfMP.size();mstIndex++){
+	    vectorOfMP[mstIndex]->repositionIterator( regionVec[regionIdx].id , regionVec[regionIdx].leftCoord , regionVec[regionIdx].rightCoord );
+	}
+
 	
+	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,&vectorOfMP, regionVec[regionIdx].leftCoord ,  ignoreMQ);
+	PileupEngine pileup;
+	pileup.AddVisitor(cv);
 
 
+	BamAlignment al;
+	unsigned int numReads=0;
+	cerr<<"Reading BAM file ..."<<endl;
+	while ( reader.GetNextAlignment(al) ) {
+	    //cerr<<"name:\t"<<al.Name<<endl;
+	    numReads++;
+	    if(numReads !=0 && (numReads%100000)==0){
+		cerr<<"Read "<<thousandSeparator(numReads)<<" reads"<<endl;
+	    }
 
-    MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,&vectorOfMP,destringify<unsigned int>(tokens2[0]),  ignoreMQ);
-    PileupEngine pileup;
-    pileup.AddVisitor(cv);
-
-
-    BamAlignment al;
-    unsigned int numReads=0;
-    cerr<<"Reading BAM file ..."<<endl;
-    while ( reader.GetNextAlignment(al) ) {
-	//cerr<<"name:\t"<<al.Name<<endl;
-	numReads++;
-	if(numReads !=0 && (numReads%100000)==0){
-	    cerr<<"Read "<<thousandSeparator(numReads)<<" reads"<<endl;
-	}
-
-	if(al.IsMapped() && 
-	   !al.IsFailedQC()){
-	    // cerr<<al.Name<<endl;
-	    pileup.AddAlignment(al);
-	}
+	    if(al.IsMapped() && 
+	       !al.IsFailedQC()){
+		// cerr<<al.Name<<endl;
+		pileup.AddAlignment(al);
+	    }
 	    
+	}
+	cerr<<"...  done"<<endl;
+    
+    
+	//clean up
+	pileup.Flush();
+	delete cv;
+
     }
-    cerr<<"...  done"<<endl;
-    
-    
-    //clean up
-    pileup.Flush();
 
     reader.Close();
-    delete cv;
 
 
     return 0;

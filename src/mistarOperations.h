@@ -57,6 +57,16 @@ bool printAllele(vector<MistarParser * > & vectorOfMP,
 		 unsigned int & coordCurrent,
 		 bool force=false);
 
+bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
+		     vector<bool> & hasData,
+		     vector<bool> & hasCoordinate,
+		     vector<int> & popSizePerFile,
+		     vector<AlleleRecords *> & vecAlleleRecords,
+		     string & chr1,
+		     unsigned int & coordCurrent,
+		     vector<double> * freqVec,
+		     bool force);
+
 /* map< string, vector<GenomicRange> * > * readBEDSortedfile(string filetoread); */
 
 #endif

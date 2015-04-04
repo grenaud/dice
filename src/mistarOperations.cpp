@@ -152,6 +152,183 @@ bool sanityCheck(vector<MistarParser * > & vectorOfMP,
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
+		     vector<bool> & hasData,
+		     vector<bool> & hasCoordinate,
+		     vector<int> & popSizePerFile,
+		     vector<AlleleRecords *> & vecAlleleRecords,
+		     string & chr1,
+		     unsigned int & coordCurrent,
+		     vector<double> * freqVec,
+		     bool force){
+
+    //sanity checks
+    string chrcheck = "";  //= vecAlleleRecords[0]->chr;
+    char refAllele  = '\0'; // = vecAlleleRecords[0]->ref;
+    bool isSane=sanityCheck(vectorOfMP,hasData,hasCoordinate,vecAlleleRecords,chr1,coordCurrent,chrcheck,refAllele,force);
+    if(!isSane)
+	return false;
+    
+    //ancestral info
+    SingleAllele chimp;
+    SingleAllele anc;
+    bool chimpSet=false;
+    bool ancSet  =false;
+	    
+    //determining new alternative allele
+    char newAlt = 'N';
+    vector<SingleAllele> toPrint;
+    for(unsigned int i=0;i<vectorOfMP.size();i++){ 
+	if(hasData[i] && hasCoordinate[i]){
+
+	    if( !isResolvedDNA(newAlt)  && //is 'N'
+		isResolvedDNA(vecAlleleRecords[i]->alt) ){ //not 'N'
+		newAlt = vecAlleleRecords[i]->alt;
+	    }
+		
+	    if( isResolvedDNA(newAlt)                   && //not 'N'
+		isResolvedDNA(vecAlleleRecords[i]->alt) && //not 'N'
+		vecAlleleRecords[i]->alt != newAlt){       //differ
+		//tri-allelic
+		//goto seekdata;
+		return false;
+	    }
+	}
+    }
+	    
+    bool ancIsDefined  = false;
+    bool rootIsDefined = false;
+    bool ancIsRef      = false;
+    bool rootIsRef     = false;
+
+    for(unsigned int i=0;i<vectorOfMP.size();i++){ 
+	if(hasData[i] && hasCoordinate[i]){
+	    //chimp
+	    if(!vecAlleleRecords[i]->vectorAlleles->at(0).alleleCountNull()){
+		rootIsDefined=true;
+
+		if(chimpSet){
+		    if(chimp != vecAlleleRecords[i]->vectorAlleles->at(0)){
+			cerr<<"Disprency in chimp info between "<<(* vecAlleleRecords[i])<<" and "<<(chimp)<<endl;
+			if(force)
+			    return false;
+			else
+			    exit(1);  
+		    }
+		}else{
+		    chimpSet=true;
+		    chimp=vecAlleleRecords[i]->vectorAlleles->at(0);
+		    
+		    if( (chimp.getRefCount() !=0 ) &&  (chimp.getAltCount() !=0 ) ){
+			cerr<<"More than one root allele for "<<(* vecAlleleRecords[i])<<" and "<<(chimp)<<endl;
+			exit(1);
+		    }
+
+		    rootIsRef= (chimp.getRefCount() !=0);
+		    
+
+		    
+		}
+	    }
+
+	    //anc
+	    if(!vecAlleleRecords[i]->vectorAlleles->at(1).alleleCountNull()){
+		ancIsDefined=true;
+		if(ancSet){
+		    if(anc != vecAlleleRecords[i]->vectorAlleles->at(1)){
+			cerr<<"Disprency in ancestral info between "<<(* vecAlleleRecords[i])<<" and "<<(anc)<<endl;
+			if(force)
+			    return false;
+			else
+			    exit(1);  
+		    }
+		}else{
+		    ancSet=true;
+		    anc=vecAlleleRecords[i]->vectorAlleles->at(1);
+
+		    if( (anc.getRefCount() !=0 ) &&  (anc.getAltCount() !=0 ) ){
+			cerr<<"More than one anc allele for "<<(* vecAlleleRecords[i])<<" and "<<(anc)<<endl;
+			exit(1);
+		    }
+
+		    ancIsRef= (anc.getRefCount() !=0);
+		    
+		}
+	    }
+
+	}
+    }
+    //cout<<endl;
+	     
+
+    // 	printnewrecord:
+    //cout<<chr1<<"\t"<<coordCurrent<<"\t"<<refAllele<<","<<newAlt<<"\t"<<chimp<<"\t"<<anc<<"\t";
+    
+    if(!rootIsDefined  || !ancIsDefined)
+	return false;
+
+
+
+
+    for(unsigned int i=0;i<vectorOfMP.size();i++){ 
+	if(hasData[i] && hasCoordinate[i]){
+
+	    double freq;
+	    for(int k=2;k<popSizePerFile[i];k++){
+
+		if( (vecAlleleRecords[i]->vectorAlleles->at(k).getRefCount() == 0 ) &&
+		    (vecAlleleRecords[i]->vectorAlleles->at(k).getAltCount() == 0 ) ){
+		    return false;
+		}
+		
+		if(ancIsRef){
+
+		    freq= double(vecAlleleRecords[i]->vectorAlleles->at(k).getAltCount() )
+			      /
+			double(vecAlleleRecords[i]->vectorAlleles->at(k).getRefCount() + vecAlleleRecords[i]->vectorAlleles->at(k).getAltCount()  );
+
+		}else{ //anc is the alt
+
+		    freq= double(vecAlleleRecords[i]->vectorAlleles->at(k).getRefCount() )
+			      /
+			double(vecAlleleRecords[i]->vectorAlleles->at(k).getRefCount() + vecAlleleRecords[i]->vectorAlleles->at(k).getAltCount()  );
+
+		}
+		freqVec->push_back(freq);
+	    }
+		    
+	}else{//has not data
+
+	    return false;
+
+	}
+    }
+    //cout<<vectorToString(toPrint,"\t")<<endl;
+
+    return true;
+}
+
+
+
+
+
+
+
+
 bool printAllele(vector<MistarParser * > & vectorOfMP,
 		 vector<bool> & hasData,
 		 vector<bool> & hasCoordinate,
