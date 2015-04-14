@@ -26,11 +26,14 @@ typedef struct{
     int num;
 } freqSite;
 
-
-// q term for binomial sampling from true genotype, to incorporate contamination and error rates
-// i = genotype, 2 = homo anc, 1 = het anc/der, 0 = homo derived
-// e = error 
-// 
+//! A method that computes the probability of seeing the derived allele for a given genotype model, to incorporate contamination and error rates
+/*!
+  \param i : dummy var 0 == homo anc, 1 = het, 2 == homo der
+  \param r : cont. rate
+  \param e : error. rate
+  \param y : frequency of the derived allele for the contaminant
+ 
+*/
 inline long double qterm(int i,long double r,long double e,long double y){
 
 #ifdef DEBUGL1
@@ -39,13 +42,16 @@ inline long double qterm(int i,long double r,long double e,long double y){
 
     long double toreturn;
     if(i == 2){          //True genotype is homozygous derived
+	//                   a:d->d          a:a->d           e:d->d
         toreturn=  (        r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)                     );
     }else{ 
         if(i == 1){      //True genotype is heterozygous
+	    //                c:d->d         c:a->d          e:d->d                 e:a->d
 	    toreturn= (     r*y*(1.0-e) + r*(1.0-y)*e + (1.0-r)*(1.0-e)/2.0 + (1.0-r)*e/2.0 );
         }else{
 
             if(i == 0){  // True genotype is homozygous ancestral
+		//            a:d->d          a:a->d                           e:a->d
 		toreturn= ( r*y*(1.0-e) + r*(1.0-y)*e                       + (1.0-r)*e     );
             }else{
 		cerr<<"Internal error, wrong genotype term in qterm() "<<i<<endl;
@@ -61,6 +67,18 @@ inline long double qterm(int i,long double r,long double e,long double y){
     return toreturn;
 }
 
+//! A method that computes Binomial probability of sampling ancestral and derived reads given q term
+/*!
+  \param a : ancestral count
+  \param d : derived count
+  \param i : dummy var 0 == homo anc, 1 = het, 2 == homo der
+  \param r : cont. rate
+  \param e : error. rate
+  \param y : frequency of the derived allele for the contaminant
+ */
+
+//(a,d,i,r,e,freqcont)
+//a = 
 // Binomial probability of sampling ancestral and derived reads given q term
 inline long double pad_given_irey(int a,int d,int i,long double r,long double e,long double y){
 #ifdef DEBUGL2
@@ -123,9 +141,7 @@ inline long double pad_given_reytau(int a,int d,long double r,long double e,long
     for(int i=0;i<=2;i++){
         sumResult += pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);
     }
-    // result <- sum(sapply(c(0,1,2),
-    //                   function(i){})
-    //            );
+
     return sumResult;
 }
 

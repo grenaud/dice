@@ -65,6 +65,8 @@ bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
 		     string & chr1,
 		     unsigned int & coordCurrent,
 		     vector<double> * freqVec,
+		     char & derAllele,
+		     char & ancAllele,
 		     bool force);
 
 /* map< string, vector<GenomicRange> * > * readBEDSortedfile(string filetoread); */

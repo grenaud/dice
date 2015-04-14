@@ -174,6 +174,8 @@ bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
 		     string & chr1,
 		     unsigned int & coordCurrent,
 		     vector<double> * freqVec,
+		     char & derAllele,
+		     char & ancAllele,
 		     bool force){
 
     //sanity checks
@@ -282,7 +284,13 @@ bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
 	return false;
 
 
-
+    if(ancIsRef){
+	derAllele = newAlt;
+	ancAllele = refAllele;
+    }else{ //anc is the alt	
+	derAllele = refAllele;
+	ancAllele = newAlt;
+    }
 
     for(unsigned int i=0;i<vectorOfMP.size();i++){ 
 	if(hasData[i] && hasCoordinate[i]){

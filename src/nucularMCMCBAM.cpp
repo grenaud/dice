@@ -13,7 +13,7 @@
 #endif
   
 
-// #define DEBUGMST
+ // #define DEBUGMST
 
 
 //GLOBAL CONSTANTS
@@ -66,18 +66,18 @@ const long double PI  = atanl(1.0L)*4;
 
 char   offsetQual=33;
 
-double likeMatch[MAXMAPPINGQUAL];
-double likeMismatch[MAXMAPPINGQUAL];
-double likeMatchMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
-double likeMismatchMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
+long double likeMatch[MAXMAPPINGQUAL];
+long double likeMismatch[MAXMAPPINGQUAL];
+long double likeMatchMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
+long double likeMismatchMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
 
-double likeMatchProb[MAXMAPPINGQUAL];
-double likeMismatchProb[MAXMAPPINGQUAL];
-double likeMatchProbMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
-double likeMismatchProbMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
+long double likeMatchProb[MAXMAPPINGQUAL];
+long double likeMismatchProb[MAXMAPPINGQUAL];
+long double likeMatchProbMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
+long double likeMismatchProbMQ[MAXMAPPINGQUAL][MAXMAPPINGQUAL];
 
-double probMapping[MAXMAPPINGQUAL];
-double probMismapping[MAXMAPPINGQUAL];
+long double probMapping[MAXMAPPINGQUAL];
+long double probMismapping[MAXMAPPINGQUAL];
 
 
 
@@ -1574,8 +1574,9 @@ public:
 		  Fasta * fastaReference,
 		  // vector<singlePosInfo> * infoPPos,
 		  // const int sizeGenome,
-		  vector<MistarParser * > * vectorOfMP,
+		  vector<MistarParser * > & vectorOfMP,
 		  unsigned int coordFirst,
+		  unsigned int coordLast,
 		  const bool ignoreMQ
 		  // const long double contaminationPrior,
 		  //const bool singleCont
@@ -1586,21 +1587,24 @@ public:
     // , m_infoPPos(infoPPos)
     // , sizeGenome(sizeGenome)
     , m_vectorOfMP(vectorOfMP)
+    , m_coordFirst(coordFirst)
+    , m_coordLast(coordLast)
     , ignoreMQ(ignoreMQ)
     // , contaminationPrior(contaminationPrior)
     // , singleCont(singleCont)
   { 
      
-    
-    initFiles(*vectorOfMP,
+      cout<<"constr size="<<vectorOfMP.size()<<endl;
+    initFiles(vectorOfMP,
 	      // atLeastOneHasData,
 	      hasData,
 	      popSizePerFile,
 	      vecAlleleRecords,
 	      chr1,
-	      coordFirst);
-
-    hasCoordinate = vector<bool>(m_vectorOfMP->size(),true);//dummy value
+	      coordFirst,
+	      false);
+      cout<<"constr"<<endl;
+    hasCoordinate = vector<bool>(m_vectorOfMP.size(),true);//dummy value
 
 
   }
@@ -1608,9 +1612,12 @@ public:
   
   // PileupVisitor interface implementation
 public:
-
+    
   void Visit(const PileupPosition& pileupData) {
-    //cout<<"visit"<<endl;
+      // for(unsigned int i=0;i<pileupData.PileupAlignments.size();i++){				
+      // 	  cout<<"visit "<<i<<"\t"<<pileupData.PileupAlignments.size()<<endl;
+      // }
+      
     char referenceBase = 'N';
 	    
     ///unsigned int posAlign = pileupData.Position+1;
@@ -1623,8 +1630,9 @@ public:
     // if( (posAlign%100) == 0){
     // 	cerr<<"pos  = "<<posAlign<<endl;
     // }
-    // cout<<endl<<"pos = "<<posAlign<<"\t"<<posVector;
-	    
+    // cout<<endl<<"pos = "<<posAlign<<endl;
+    if(posAlign>m_coordLast)
+	return ;
 
     if ( !m_fastaReference->GetBase(pileupData.RefId, posAlign-1, referenceBase ) ) {
 	cerr << "bamtools convert ERROR: pileup conversion - could not read reference base from FASTA file at chr "<<pileupData.RefId<<" position "<<(posAlign-1) << endl;
@@ -1636,6 +1644,7 @@ public:
 
     bool stayLoop=true;
     bool samePos=false;
+    //the following syncs the allele count files to make sure they are at the same positon
 
     while(stayLoop){
 
@@ -1645,7 +1654,7 @@ public:
 
 	bool allHaveCoordinate=true;
 
-	for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+	for(unsigned int i=0;i<m_vectorOfMP.size();i++){ 
 	    //cout<<"hasData["<<i<<"]"<<hasData[i]<<endl;
 	    if(hasData[i]){		
 		if(posAlign  != vecAlleleRecords[i]->coordinate){
@@ -1681,15 +1690,15 @@ public:
 	    break;
 
 	    if(0)
-	    for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+	    for(unsigned int i=0;i<m_vectorOfMP.size();i++){ 
 		 
 		if(!hasData[i] ){
 		    cerr<<"Invalid state"<<endl;
 		    exit(1);
 		}
-		hasData[i]  =  m_vectorOfMP->at(i)->hasData();
+		hasData[i]  =  m_vectorOfMP.at(i)->hasData();
 		if(hasData[i]){
-		    vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
+		    vecAlleleRecords[i] = m_vectorOfMP.at(i)->getData() ;
 		}else{
 		    stayLoop=false;
 		    break;
@@ -1718,7 +1727,7 @@ public:
 	    // return 1;  
 	    
 	    
-	    for(unsigned int i=0;i<m_vectorOfMP->size();i++){ 
+	    for(unsigned int i=0;i<m_vectorOfMP.size();i++){ 
 #ifdef DEBUGMST
 		cout<<"coord["<<i<<"] "<< vecAlleleRecords[i]->coordinate<<endl;
 #endif
@@ -1734,9 +1743,9 @@ public:
 		}
 
 		if(posAlign >  vecAlleleRecords[i]->coordinate){ //running behind
-		    hasData[i]  =   m_vectorOfMP->at(i)->hasData();
+		    hasData[i]  =   m_vectorOfMP[i]->hasData();
 		    if(hasData[i]){
-			vecAlleleRecords[i] = m_vectorOfMP->at(i)->getData() ;
+			vecAlleleRecords[i] = m_vectorOfMP.at(i)->getData() ;
 		    }else{
 			stayLoop=false;
 			break;
@@ -1752,9 +1761,72 @@ public:
     }//end stay loop
     // END READING ALLELE FREQ
 
-    vector<singleBase> singleBaseVec;
 
     if(samePos){
+
+	char derAllele='N';
+	char ancAllele='N';
+	vector<double> derFreq;
+
+	if(    (pileupData.PileupAlignments.size()>0) ){
+	    
+	    bool populatedFreq= populateFreqVec(m_vectorOfMP,
+						hasData,
+						hasCoordinate,
+						popSizePerFile,
+						vecAlleleRecords,
+						chr1,
+						posAlign,
+						&derFreq,
+						derAllele,
+						ancAllele,
+						false);
+
+	    
+	    if(!populatedFreq){
+		return ;
+	    }
+
+
+	    if(populatedFreq){
+
+		
+#ifdef DEBUGMST
+		if(m_vectorOfMP.size()>1){		    
+		    printAllele(m_vectorOfMP,
+				hasData,
+				hasCoordinate,
+				popSizePerFile,
+				vecAlleleRecords,
+				chr1,
+				posAlign,
+				false);
+		}else{
+		    cout<<"alelle record "<<( *(vecAlleleRecords[0]) )<<endl;		    			
+		}		
+#endif
+
+		if(vecAlleleRecords[0]->ref !=  referenceBase){
+		    cerr<<"Error: the reference allele differs at  "<<chr1<<":"<<posAlign<<" allele count says : "<<vecAlleleRecords[0]->ref<<" bam file says "<<referenceBase<<endl;
+		    exit(1);
+		}
+
+	
+	    }
+	}//if has alignments
+
+	if( derAllele=='N' ||
+	    ancAllele=='N' )
+	    return ;
+	cout<<"samepos "<<chr1<<":"<<posAlign<<" derFreq "<<vectorToString(derFreq)<<"\td="<<derAllele<<"\ta="<<ancAllele<<endl;
+	cout<<"derFreq: "<<vectorToString(derFreq,"\t")<<endl;
+		// for(unsigned int k=0;k<singleBaseVec.size();k++){
+		//     cout<<"\t"<<singleBaseVec[k].b<<"\t"<<singleBaseVec[k].bq;
+		// }
+	cout<<endl<<endl;
+	//store 
+	//vector<singleBase> toAddSBs;
+	vector<singleBase> singleBaseVec;
 
 	//re-iterate over each read to compute the likelihood for each insert (or pair of inserts)
 	for(unsigned int i=0;i<pileupData.PileupAlignments.size();i++){				
@@ -1762,13 +1834,13 @@ public:
 
 		
 	    if( !pileupData.PileupAlignments[i].IsCurrentDeletion &&
-		pileupData.PileupAlignments[i].IsNextInsertion &&
-		(pileupData.PileupAlignments[i].InsertionLength>0)){ //has insertion		    
+		pileupData.PileupAlignments[i].IsNextInsertion    &&
+		(pileupData.PileupAlignments[i].InsertionLength    >0)){ //has insertion		    
 		continue;//ignore
 	    }
 
 	    if( pileupData.PileupAlignments[i].IsCurrentDeletion &&
-		pileupData.PileupAlignments[i].IsNextInsertion &&
+		pileupData.PileupAlignments[i].IsNextInsertion   &&
 		(pileupData.PileupAlignments[i].InsertionLength == 0)){ //has deletion
 		continue;
 	    }
@@ -1783,13 +1855,17 @@ public:
 	    if(b == 'N')
 		continue;	    
 
+	    if(b != derAllele &&
+	       b != ancAllele) //skip tri-allelic sites	       
+		return;
+	
+	    
+
 	    // vector<singleBase> singleBaseVec;
 	    singleBase sb;
-	    //cout<<"i="<<i<<"\t"<<posAlign<<"\t"<<b<<"\t"<<referenceBase<<"\t"<<int(q)<<endl;	    
 	    sb.b    = b;
 	    sb.bq   = int(q);
 	    sb.mpq  = m;
-	    singleBaseVec.push_back(sb);
 
 	    // BEGIN DEAMINATION COMPUTATION
 	    //zero base distance to the 5p/3p end
@@ -1848,8 +1924,91 @@ public:
 		    
 	    }
 
-	    // END DEAMINATION COMPUTATION
+	    //int dinucIndexModelObs;
+	    int dinucIndexDD;
+	    int dinucIndexDA;
+	    int dinucIndexAD;
+	    int dinucIndexAA;
 
+	    //there are four possibilities:
+	    // model       observation
+	    // d           d
+	    // d           a
+	    // a           d
+	    // a           a
+
+	    if( pileupData.PileupAlignments[i].Alignment.IsReverseStrand() ){
+
+		dinucIndexDD =      baseResolved2int(complement(derAllele)) *4+baseResolved2int(complement(derAllele));
+		dinucIndexDA =      baseResolved2int(complement(derAllele)) *4+baseResolved2int(complement(ancAllele));
+		dinucIndexAD =      baseResolved2int(complement(ancAllele)) *4+baseResolved2int(complement(derAllele));
+		dinucIndexAA =      baseResolved2int(complement(ancAllele)) *4+baseResolved2int(complement(ancAllele));
+
+	    }else{
+
+		dinucIndexDD =      baseResolved2int(           derAllele)  *4+baseResolved2int(           derAllele);
+		dinucIndexDA =      baseResolved2int(           derAllele)  *4+baseResolved2int(           ancAllele);
+		dinucIndexAD =      baseResolved2int(           ancAllele)  *4+baseResolved2int(           derAllele);
+		dinucIndexAA =      baseResolved2int(           ancAllele)  *4+baseResolved2int(           ancAllele);
+
+	    }
+
+	    
+	    // if(b== derAllele){//b is the observation and b is derived
+
+
+	    // }else{
+
+	    // 	if( pileupData.PileupAlignments[i].Alignment.IsReverseStrand() ){
+	    // 	    dinucIndex =      baseResolved2int(complement(derAllele)) *4+baseResolved2int(complement(ancAllele));
+	    // 	}else{
+	    // 	    dinucIndex =      baseResolved2int(           derAllele)  *4+baseResolved2int(           ancAllele);
+	    // 	}
+
+
+	    // }
+	    // END DEAMINATION COMPUTATION
+	    
+	    cout<<"i="<<i<<"\t"<<posAlign<<"\tref="<<referenceBase<<"\tb_obs="<<b<<"\t"<<int(q)<<"\t"<<pileupData.PileupAlignments[i].Alignment.Name<<"\t"<<"\td="<<derAllele<<"\ta="<<ancAllele <<"\t"<<dist5p<<"\t"<<dist3p<<"\t"<<(pileupData.PileupAlignments[i].Alignment.IsReverseStrand()?"R":"F")<<endl;
+
+	    cout<<dinucIndexDD<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDD]<<endl;	    
+	    cout<<dinucIndexDA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDA]<<endl;	    
+	    cout<<dinucIndexAD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAD]<<endl;	    
+	    cout<<dinucIndexAA<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAA]<<endl;	    
+
+
+	    long double probDDe = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseEndo->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDD]);
+	    long double probDAe = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseEndo->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDA]);
+	    long double probADe = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseEndo->s[dinucIndexAD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAD]);
+	    long double probAAe = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseEndo->s[dinucIndexAA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAA]);
+
+	    long double probDDc = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseCont->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDD]);
+	    long double probDAc = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseCont->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDA]);
+	    long double probADc = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseCont->s[dinucIndexAD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAD]);
+	    long double probAAc = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseCont->s[dinucIndexAA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAA]);
+
+	    cout<<dinucIndexDD<<"\t"<<probDDe<<endl;	    
+	    cout<<dinucIndexDA<<"\t"<<probDAe<<endl;	    
+	    cout<<dinucIndexAD<<"\t"<<probADe<<endl;	    
+	    cout<<dinucIndexAA<<"\t"<<probAAe<<endl;	    
+
+	    cout<<dinucIndexDD<<"\t"<<probDDc<<endl;	    
+	    cout<<dinucIndexDA<<"\t"<<probDAc<<endl;	    
+	    cout<<dinucIndexAD<<"\t"<<probADc<<endl;	    
+	    cout<<dinucIndexAA<<"\t"<<probAAc<<endl;	    
+
+	    sb.probDDc = probDDc;
+	    sb.probADc = probADc;
+	    sb.probDAc = probDAc;
+	    sb.probAAc = probAAc;
+
+	    sb.probDDe = probDDe;
+	    sb.probADe = probADe;
+	    sb.probDAe = probDAe;
+	    sb.probAAe = probAAe;
+
+
+	    singleBaseVec.push_back(sb);
 
 	
 	    // vector<bool> hasData;
@@ -1866,45 +2025,11 @@ public:
 	}//end for each read
 	
 
+	//put single base Vec somwhere
+	
 	// if(samePos && 
 	// (pileupData.PileupAlignments.size()>0)){
 	// 	cout<<samePos<<endl;
-	if(    (pileupData.PileupAlignments.size()>0) ){
-	    vector<double> derFreq;
-
-	    bool populatedFreq= populateFreqVec(*m_vectorOfMP,
-						hasData,
-						hasCoordinate,
-						popSizePerFile,
-						vecAlleleRecords,
-						chr1,
-						posAlign,
-						&derFreq,
-						false);
-	    if(populatedFreq){
-
-
-
-		printAllele(*m_vectorOfMP,
-			    hasData,
-			    hasCoordinate,
-			    popSizePerFile,
-			    vecAlleleRecords,
-			    chr1,
-			    posAlign,
-			    false);
-		
-		if(vecAlleleRecords[0]->ref !=  referenceBase){
-		    cerr<<"Error: the reference allele differs at  "<<chr1<<":"<<posAlign<<" allele count says : "<<vecAlleleRecords[0]->ref<<" bam file says "<<referenceBase<<endl;
-		    exit(1);
-		}
-		cout<<vectorToString(derFreq,"\t")<<endl;
-		for(unsigned int k=0;k<singleBaseVec.size();k++){
-		    cout<<"\t"<<singleBaseVec[k].b<<"\t"<<singleBaseVec[k].bq;
-		}
-		cout<<endl<<endl;
-	    }
-	}
 
     }//samePos
 
@@ -1924,9 +2049,13 @@ private:
     unsigned int coordCurrent;
     vector<bool>  hasCoordinate;
 
+
+    unsigned int m_coordFirst;
+    unsigned int m_coordLast;
+
     RefVector m_references;
     Fasta * m_fastaReference;
-    vector<MistarParser * > * m_vectorOfMP;
+    vector<MistarParser * >  m_vectorOfMP;
     // vector<singlePosInfo> * m_infoPPos;
     // int sizeGenome;
     bool ignoreMQ;
@@ -2567,7 +2696,10 @@ int main (int argc, char *argv[]) {
 	}
 
 	MistarParser * mp = new MistarParser(string(argv[i]),(string(argv[i])+".tbi"),regionVec[0].id,regionVec[0].leftCoord,regionVec[0].rightCoord);
+	cout<<"mp addr "<<mp->hasData()<<endl;
 	vectorOfMP.push_back(mp);
+	
+
     }    
     
     if(vectorOfMP.size() == 0){
@@ -2589,29 +2721,29 @@ int main (int argc, char *argv[]) {
 	cerr << "ERROR: failed to open fasta file " <<fastaFile<<" and index " << fastaFile<<".fai"<<endl;
 	exit(1);
     }
-
+    //cout<<"fine1"<<endl;
 
     for(unsigned int regionIdx=0;regionIdx<regionVec.size();regionIdx++){
 	int id = reader.GetReferenceID( regionVec[regionIdx].id );
-
-	BamRegion regionbam ( id , regionVec[regionIdx].leftCoord , regionVec[regionIdx].rightCoord );    
+	cout<<"fine id "<<id<<"\t"<<regionVec[regionIdx].id<<"\t"<<regionVec[regionIdx].leftCoord<<"\t"<<regionVec[regionIdx].rightCoord<<endl;
+	BamRegion regionbam ( id , regionVec[regionIdx].leftCoord , id, regionVec[regionIdx].rightCoord );    
 	reader.SetRegion(regionbam);
-
+	//cout<<"fine2 id "<<id<<endl;
 	for(unsigned int mstIndex=0;mstIndex<vectorOfMP.size();mstIndex++){
 	    vectorOfMP[mstIndex]->repositionIterator( regionVec[regionIdx].id , regionVec[regionIdx].leftCoord , regionVec[regionIdx].rightCoord );
 	}
-
+	//cout<<"fine3 id "<<id<<endl;
 	
-	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,&vectorOfMP, regionVec[regionIdx].leftCoord ,  ignoreMQ);
+	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ);
 	PileupEngine pileup;
 	pileup.AddVisitor(cv);
 
-
+	//cout<<"fine4 id "<<id<<endl;
 	BamAlignment al;
 	unsigned int numReads=0;
 	cerr<<"Reading BAM file ..."<<endl;
 	while ( reader.GetNextAlignment(al) ) {
-	    //cerr<<"name:\t"<<al.Name<<endl;
+	    //cout<<"name:\t"<<al.Name<<endl;
 	    numReads++;
 	    if(numReads !=0 && (numReads%100000)==0){
 		cerr<<"Read "<<thousandSeparator(numReads)<<" reads"<<endl;
