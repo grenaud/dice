@@ -15,6 +15,11 @@ MistarParser::MistarParser(string file,string indexForFile,string chrName,int st
     gettimeofday(&time, NULL);
     srand(  long((time.tv_sec * 1000) + (time.tv_usec / 1000)) );
 
+    // cout<<file<<endl;
+    // cout<<indexForFile<<endl;
+    // cout<<chrName<<endl;
+    // cout<<start<<endl;
+    // cout<<end<<endl;
 
     rt =new ReadTabix (file,indexForFile,chrName,start,end);
     string headertemp=rt->getHeader();
@@ -141,7 +146,8 @@ void MistarParser::parseHeader(istream & in){
 	    if(strBeginsWith(line, "#chr")){
 		defline=line;
 		vector<string> fields=allTokens(line,'\t');
-		if(fields[0] != "#chr")   { cerr<<"Field #1 of header must be #chr ";    exit(1); }
+
+		if(fields[0] != "#chr")   { cerr<<"Field #1 ("<<fields[0]<<") of header must be #chr in line #"<<line<<"#"<<endl;    exit(1); }
 		if(fields[1] != "coord")  { cerr<<"Field #2 of header must be coord ";   exit(1); }
 		if(fields[2] != "REF,ALT"){ cerr<<"Field #3 of header must be REF,ALT "; exit(1); }
 		if(fields[3] != "root")   { cerr<<"Field #4 of header must be root ";    exit(1); }

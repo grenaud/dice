@@ -11,11 +11,15 @@
 /* #define DEBUGL1 */
 /* #define DEBUGL2 */
 /* #define DEBUGL3 */
+//#define DEBUGBAML2
+#define DEBUGBAML3
 
 using namespace std;
 
 
 #include "utils.h"
+#include "miscfunc.h"
+
 
 typedef struct{
     int ancCount;
@@ -67,6 +71,12 @@ inline long double qterm(int i,long double r,long double e,long double y){
     return toreturn;
 }
 
+
+
+//(a,d,i,r,e,freqcont)
+//a = 
+// Binomial probability of sampling ancestral and derived reads given q term
+
 //! A method that computes Binomial probability of sampling ancestral and derived reads given q term
 /*!
   \param a : ancestral count
@@ -76,10 +86,6 @@ inline long double qterm(int i,long double r,long double e,long double y){
   \param e : error. rate
   \param y : frequency of the derived allele for the contaminant
  */
-
-//(a,d,i,r,e,freqcont)
-//a = 
-// Binomial probability of sampling ancestral and derived reads given q term
 inline long double pad_given_irey(int a,int d,int i,long double r,long double e,long double y){
 #ifdef DEBUGL2
     //cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
@@ -102,8 +108,14 @@ inline long double pad_given_irey(int a,int d,int i,long double r,long double e,
 }
 
 
+//!  Probability of ancient genotype given anchor population frequency and drift parameters   
+/*
 
-// Probability of ancient genotype given anchor population frequency and drift parameters   
+  \param i : dummy var 0 == homo anc, 1 = het, 2 == homo der
+  \param y : 
+  \param tau_C : drift for the contaminant lineage
+  \param tau_A : drift for the archaic lineage
+*/
 inline long double Pgeno_given_ytau(int i,long double y,long double tau_C,long double tau_A){
     long double toreturn;
 #ifdef DEBUGL2
@@ -134,10 +146,22 @@ inline long double Pgeno_given_ytau(int i,long double y,long double tau_C,long d
 
 }
 
-// Sum over each of the 3 types of genotypes for two-population method (no admixture)
+
+
+//!   Sum over each of the 3 types of genotypes for two-population method (no admixture)
+/*
+  \param a : ancestral count
+  \param d : derived count
+  \param r : cont. rate
+  \param e : error. rate
+  \param y : anchor pop. derived frequency
+  \param freqcont : frequency of the derived allele for the contaminant
+  \param tau_C : drift for the contaminant lineage
+  \param tau_A : drift for the archaic lineage 
+*/
 inline long double pad_given_reytau(int a,int d,long double r,long double e,long double y,long double freqcont,long double tau_C,long double tau_A){
 
-    double long sumResult=0.0;
+    long double  sumResult=0.0;
     for(int i=0;i<=2;i++){
         sumResult += pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);
     }
@@ -152,7 +176,7 @@ inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long d
     long double  ycoord     = roundl( y * numhumy );
     long double  zcoord     = roundl( z * numhumz );
     long double  finalcoord = ycoord*(numhumy+1) + zcoord ; //TODO check for 
-    double long sumResult=0.0;
+    long double  sumResult=0.0;
     for(int i=0;i<=2;i++){
 	/* cout<<"pad_given_reytau_dadi_threeP1\ts="<<dadiTable->size()<<"\ts="<<dadiTable->at(finalcoord)->size()<<"\t"<<ycoord<<"\t"<<zcoord<<"\t"<<finalcoord<<"\t"<<i<<endl; */
 	/* cout<<"P "<<pad_given_irey(a,d,i,r,e,freqcont)<<endl; */
@@ -258,6 +282,244 @@ inline vector< vector<long double>  * > * getDadiTableThreeP(long double tau_C,l
     return toReturn;
 }
 
+
+
+
+//! A method that computes the probability of seeing the ancestral allele for a given genotype model, to incorporate contamination and error rates
+/*!
+  \param i : dummy var 0 == homo anc, 1 = het, 2 == homo der
+  \param b : the single base
+  \param r : cont. rate
+  \param y : frequency of the derived allele for the contaminant 
+*/
+inline long double qtermBAMA(int i,const singleBase b,long double r,long double y){
+
+#ifdef DEBUGL1
+    cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<y<<endl;
+#endif
+    //y is the derived allele frequency
+    //1-y is the ancestral allele frequency
+
+
+    long double toreturn;
+    if(i == 2){          //True genotype is homozygous derived
+	//                  c:d->a          c:a->a                e:d->a
+        toreturn=  (        r*y*b.probDAc + r*(1.0-y)*b.probAAc + (1.0-r)*b.probDAe                     );
+    }else{ 
+        if(i == 1){      //True genotype is heterozygous
+	    //              c:d->a          c:a->a                e:d->a                   e:a->a
+	    toreturn= (     r*y*b.probDAc + r*(1.0-y)*b.probAAc + (1.0-r)*b.probDAe/2.0 + (1.0-r)*b.probAAe/2.0 );
+        }else{
+
+            if(i == 0){  // True genotype is homozygous ancestral
+		//          c:d->a          c:a->a                e:a->a
+		toreturn= ( r*y*b.probDAc + r*(1.0-y)*b.probAAc + (1.0-r)*b.probAAe     );
+            }else{
+		cerr<<"Internal error, wrong genotype term in qterm() "<<i<<endl;
+		exit(1);
+	    }
+	}
+    }
+
+#ifdef DEBUGL1
+    cout<<"qterm end\t"<<toreturn<<endl;
+#endif
+
+    return toreturn;
+}
+
+
+
+
+
+//! A method that computes the probability of seeing the derived allele for a given genotype model, to incorporate contamination and error rates
+/*!
+  \param i : dummy var 0 == homo anc, 1 = het, 2 == homo der
+  \param b : the single base
+  \param r : cont. rate
+  \param y : frequency of the derived allele for the contaminant
+ 
+*/
+inline long double qtermBAMD(int i,const singleBase b,long double r,long double y){
+
+#ifdef DEBUGL1
+    cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
+#endif
+    //y is the derived allele frequency
+    //1-y is the ancestral allele frequency
+
+    long double toreturn;
+    if(i == 2){          //True genotype is homozygous derived
+	//                   c:d->d         c:a->d                e:d->d
+        toreturn=  (        r*y*b.probDDc + r*(1.0-y)*b.probADc + (1.0-r)*b.probDDe                     );
+    }else{ 
+        if(i == 1){      //True genotype is heterozygous
+	    //              c:d->d          c:a->d                e:d->d                   e:a->d
+	    toreturn= (     r*y*b.probDDc + r*(1.0-y)*b.probADc + (1.0-r)*b.probDDe/2.0 + (1.0-r)*b.probADe/2.0 );
+        }else{
+
+            if(i == 0){  // True genotype is homozygous ancestral
+		//          c:d->d          c:a->d                e:a->d
+		toreturn= ( r*y*b.probDDc + r*(1.0-y)*b.probADc + (1.0-r)*b.probADe     );
+            }else{
+		cerr<<"Internal error, wrong genotype term in qterm() "<<i<<endl;
+		exit(1);
+	    }
+	}
+    }
+
+#ifdef DEBUGL1
+    cout<<"qterm end\t"<<toreturn<<endl;
+#endif
+
+    return toreturn;
+}
+
+
+
+
+
+//! A method that computes the log of the Binomial probability of sampling ancestral and derived reads given q term
+/*!
+  \param currentSite : The current site as a "singleSite" struct
+  \param i : dummy var 0 == homo anc, 1 = het, 2 == homo der
+  \param r : cont. rate
+  \param y : frequency of the derived allele for the contaminant
+ */
+inline long double pad_given_ireyBAM(const singleSite & currentSite,int i,long double r,long double y){
+
+    int a = int(currentSite.sitesBAMa.size());
+    int d = int(currentSite.sitesBAMd.size());
+
+#ifdef DEBUGBAML2
+    //cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
+    cout<<"pad_given_irey begin("<<i<<")"<<"\ta="<< a<<"\td="<<d<<"\t"<<r<<"\t"<<y<<endl;
+#endif
+
+
+    long double toreturn = logl( (long double)(nChoosek(a+d,d)) );
+
+    for(int indexA=0;indexA<a;indexA++){
+	long double qtermA   = qtermBAMA(i,currentSite.sitesBAMa[indexA],r,y);
+	
+	toreturn += logl( qtermA );
+
+#ifdef DEBUGBAML2
+	cout<<indexA<<"\t"<<qtermA<<"\t"<<toreturn<<endl;
+#endif
+    }
+
+    for( int indexD=0;indexD<d;indexD++){
+	long double qtermD   = qtermBAMD(i,currentSite.sitesBAMd[indexD],r,y);
+	toreturn += logl( qtermD );
+
+#ifdef DEBUGBAML2
+	cout<<indexD<<"\t"<<qtermD<<"\t"<<toreturn<<"\t"<<currentSite.sitesBAMd[indexD].probADe<<endl;
+#endif
+
+    }
+
+    //    long double toreturn=0;
+    //    long double toreturn = ( (long double)(nChoosek(a+d,d)) ) * (powl(qtermA,d))* (powl(1.0-qtermA,a) )  ; //defined in lib gab
+
+#ifdef DEBUGBAML2
+    cout<<"pad_given_irey res\ta="<< a<<"\t"<<d<<"\t"<<i<<"\t"<<r<<"\t"<<y<<endl;    
+    cout<<"comb "<< (long double)(nChoosek(a+d,d))  <<endl;
+    cout<<"toreturn "<<expl(toreturn)<<endl;
+#endif
+
+    return toreturn;
+}
+
+
+//  Log final posterior for two populations for BAM files
+//! 
+/*!
+  \param dataSitesVec : vector of sites found in the BAM file
+  \param r            : cont. rate 
+  \param tau_C : drift for the contaminant lineage
+  \param tau_A : drift for the archaic lineage
+  \param contIndex : index of the contaminant among the freqDerived
+  \param anchorIndex : index of the anchor among the freqDerived
+*/
+inline long double LogFinalTwoPBAM( const vector<singleSite> *  dataSitesVec,long double r,long double tau_C,long double tau_A,int contIndex,int anchorIndex){
+    /* for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){ */
+
+    /* 	    } */
+    long double sumterm=0.0;
+    cout<<"LogFinalTwoPBAM\t"<<dataSitesVec->size()<<endl;
+    for(unsigned int indexSite=0;indexSite<dataSitesVec->size();indexSite++){
+	//sum for each genotype
+#ifdef DEBUGBAML3
+	cout<<"LogFinalTwoPBAM indexSite=\t"<<indexSite<<"\t"<<dataSitesVec->at(indexSite).freqDerived[anchorIndex]<<"\ta="<<dataSitesVec->at(indexSite).sitesBAMa.size()<<"\td="<<dataSitesVec->at(indexSite).sitesBAMd.size()<<endl;
+#endif
+
+	long double  sumResult=0.0;
+
+	int i;
+	i=0; //AA
+	long double sumResult0l =  (pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]));
+	long double sumResult0p =  logl(Pgeno_given_ytau(i,dataSitesVec->at(indexSite).freqDerived[anchorIndex] ,tau_C,tau_A));
+	long double sumResult0  =  sumResult0l + sumResult0p;//product
+
+#ifdef DEBUGBAML3
+	cout<<i<<"\tl"<<sumResult0l<<endl;
+	cout<<i<<"\tp"<<sumResult0p<<endl;
+	cout<<i<<"\ts"<<sumResult0<<endl;
+#endif
+
+	i=1; //AD
+	/* long double sumResult1 = logl(pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]))+ */
+	/*     logl(Pgeno_given_ytau(i,dataSitesVec->at(indexSite).freqDerived[anchorIndex],tau_C,tau_A));//product */
+	long double sumResult1l =  (pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]));
+	long double sumResult1p =  logl(Pgeno_given_ytau(i,dataSitesVec->at(indexSite).freqDerived[anchorIndex] ,tau_C,tau_A));
+	long double sumResult1  =  sumResult1l + sumResult1p;//product
+
+#ifdef DEBUGBAML3
+	cout<<i<<"\tl"<<sumResult1l<<endl;
+	cout<<i<<"\tp"<<sumResult1p<<endl;
+	cout<<i<<"\ts"<<sumResult1<<endl;
+#endif
+
+
+	i=2; //DD
+
+	long double sumResult2l =  (pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]));
+	long double sumResult2p =  logl(Pgeno_given_ytau(i,dataSitesVec->at(indexSite).freqDerived[anchorIndex] ,tau_C,tau_A));
+	long double sumResult2  =  sumResult2l + sumResult2p;//product
+
+#ifdef DEBUGBAML3
+	cout<<i<<"\tl"<<sumResult2l<<endl;
+	cout<<i<<"\tp"<<sumResult2p<<endl;
+	cout<<i<<"\ts"<<sumResult2<<endl;
+#endif
+
+
+	/* long double sumResult2 = logl(pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]))+ */
+	/*     logl(Pgeno_given_ytau(i,dataSitesVec->at(indexSite).freqDerived[anchorIndex],tau_C,tau_A));//product */
+	/* cout<<i<<"\t"<<logl(pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]))<<endl; */
+	/* cout<<i<<"\t"<<logl(Pgeno_given_ytau(i,dataSitesVec->at(indexSite).freqDerived[anchorIndex] ,tau_C,tau_A))<<endl; */
+	sumResult = oplusl( oplusl(sumResult0,sumResult1), sumResult2);//sum already in log
+	
+	sumterm+=sumResult; // a product
+
+#ifdef DEBUGBAML3	
+	cout<<indexSite<<"\t"<<sumterm<<endl;
+#endif
+
+	/* long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount, */
+	/* 					      tableData->at(indexSite).derCount, */
+	/* 					      r, */
+	/* 					      e, */
+	/* 					      tableData->at(indexSite).panelFreqCont, */
+	/* 					      tableData->at(indexSite).panelFreqCont, */
+	/* 					      tau_C,tau_A))*tableData->at(indexSite).num; */
+    }
+    return sumterm;
+
+}
+
+
 //  Log final posterior for two populations
 inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor){
 //     print(c(e,r,tau_C,tau_A))
@@ -271,7 +533,8 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
 	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
 							  tableData->at(indexSite).derCount,
-							  r,e,
+							  r,
+							  e,
 							  tableData->at(indexSite).panelFreqCont,
 							  tableData->at(indexSite).panelFreqCont,
 							  tau_C,tau_A))*tableData->at(indexSite).num;
@@ -285,8 +548,6 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 	for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
 
-	    //result <- sum(apply(table,1,function(x){
-	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
 	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
 							  tableData->at(indexSite).derCount,
 							  r,e,

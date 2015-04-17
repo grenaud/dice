@@ -47,7 +47,7 @@ void initFiles(vector<MistarParser * > & vectorOfMP,
 	       string & chr1,
 	       unsigned int & coordCurrent,
 	       bool printOnlyFirstPop){
-    cout<<"#chr\tcoord\tREF,ALT\troot\tanc\t";
+    // cout<<"#chr\tcoord\tREF,ALT\troot\tanc\t";
 
 
     //   atLeastOneHasData=false;
@@ -73,7 +73,7 @@ void initFiles(vector<MistarParser * > & vectorOfMP,
 	for(unsigned int j=2;j<nonPop;j++){
 	    pops.push_back( vectorOfMP[i]->getPopulationsNames()->at(j));
 	}
-	cout<<vectorToString(pops,"\t");
+	//cout<<vectorToString(pops,"\t");
 	if(printOnlyFirstPop)
 	    break;
 
@@ -82,7 +82,7 @@ void initFiles(vector<MistarParser * > & vectorOfMP,
 	}       	
     }
 
-    cout<<"\n";
+    // cout<<"\n";
 
 
 

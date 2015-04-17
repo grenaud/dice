@@ -14,6 +14,7 @@
   
 
  // #define DEBUGMST
+// #define DEBUGERRORP
 
 
 //GLOBAL CONSTANTS
@@ -50,6 +51,8 @@
 
 #include "utils.h"
 #include "miscfunc.h"
+#include "libnuc.h"
+
 #include "ReconsReferenceBAM.h"
 #include "MistarParser.h"
 #include "mistarOperations.h"
@@ -1577,24 +1580,24 @@ public:
 		  vector<MistarParser * > & vectorOfMP,
 		  unsigned int coordFirst,
 		  unsigned int coordLast,
-		  const bool ignoreMQ
+		  const bool ignoreMQ,
+		  vector<singleSite> * dataSitesVec
 		  // const long double contaminationPrior,
 		  //const bool singleCont
-)
+		  )
     : PileupVisitor()
       // , m_references(references)
     , m_fastaReference(fastaReference)
-    // , m_infoPPos(infoPPos)
-    // , sizeGenome(sizeGenome)
     , m_vectorOfMP(vectorOfMP)
     , m_coordFirst(coordFirst)
     , m_coordLast(coordLast)
     , ignoreMQ(ignoreMQ)
+    , m_dataSitesVec(dataSitesVec)
     // , contaminationPrior(contaminationPrior)
     // , singleCont(singleCont)
   { 
      
-      cout<<"constr size="<<vectorOfMP.size()<<endl;
+      //cout<<"constr size="<<vectorOfMP.size()<<endl;
     initFiles(vectorOfMP,
 	      // atLeastOneHasData,
 	      hasData,
@@ -1603,7 +1606,7 @@ public:
 	      chr1,
 	      coordFirst,
 	      false);
-      cout<<"constr"<<endl;
+    //cout<<"constr"<<endl;
     hasCoordinate = vector<bool>(m_vectorOfMP.size(),true);//dummy value
 
 
@@ -1813,20 +1816,34 @@ public:
 
 	
 	    }
-	}//if has alignments
+	}else{ //if has no alignments
+	    return ;
+	}
+
 
 	if( derAllele=='N' ||
 	    ancAllele=='N' )
 	    return ;
+	for(unsigned int df=0;df<derFreq.size();df++){
+	    if(derFreq[df] <= 0 || derFreq[df] >= 1.0)//skip sites with fixed bases
+		return ;
+	}
+
+#ifdef DEBUGERRORP
 	cout<<"samepos "<<chr1<<":"<<posAlign<<" derFreq "<<vectorToString(derFreq)<<"\td="<<derAllele<<"\ta="<<ancAllele<<endl;
 	cout<<"derFreq: "<<vectorToString(derFreq,"\t")<<endl;
 		// for(unsigned int k=0;k<singleBaseVec.size();k++){
 		//     cout<<"\t"<<singleBaseVec[k].b<<"\t"<<singleBaseVec[k].bq;
 		// }
 	cout<<endl<<endl;
+#endif
 	//store 
-	//vector<singleBase> toAddSBs;
-	vector<singleBase> singleBaseVec;
+	singleSite toAddSS;
+	toAddSS.freqDerived = derFreq;
+	toAddSS.ancAllele = ancAllele;
+	toAddSS.derAllele = derAllele;
+
+	//	vector<singleBase> singleBaseVec;
 
 	//re-iterate over each read to compute the likelihood for each insert (or pair of inserts)
 	for(unsigned int i=0;i<pileupData.PileupAlignments.size();i++){				
@@ -1968,34 +1985,43 @@ public:
 
 	    // }
 	    // END DEAMINATION COMPUTATION
-	    
-	    cout<<"i="<<i<<"\t"<<posAlign<<"\tref="<<referenceBase<<"\tb_obs="<<b<<"\t"<<int(q)<<"\t"<<pileupData.PileupAlignments[i].Alignment.Name<<"\t"<<"\td="<<derAllele<<"\ta="<<ancAllele <<"\t"<<dist5p<<"\t"<<dist3p<<"\t"<<(pileupData.PileupAlignments[i].Alignment.IsReverseStrand()?"R":"F")<<endl;
-
-	    cout<<dinucIndexDD<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDD]<<endl;	    
-	    cout<<dinucIndexDA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDA]<<endl;	    
-	    cout<<dinucIndexAD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAD]<<endl;	    
-	    cout<<dinucIndexAA<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAA]<<endl;	    
 
 
-	    long double probDDe = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseEndo->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDD]);
+	    long double probDDe = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseEndo->s[dinucIndexDD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDD]);
 	    long double probDAe = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseEndo->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDA]);
-	    long double probADe = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseEndo->s[dinucIndexAD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAD]);
+	    long double probADe = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseEndo->s[dinucIndexAD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAD]);
 	    long double probAAe = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseEndo->s[dinucIndexAA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAA]);
 
-	    long double probDDc = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseCont->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDD]);
+	    long double probDDc = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseCont->s[dinucIndexDD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDD]);
 	    long double probDAc = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseCont->s[dinucIndexDA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexDA]);
-	    long double probADc = (likeMatchProb[int(q)] * (1.0-probSubMatchToUseCont->s[dinucIndexAD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAD]);
+	    long double probADc = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseCont->s[dinucIndexAD]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAD]);
 	    long double probAAc = (likeMatchProb[int(q)] * (0.0+probSubMatchToUseCont->s[dinucIndexAA]) + (1.0 - likeMatchProb[int(q)])* illuminaErrorsProb.s[dinucIndexAA]);
 
-	    cout<<dinucIndexDD<<"\t"<<probDDe<<endl;	    
-	    cout<<dinucIndexDA<<"\t"<<probDAe<<endl;	    
-	    cout<<dinucIndexAD<<"\t"<<probADe<<endl;	    
-	    cout<<dinucIndexAA<<"\t"<<probAAe<<endl;	    
 
-	    cout<<dinucIndexDD<<"\t"<<probDDc<<endl;	    
-	    cout<<dinucIndexDA<<"\t"<<probDAc<<endl;	    
-	    cout<<dinucIndexAD<<"\t"<<probADc<<endl;	    
-	    cout<<dinucIndexAA<<"\t"<<probAAc<<endl;	    
+#ifdef DEBUGERRORP	    
+	    cout<<"i="<<i<<"\t"<<posAlign<<"\tref="<<referenceBase<<"\tb_obs="<<b<<"\tq="<<int(q)<<"\t"<<pileupData.PileupAlignments[i].Alignment.Name<<"\t"<<"\td="<<derAllele<<"\ta="<<ancAllele <<"\t"<<dist5p<<"\t"<<dist3p<<"\t"<<(pileupData.PileupAlignments[i].Alignment.IsReverseStrand()?"R":"F")<<endl;
+
+	    cout<<dinucIndexDD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDD]<<endl;	    
+	    cout<<dinucIndexDA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDA]<<endl;	    
+	    cout<<dinucIndexAD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAD]<<endl;	    
+	    cout<<dinucIndexAA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAA]<<endl;	    
+	    // cout<<dinucIndexDD<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDD]<<endl;	    
+	    // cout<<dinucIndexDA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDA]<<endl;	    
+	    // cout<<dinucIndexAD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAD]<<endl;	    
+	    // cout<<dinucIndexAA<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAA]<<endl;	    
+
+	    cout<<dinucIndexDD<<"\tdde\t"<<probDDe<<endl;	    
+	    cout<<dinucIndexDA<<"\tdae\t"<<probDAe<<endl;	    
+	    cout<<dinucIndexAD<<"\tade\t"<<probADe<<endl;	    
+	    cout<<dinucIndexAA<<"\taae\t"<<probAAe<<endl;	    
+
+	    cout<<dinucIndexDD<<"\tddc\t"<<probDDc<<endl;	    
+	    cout<<dinucIndexDA<<"\tdac\t"<<probDAc<<endl;	    
+	    cout<<dinucIndexAD<<"\tadc\t"<<probADc<<endl;	    
+	    cout<<dinucIndexAA<<"\taac\t"<<probAAc<<endl;	    
+
+#endif
+
 
 	    sb.probDDc = probDDc;
 	    sb.probADc = probADc;
@@ -2008,7 +2034,17 @@ public:
 	    sb.probAAe = probAAe;
 
 
-	    singleBaseVec.push_back(sb);
+	    //singleBaseVec.push_back(sb);
+	    if(b ==  derAllele){ //derived observation
+		toAddSS.sitesBAMd.push_back(sb);
+	    }else{
+		if(b ==  ancAllele){ //ancestral observation
+		    toAddSS.sitesBAMa.push_back(sb);
+		}else{
+		    cerr<<"Internal error, base "<<b<<" is neither ancestral or derived"<<endl;
+		    exit(1);
+		}
+	    }
 
 	
 	    // vector<bool> hasData;
@@ -2024,7 +2060,7 @@ public:
 	
 	}//end for each read
 	
-
+	m_dataSitesVec->push_back(toAddSS);
 	//put single base Vec somwhere
 	
 	// if(samePos && 
@@ -2056,6 +2092,7 @@ private:
     RefVector m_references;
     Fasta * m_fastaReference;
     vector<MistarParser * >  m_vectorOfMP;
+    vector<singleSite> *  m_dataSitesVec;
     // vector<singlePosInfo> * m_infoPPos;
     // int sizeGenome;
     bool ignoreMQ;
@@ -2172,7 +2209,7 @@ void initScores(){
 */
 int main (int argc, char *argv[]) {
     setlocale(LC_ALL, "POSIX");
-    int sizeGenome=0;
+    // int sizeGenome=0;
     string output  = "/dev/stdout";
     string outlog  = "/dev/stderr";
     // string nameMT  = "MT";
@@ -2186,7 +2223,7 @@ int main (int argc, char *argv[]) {
     // string nameMTC  = "MTc";
     // bool userWantsContProduced = false;
   
-    int minQual                = 0;
+    // int minQual                = 0;
     bool ignoreMQ              = false;
 
 
@@ -2199,10 +2236,10 @@ int main (int argc, char *argv[]) {
     ////////////////////////////////////
 
 
-    long double locatione=0.0;
-    long double locationc=0.0;
-    long double scalee   =0.0;
-    long double scalec   =0.0;
+    // long double locatione=0.0;
+    // long double locationc=0.0;
+    // long double scalee   =0.0;
+    // long double scalec   =0.0;
 
 
 
@@ -2684,21 +2721,28 @@ int main (int argc, char *argv[]) {
 
 
     vector<MistarParser * > vectorOfMP;
+    int numberOfPopulationForCont=0;
+    vector<string> namesCont;
+
     for(int i=(lastOpt+3);i<(argc);i++){ 
 	// if(i==1 && string(argv[i]) == "-f"){
 	//     force=true;
 	//     continue;
 	// }
-	//cout<<"MP "<<string(argv[i])<<endl;
+	// cout<<"MP "<<string(argv[i])<<endl;
 	if(!isFile(string(argv[i])+".tbi")){
 	    cerr<<"Error: The allele count file must be tabix indexed: "<<string(argv[i])<<".tbi file not found"<<endl;
 	    return 1;	
 	}
 
 	MistarParser * mp = new MistarParser(string(argv[i]),(string(argv[i])+".tbi"),regionVec[0].id,regionVec[0].leftCoord,regionVec[0].rightCoord);
-	cout<<"mp addr "<<mp->hasData()<<endl;
+	//cout<<"mp addr "<<mp->hasData()<<endl;
 	vectorOfMP.push_back(mp);
-	
+
+	numberOfPopulationForCont+=(mp->getPopulationsNames()->size() -2);//minus the root and anc
+	for(unsigned int n=2;n<mp->getPopulationsNames()->size();n++){
+	    namesCont.push_back( mp->getPopulationsNames()->at(n) );
+	}
 
     }    
     
@@ -2721,11 +2765,13 @@ int main (int argc, char *argv[]) {
 	cerr << "ERROR: failed to open fasta file " <<fastaFile<<" and index " << fastaFile<<".fai"<<endl;
 	exit(1);
     }
-    //cout<<"fine1"<<endl;
+    // cout<<"fine1"<<endl;
+
+    vector<singleSite> *  dataSitesVec = new vector<singleSite>();
 
     for(unsigned int regionIdx=0;regionIdx<regionVec.size();regionIdx++){
 	int id = reader.GetReferenceID( regionVec[regionIdx].id );
-	cout<<"fine id "<<id<<"\t"<<regionVec[regionIdx].id<<"\t"<<regionVec[regionIdx].leftCoord<<"\t"<<regionVec[regionIdx].rightCoord<<endl;
+	cerr<<"Processing region :"<<"\t"<<regionVec[regionIdx].id<<"\t"<<regionVec[regionIdx].leftCoord<<"\t"<<regionVec[regionIdx].rightCoord<<endl;
 	BamRegion regionbam ( id , regionVec[regionIdx].leftCoord , id, regionVec[regionIdx].rightCoord );    
 	reader.SetRegion(regionbam);
 	//cout<<"fine2 id "<<id<<endl;
@@ -2734,14 +2780,14 @@ int main (int argc, char *argv[]) {
 	}
 	//cout<<"fine3 id "<<id<<endl;
 	
-	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ);
+	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec);
 	PileupEngine pileup;
 	pileup.AddVisitor(cv);
 
 	//cout<<"fine4 id "<<id<<endl;
 	BamAlignment al;
 	unsigned int numReads=0;
-	cerr<<"Reading BAM file ..."<<endl;
+	//cerr<<"Reading BAM file ..."<<endl;
 	while ( reader.GetNextAlignment(al) ) {
 	    //cout<<"name:\t"<<al.Name<<endl;
 	    numReads++;
@@ -2756,7 +2802,7 @@ int main (int argc, char *argv[]) {
 	    }
 	    
 	}
-	cerr<<"...  done"<<endl;
+	// cerr<<"...  done"<<endl;
     
     
 	//clean up
@@ -2766,7 +2812,27 @@ int main (int argc, char *argv[]) {
     }
 
     reader.Close();
+    cerr<<"done reading bam files"<<endl;
 
+
+    cout<<"Anc\tDer\tPanelFreq\tNum"<<endl;
+    for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){
+	cout<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived,"\t")<<"\t"<<1<<endl;
+    }
+
+
+    for(int indexCont=0;indexCont<numberOfPopulationForCont;indexCont++){
+	for(int indexAnchor=0;indexAnchor<numberOfPopulationForCont;indexAnchor++){
+	    cout<<"C"<<namesCont[indexCont]<<"\tA"<<namesCont[indexAnchor]<<endl;
+	    long double llik = LogFinalTwoPBAM( dataSitesVec, 0.05, 0.5, 0.5, indexCont, indexAnchor );
+	    cout<<llik<<endl;
+	}
+    }
+    // for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){
+	
+
+    // 	cout<<dataSitesVec->at(sitesIdx).ancAllele<<"\t"<<dataSitesVec->at(sitesIdx).derAllele<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived)<<endl;
+    // }
 
     return 0;
 }

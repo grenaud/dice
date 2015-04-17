@@ -1,4 +1,4 @@
-CXX      = g++ #-g 
+CXX      = g++ -g 
 
 
 BAMTOOLS= $(realpath ../bamtools/)
