@@ -70,5 +70,5 @@ nucularMCMC:	nucularMCMC.o ${LIBTABIX}/libtabix.a ${BAMTOOLS}/lib/libbamtools.a 
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
-	rm -f nucular.o nucular nucularMCMC.o nucularMCMC libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o  mistarOperations.o
+	rm -f *.o nucular  nucularMCMC  nucularMCMCBAM
 

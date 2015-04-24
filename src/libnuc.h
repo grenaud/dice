@@ -11,8 +11,10 @@
 /* #define DEBUGL1 */
 /* #define DEBUGL2 */
 /* #define DEBUGL3 */
-//#define DEBUGBAML2
-#define DEBUGBAML3
+
+/* #define DEBUGBAML1 */
+/* #define DEBUGBAML2 */
+/* #define DEBUGBAML3 */
 
 using namespace std;
 
@@ -169,6 +171,19 @@ inline long double pad_given_reytau(int a,int d,long double r,long double e,long
     return sumResult;
 }
 
+/* inline long double pad_given_reytauBAM(const singleSite & currentSite,long double r,long double y,long double tau_C,long double tau_A){ */
+
+/*     long double  sumResult=0.0; */
+/*     for(int i=0;i<=2;i++){ */
+/* 	//inline long double pad_given_ireyBAM(const singleSite & currentSite,int i,long double r,long double y){ */
+/*         sumResult += pad_given_ireyBAM(currentSite,i,r,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A); */
+/*     } */
+
+/*     return sumResult; */
+/* } */
+
+
+
 //Sum over each of the 3 types of genotypes for three-population method (incorporating admixture)
 inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz){
     /* cout<<"pad_given_reytau_dadi_threeP1\t"<<a<<"\t"<<d<<endl; */
@@ -294,9 +309,10 @@ inline vector< vector<long double>  * > * getDadiTableThreeP(long double tau_C,l
 */
 inline long double qtermBAMA(int i,const singleBase b,long double r,long double y){
 
-#ifdef DEBUGL1
-    cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<y<<endl;
+#ifdef DEBUGBAML1
+    cout<<"qtermBAMA begin\t"<<i<<"\t"<<r<<"\t"<<y<<endl;
 #endif
+
     //y is the derived allele frequency
     //1-y is the ancestral allele frequency
 
@@ -321,7 +337,7 @@ inline long double qtermBAMA(int i,const singleBase b,long double r,long double 
 	}
     }
 
-#ifdef DEBUGL1
+#ifdef DEBUGBAML1
     cout<<"qterm end\t"<<toreturn<<endl;
 #endif
 
@@ -342,7 +358,7 @@ inline long double qtermBAMA(int i,const singleBase b,long double r,long double 
 */
 inline long double qtermBAMD(int i,const singleBase b,long double r,long double y){
 
-#ifdef DEBUGL1
+#ifdef DEBUGBAML1
     cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
 #endif
     //y is the derived allele frequency
@@ -368,7 +384,7 @@ inline long double qtermBAMD(int i,const singleBase b,long double r,long double 
 	}
     }
 
-#ifdef DEBUGL1
+#ifdef DEBUGBAML1
     cout<<"qterm end\t"<<toreturn<<endl;
 #endif
 
@@ -390,6 +406,9 @@ inline long double pad_given_ireyBAM(const singleSite & currentSite,int i,long d
 
     int a = int(currentSite.sitesBAMa.size());
     int d = int(currentSite.sitesBAMd.size());
+    /* long double qtermD   = qtermBAMD(i,currentSite.sitesBAMd[indexD],r,y); */
+
+    /* (( (long double)(nChoosek(a+d,d)) ) * (powl(qtermA,d))* (powl(1.0-qtermA,a) )  ); //defined in lib gab */
 
 #ifdef DEBUGBAML2
     //cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
@@ -402,7 +421,7 @@ inline long double pad_given_ireyBAM(const singleSite & currentSite,int i,long d
     for(int indexA=0;indexA<a;indexA++){
 	long double qtermA   = qtermBAMA(i,currentSite.sitesBAMa[indexA],r,y);
 	
-	toreturn += logl( qtermA );
+	toreturn += logl( qtermA ); //product
 
 #ifdef DEBUGBAML2
 	cout<<indexA<<"\t"<<qtermA<<"\t"<<toreturn<<endl;
@@ -411,7 +430,7 @@ inline long double pad_given_ireyBAM(const singleSite & currentSite,int i,long d
 
     for( int indexD=0;indexD<d;indexD++){
 	long double qtermD   = qtermBAMD(i,currentSite.sitesBAMd[indexD],r,y);
-	toreturn += logl( qtermD );
+	toreturn += logl( qtermD ); //product
 
 #ifdef DEBUGBAML2
 	cout<<indexD<<"\t"<<qtermD<<"\t"<<toreturn<<"\t"<<currentSite.sitesBAMd[indexD].probADe<<endl;
@@ -447,7 +466,12 @@ inline long double LogFinalTwoPBAM( const vector<singleSite> *  dataSitesVec,lon
 
     /* 	    } */
     long double sumterm=0.0;
-    cout<<"LogFinalTwoPBAM\t"<<dataSitesVec->size()<<endl;
+
+#ifdef DEBUGBAML3
+
+    cout<<"LogFinalTwoPBAM\t"<<dataSitesVec->size()<<"\t"<<r<<"\t"<<tau_A<<"\t"<<tau_C<<"\t"<<contIndex<<"\t"<<anchorIndex<<endl;
+#endif
+
     for(unsigned int indexSite=0;indexSite<dataSitesVec->size();indexSite++){
 	//sum for each genotype
 #ifdef DEBUGBAML3
@@ -515,6 +539,9 @@ inline long double LogFinalTwoPBAM( const vector<singleSite> *  dataSitesVec,lon
 	/* 					      tableData->at(indexSite).panelFreqCont, */
 	/* 					      tau_C,tau_A))*tableData->at(indexSite).num; */
     }
+
+
+
     return sumterm;
 
 }
