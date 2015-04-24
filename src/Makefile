@@ -1,7 +1,7 @@
 CXX      = g++ -g 
 
 
-BAMTOOLS= $(realpath ../bamtools/)
+BAMTOOLS= ../bamtools/
 LIBGAB=  ../libgab/
 #LIBTABIX = $(realpath tabix/)
 
