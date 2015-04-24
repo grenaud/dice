@@ -24,7 +24,7 @@ ${LIBGAB}/gzstream/libgzstream.a: ${LIBGAB}/utils.o
 
 ${LIBGAB}/utils.h:
 	rm -rf ${LIBGAB}/
-	git clone --recursive https://github.com/grenaud/${LIBGAB}.git
+	git clone --recursive https://github.com/grenaud/libgab.git ${LIBGAB}
 
 
 ${LIBGAB}/utils.o: ${BAMTOOLS}/lib/libbamtools.a  ${LIBGAB}/utils.h
