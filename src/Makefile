@@ -59,7 +59,7 @@ nucularMCMCBAM:	nucularMCMCBAM.o tabix/libtabix.a miscfunc.o libnuc.o MistarPars
 nucularMCMCBAM:	nucularMCMCBAM.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-libnuc.o:	libnuc.cpp
+libnuc.o:	libnuc.cpp  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} ${CXXFLAGS} libnuc.cpp
 
 
