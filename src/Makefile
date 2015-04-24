@@ -20,6 +20,7 @@ tabix/tabix.h:
 tabix/libtabix.a: tabix/tabix.h
 	make -C tabix
 
+${LIBGAB}/gzstream/libgzstream.a: ${LIBGAB}/utils.o
 
 ${LIBGAB}/utils.h:
 	rm -rf ${LIBGAB}/
