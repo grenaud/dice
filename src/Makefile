@@ -2,32 +2,32 @@ CXX      = g++ -g
 
 
 BAMTOOLS= $(realpath ../bamtools/)
-LIBGAB= $(realpath ../libgab/)
-LIBTABIX = $(realpath tabix/)
+#LIBGAB= $(realpath ../libgab/)
+#LIBTABIX = $(realpath tabix/)
 
-CXXFLAGS = -Wall -lm -O3 -lz -std=c++0x -I${LIBGAB} -I${LIBGAB}/gzstream/  -I${BAMTOOLS}/include/ -I${LIBTABIX} -I${BAMTOOLS}/src/  -c
-LDFLAGS  = ${LIBTABIX}/libtabix.a ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/lib/libbamtools.a  -lpthread -lm -lz
+CXXFLAGS = -Wall -lm -O3 -lz -std=c++0x -Ilibgab -Ilibgab/gzstream/  -I${BAMTOOLS}/include/ -Itabix -I${BAMTOOLS}/src/  -c
+LDFLAGS  = tabix/libtabix.a ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/lib/libbamtools.a  -lpthread -lm -lz
 
 
 
 all: nucular  nucularMCMC nucularMCMCBAM
 
 
-${LIBTABIX}/tabix.h:
-	rm -rf ${LIBTABIX}/*
+tabix/tabix.h:
+	rm -rf tabix/*
 	git clone --recursive https://github.com/samtools/tabix.git
 
-${LIBTABIX}/libtabix.a: ${LIBTABIX}/tabix.h
+tabix/libtabix.a: tabix/tabix.h
 	make -C tabix
 
 
-${LIBGAB}/utils.h:
-	rm -rf ${LIBGAB}/
-	git clone --recursive https://github.com/grenaud/${LIBGAB}.git
+libgab/utils.h:
+	rm -rf libgab/
+	git clone --recursive https://github.com/grenaud/libgab.git
 
 
-${LIBGAB}/utils.o: ${BAMTOOLS}/lib/libbamtools.a  ${LIBGAB}/utils.h
-	make -C ${LIBGAB}
+libgab/utils.o: ${BAMTOOLS}/lib/libbamtools.a  libgab/utils.h
+	make -C libgab
 
 ${BAMTOOLS}/src/api/BamAlignment.h:
 	rm -rf ${BAMTOOLS}/
@@ -38,7 +38,7 @@ ${BAMTOOLS}/lib/libbamtools.a: ${BAMTOOLS}/src/api/BamAlignment.h
 	cd ${BAMTOOLS}/ && mkdir -p build/  && cd build/ && cmake .. && make && cd ../..
 
 
-miscfunc.o:	${LIBGAB}/utils.o miscfunc.cpp
+miscfunc.o:	libgab/utils.o miscfunc.cpp
 	${CXX} ${CXXFLAGS} miscfunc.cpp
 
 
@@ -54,19 +54,19 @@ nucularMCMCBAM.o:	nucularMCMCBAM.cpp
 
 
 
-nucularMCMCBAM:	nucularMCMCBAM.o ${LIBTABIX}/libtabix.a miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+nucularMCMCBAM:	nucularMCMCBAM.o tabix/libtabix.a miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o libgab/utils.o  libgab/gzstream/libgzstream.a
 
-nucularMCMCBAM:	nucularMCMCBAM.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+nucularMCMCBAM:	nucularMCMCBAM.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a libgab/utils.o  libgab/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 libnuc.o:	libnuc.cpp
 	${CXX} ${CXXFLAGS} libnuc.cpp
 
 
-nucular:	nucular.o  ${LIBTABIX}/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+nucular:	nucular.o  tabix/libtabix.a libgab/utils.o  libgab/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-nucularMCMC:	nucularMCMC.o ${LIBTABIX}/libtabix.a ${BAMTOOLS}/lib/libbamtools.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+nucularMCMC:	nucularMCMC.o tabix/libtabix.a ${BAMTOOLS}/lib/libbamtools.a libgab/utils.o  libgab/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
