@@ -32,7 +32,7 @@ ${LIBGAB}/utils.o: ${BAMTOOLS}/lib/libbamtools.a  ${LIBGAB}/utils.h
 
 ${BAMTOOLS}/src/api/BamAlignment.h:
 	rm -rf ${BAMTOOLS}/
-	git clone --recursive https://github.com/pezmaster31/${BAMTOOLS}.git
+	git clone --recursive https://github.com/pezmaster31/bamtools.git
 
 
 ${BAMTOOLS}/lib/libbamtools.a: ${BAMTOOLS}/src/api/BamAlignment.h
