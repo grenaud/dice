@@ -222,8 +222,8 @@ inline string ld2string(long double i){
 }
 
 
-inline vector< vector<long double>  * > * getDadiTableThreeP(long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,long double nA,const string & cwdProg){
-    string cmd = "python  "+cwdProg+"/Dadi_three_pop_admix.py -c "+ld2string(tau_C)+" -a "+ld2string(tau_A)+" -x "+ld2string(admixrate)+" -t "+ld2string(admixtime)+" -y "+ld2string(innerdriftY)+" -z "+ld2string(innerdriftZ)+" -m "+ld2string(nC)+" -n "+ld2string(nA)+" -b "+ld2string(nB)+" ";
+inline vector< vector<long double>  * > * getDadiTableThreeP(long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,long double nA,const string & cwdProg,long double admixrateold,long double admixtimeold){
+    string cmd = "python  "+cwdProg+"/Dadi_three_pop_admix_and_oldadm.py -o "+ld2string(admixrateold)+" -q "+ld2string(admixtimeold)+"  -c "+ld2string(tau_C)+" -a "+ld2string(tau_A)+" -x "+ld2string(admixrate)+" -t "+ld2string(admixtime)+" -y "+ld2string(innerdriftY)+" -z "+ld2string(innerdriftZ)+" -m "+ld2string(nC)+" -n "+ld2string(nA)+" -b "+ld2string(nB)+" ";
     //cerr<<cmd<<endl;
     string values = runCmdAndCaptureSTDOUTandSTDERR(cmd);
     
@@ -553,7 +553,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 	// Case where the anchor population is the same as the putative contaminant population (3rd column of data file)
     if(contequalanchor){
-        long double sumterm=0.0;
+       long double sumterm=0.0;
         for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
 
 	    //result <- sum(apply(table,1,function(x){
@@ -595,7 +595,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 
 //  Log final posterior for three populations
-inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor){
+inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor,long double admixrateold,long double admixtimeold){
     //     print(c(e,r,tau_C,tau_A))
     //cout<<cwdProg<<"\t"<<contequalanchor<<endl;
     //exit(1);
@@ -603,6 +603,7 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 	(r < 0)     || 
 	(tau_C < 0) || 
 	(tau_A < 0) || 
+	(tau_C < admixtimeold) || 
 	(admixrate < 0) || admixtime < 0){
         return(-1000000000000000);
     }else{
@@ -616,7 +617,9 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 									nC,
 									nB,
 									nA,
-									cwdProg);
+									cwdProg,
+									admixrateold,
+									admixtimeold);
 	//cout<<"after getDadiTableThreeP"<<endl;
 	long double sumterm=0.0;
 	if(contequalanchor){

@@ -59,6 +59,8 @@ int main (int argc, char *argv[]) {
     long double tau_Alower     = 0.000001;
     long double admixratelower = 0.000001;
     long double admixtimelower = 0.05;
+    long double admixrateoldlower = 0.000001;
+    long double admixtimeoldlower = tau_Clower;
 
     // Set upper boundaries for optimization algorithm
     long double eupper         = 0.1;
@@ -67,6 +69,8 @@ int main (int argc, char *argv[]) {
     long double tau_Aupper     = 1.0;
     long double admixrateupper = 0.5;
     long double admixtimeupper = 0.11;
+    long double admixrateoldupper = 0.5;
+    long double admixtimeoldupper = tau_Cupper;
 
     long double e_i         ;
     long double r_i         ;
@@ -74,6 +78,9 @@ int main (int argc, char *argv[]) {
     long double tau_A_i     ;
     long double admixrate_i ;
     long double admixtime_i ;
+    long double admixrateold_i ;
+    long double admixtimeold_i ;
+
 
     bool e_i_0         = false;
     bool r_i_0         = false;
@@ -81,6 +88,8 @@ int main (int argc, char *argv[]) {
     bool tau_A_i_0     = false;
     bool admixrate_i_0 = false;
     bool admixtime_i_0 = false;
+    bool admixrateold_i_0 = false;
+    bool admixtimeold_i_0 = false;
 
 
     const string usage=string("\t"+string(argv[0])+
@@ -102,6 +111,8 @@ int main (int argc, char *argv[]) {
 			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau Contaminant    (default: random)"+"\n"+
 			      "\t\t"+"-aR0    [admR]" +"\t\t\t"+"Admixture time     (default: random)"+"\n"+
 			      "\t\t"+"-aT0    [admT]" +"\t\t\t"+"Admixture rate     (default: random)"+"\n"+
+			      "\t\t"+"-aOR0    [admR]" +"\t\t\t"+"Admixture old time      (default: random)"+"\n"+
+			      "\t\t"+"-aOT0    [admT]" +"\t\t\t"+"Admixture old rate      (default: random)"+"\n"+
                               
 			      "\n\tRange for parameter values:\n"+
 			      "\t\t"+"-e     el,eh"+"\t\t\t"+"Error rate range          (default: "+stringify(elower)         +","+stringify(eupper)+" )"+"\n"+
@@ -110,6 +121,8 @@ int main (int argc, char *argv[]) {
 			      "\t\t"+"-tC    tauCl,tauCh" +"\t\t"+"Tau Contaminant range     (default: "+stringify(tau_Clower)     +","+stringify(tau_Cupper)+"   )"+"\n"+
 			      "\t\t"+"-aR    admRl,admRh" +"\t\t"+"Admixture time range      (default: "+stringify(admixratelower) +","+stringify(admixrateupper)+" )"+"\n"+
 			      "\t\t"+"-aT    admTl,admTh" +"\t\t"+"Admixture rate range      (default: "+stringify(admixtimelower) +","+stringify(admixtimeupper)+" )"+"\n"+
+			      "\t\t"+"-aOR    admORl,admORh" +"\t\t"+"Admixture old time range      (default: "+stringify(admixrateoldlower) +","+stringify(admixrateoldupper)+" )"+"\n"+
+			      "\t\t"+"-aOT    admOTl,admOTh" +"\t\t"+"Admixture old rate range      (default: "+stringify(admixtimeoldlower) +","+stringify(admixtimeoldupper)+" )"+"\n"+
 			      
 			      "\n\tPopulation specific constants:\n"+
 			      "\t\t"+"-idy     [drift]" +"\t\t"+"Inner drift Y (default: "+stringify(innerdriftY)+")"+"\n"+
@@ -163,7 +176,8 @@ int main (int argc, char *argv[]) {
             i++;
             continue;
         }
-
+	
+	//BEGIN admix parameters
         if(string(argv[i]) == "-aT0"  ){
 	    admixtime_i  = destringify<double>(argv[i+1]);
 	    admixtime_i_0=true;
@@ -194,6 +208,43 @@ int main (int argc, char *argv[]) {
              i++;
              continue;
          }
+	//END admix parameters
+
+
+	//BEGIN old admix parameters
+        if(string(argv[i]) == "-aOT0"  ){
+	    admixtimeold_i  = destringify<double>(argv[i+1]);
+	    admixtimeold_i_0=true;
+            i++;
+            continue;
+        }
+
+	if(string(argv[i]) == "-aOT"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     admixtimeoldlower = t.first;
+	     admixtimeoldupper = t.second;	     
+             i++;
+             continue;
+         }
+
+
+        if(string(argv[i]) == "-aOR0"  ){
+	    admixrateold_i  = destringify<double>(argv[i+1]);
+	    admixrateold_i_0=true;
+            i++;
+            continue;
+        }
+
+         if(string(argv[i]) == "-aOR"  ){
+	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
+	     admixrateoldlower = t.first;
+	     admixrateoldupper = t.second;	     
+             i++;
+             continue;
+         }
+	//END old admix parameters
+
+
 
 
         if(string(argv[i]) == "-tC0"  ){
@@ -414,22 +465,29 @@ int main (int argc, char *argv[]) {
 
     //vector Variables
    if(!e_i_0)
-       e_i       = randomLongDouble(elower,         eupper);
+       e_i          = randomLongDouble(elower,            eupper);
 
    if(!r_i_0)
-     r_i         = randomLongDouble(rlower,         rupper);
+     r_i            = randomLongDouble(rlower,            rupper);
 
    if(!tau_C_i_0)
-     tau_C_i     = randomLongDouble(tau_Clower,     tau_Cupper);
+     tau_C_i        = randomLongDouble(tau_Clower,        tau_Cupper);
 
    if(!tau_A_i_0)
-     tau_A_i     = randomLongDouble(tau_Alower,     tau_Aupper);
+     tau_A_i        = randomLongDouble(tau_Alower,        tau_Aupper);
 
    if(!admixrate_i_0)
-     admixrate_i = randomLongDouble(admixratelower, admixrateupper);
+     admixrate_i    = randomLongDouble(admixratelower,    admixrateupper);
 
    if(!admixtime_i_0)
-     admixtime_i = randomLongDouble(admixtimelower, admixtimeupper);
+     admixtime_i    = randomLongDouble(admixtimelower,    admixtimeupper);
+
+   if(!admixrateold_i_0)
+     admixrateold_i = randomLongDouble(admixrateoldlower, admixrateoldupper);
+
+   if(!admixtimeold_i_0)
+     admixtimeold_i = randomLongDouble(admixtimeoldlower, admixtimeoldupper);
+
 
     long double e_i_1;
     long double r_i_1;
@@ -437,6 +495,11 @@ int main (int argc, char *argv[]) {
     long double tau_A_i_1;
     long double admixrate_i_1;
     long double admixtime_i_1;
+    long double admixrateold_i_1;
+    long double admixtimeold_i_1;
+
+
+
 
    //to test
 
@@ -458,7 +521,7 @@ int main (int argc, char *argv[]) {
    if(twoPopMode){
        x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,has4Cols);
    }else{
-       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols);
+       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,admixrateold_i,admixtimeold_i);
    }
    outLogFP<<"chain"<<"\tllik"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance"<<endl;
    int accept=0;
@@ -526,7 +589,7 @@ int main (int argc, char *argv[]) {
 
 	  
        if(chain!=0)
-	   outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<endl;
+	   outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<admixrateold_i<<"\t"<<admixtimeold_i<<"\t"<<double(accept)/double(chain)<<endl;
        // cout<<"e"<<e_i<<"\te_1\t"<<e_i_1<<endl;
        // return 1;
 
@@ -580,6 +643,39 @@ int main (int argc, char *argv[]) {
 	   if(admixtime_i_1 <= admixtimelower ||  admixtime_i_1 >= admixtimeupper ){
 	       admixtime_i_1  = admixtime_i;
 	   }
+
+
+
+
+
+
+
+	   normal_distribution<long double> distribution_admixrateold(admixrateold_i, (admixrateoldupper-admixrateoldlower)/partition  );
+	   admixrateold_i_1  = distribution_admixrateold(dre);
+     
+	   if(admixrateold_i_1 <= admixrateoldlower ||  admixrateold_i_1 >= admixrateoldupper ){
+	       admixrateold_i_1  = admixrateold_i;
+	   }
+
+	   normal_distribution<long double> distribution_admixtimeold(admixtimeold_i, (admixtimeoldupper-admixtimeoldlower)/partition  );
+	   admixtimeold_i_1  = distribution_admixtimeold(dre);
+     
+	   if(admixtimeold_i_1 <= admixtimeoldlower ||  admixtimeold_i_1 >= admixtimeoldupper ){
+	       admixtimeold_i_1  = admixtimeold_i;
+	   }
+
+
+
+
+
+
+
+
+
+
+
+
+
 	   
 	   // long double factadmixrate = fmod( (long double)(randomProb()), (admixrateupper-admixratelower)/partition);
 	   // if(randomBool()){
@@ -600,7 +696,7 @@ int main (int argc, char *argv[]) {
        if(twoPopMode){
 	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols );
        }else{
-	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols );
+	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols ,admixrateold_i_1,admixtimeold_i_1);
        }
 
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
@@ -611,13 +707,16 @@ int main (int argc, char *argv[]) {
        //outLogFP<<chain<<"p\t"<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
 
        if( (long double)(randomProb()) < acceptance){
-	   e_i           =  e_i_1;
-	   r_i           =  r_i_1;
-	   tau_C_i       =  tau_C_i_1;
-	   tau_A_i       =  tau_A_i_1;	  
-	   admixrate_i   =  admixrate_i_1;
-	   admixtime_i   =  admixtime_i_1;
-	   x_il      = x_i_1l;
+	   e_i              =  e_i_1;
+	   r_i              =  r_i_1;
+	   tau_C_i          =  tau_C_i_1;
+	   tau_A_i          =  tau_A_i_1;	  
+	   admixrate_i      =  admixrate_i_1;
+	   admixtime_i      =  admixtime_i_1;
+	   admixrateold_i   =  admixrateold_i_1;
+	   admixtimeold_i   =  admixtimeold_i_1;
+
+	   x_il             =  x_i_1l;
 	   accept++;
 	   //outLogFP<<"new state"<<endl;
        }else{
