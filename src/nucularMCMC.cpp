@@ -54,6 +54,8 @@ int main (int argc, char *argv[]) {
 
     // Set lower boundaries for optimization algorithm
     long double elower         = 0.00001;
+    long double pelower        = 0.0000001;
+
     long double rlower         = 0.00001;
     long double tau_Clower     = 0.000001;
     long double tau_Alower     = 0.000001;
@@ -62,6 +64,7 @@ int main (int argc, char *argv[]) {
 
     // Set upper boundaries for optimization algorithm
     long double eupper         = 0.1;
+    long double peupper        = 1.0;
     long double rupper         = 0.5;
     long double tau_Cupper     = 1.0;
     long double tau_Aupper     = 1.0;
@@ -69,6 +72,9 @@ int main (int argc, char *argv[]) {
     long double admixtimeupper = 0.11;
 
     long double e_i         ;
+    long double e2_i        ;
+    long double pe_i        ;
+
     long double r_i         ;
     long double tau_C_i     ;
     long double tau_A_i     ;
@@ -76,6 +82,9 @@ int main (int argc, char *argv[]) {
     long double admixtime_i ;
 
     bool e_i_0         = false;
+    bool e2_i_0        = false;
+    bool pe_i_0        = false;
+
     bool r_i_0         = false;
     bool tau_C_i_0     = false;
     bool tau_A_i_0     = false;
@@ -416,6 +425,12 @@ int main (int argc, char *argv[]) {
    if(!e_i_0)
        e_i       = randomLongDouble(elower,         eupper);
 
+   if(!e2_i_0)
+       e2_i       = randomLongDouble(elower,         eupper);
+
+   if(!e2_i_0)
+       pe_i       = randomLongDouble(pelower,         peupper);
+
    if(!r_i_0)
      r_i         = randomLongDouble(rlower,         rupper);
 
@@ -432,6 +447,9 @@ int main (int argc, char *argv[]) {
      admixtime_i = randomLongDouble(admixtimelower, admixtimeupper);
 
     long double e_i_1;
+    long double e2_i_1;
+    long double pe_i_1;
+
     long double r_i_1;
     long double tau_C_i_1;
     long double tau_A_i_1;
@@ -456,7 +474,7 @@ int main (int argc, char *argv[]) {
    long double x_i_1l;
 
    if(twoPopMode){
-       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,has4Cols);
+       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,has4Cols,e2_i,pe_i);
    }else{
        x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols);
    }
@@ -488,6 +506,29 @@ int main (int argc, char *argv[]) {
 	   //chain--;
 	   //continue;
        }
+
+       //e2
+       normal_distribution<long double> distribution_e2(e2_i,     (eupper-elower)/partition  );
+       e2_i_1      = distribution_e2(dre);
+       // e2_i_1      = e2_i;
+
+       if(e2_i_1 <= elower     ||  e2_i_1 >= eupper     ){
+	   e2_i_1      = e2_i;
+	   //chain--;
+	   //continue;
+       }
+
+       //pe
+       normal_distribution<long double> distribution_pe(pe_i,     (peupper-pelower)/partition  );
+       pe_i_1      = distribution_pe(dre);
+       // e_i_1      = e_i;
+
+       if(pe_i_1 <= pelower     ||  pe_i_1 >= peupper     ){
+	   pe_i_1      = pe_i;
+	   //chain--;
+	   //continue;
+       }
+
 
        normal_distribution<long double> distribution_r(r_i,     (rupper-rlower)/partition  );
        r_i_1      = distribution_r(dre);
@@ -526,7 +567,7 @@ int main (int argc, char *argv[]) {
 
 	  
        if(chain!=0)
-	   outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<endl;
+	   outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<"\t"<<e2_i<<"\t"<<pe_i<<"\t"<<endl;
        // cout<<"e"<<e_i<<"\te_1\t"<<e_i_1<<endl;
        // return 1;
 
@@ -598,7 +639,7 @@ int main (int argc, char *argv[]) {
        }
        //cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
        if(twoPopMode){
-	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols );
+	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols, e2_i_1, pe_i_1 );
        }else{
 	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols );
        }
@@ -612,6 +653,9 @@ int main (int argc, char *argv[]) {
 
        if( (long double)(randomProb()) < acceptance){
 	   e_i           =  e_i_1;
+	   e2_i          =  e2_i_1;
+	   pe_i          =  pe_i_1;
+
 	   r_i           =  r_i_1;
 	   tau_C_i       =  tau_C_i_1;
 	   tau_A_i       =  tau_A_i_1;	  

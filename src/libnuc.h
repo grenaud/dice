@@ -148,6 +148,16 @@ inline long double Pgeno_given_ytau(int i,long double y,long double tau_C,long d
 
 }
 
+inline long double pad_given_reytau_twoerror(int a,int d,long double r,long double e,long double y,long double freqcont,long double tau_C,long double tau_A,long double e2, long double pe){
+    long double  sumResult=0.0;
+
+    for(int i=0;i<=2;i++){
+        sumResult += ( pe * pad_given_irey(a,d,i,r,e,freqcont) + (1.0 - pe) * pad_given_irey(a,d,i,r,e2,freqcont) ) * Pgeno_given_ytau(i,y,tau_C,tau_A);
+    }
+
+    return sumResult;
+}
+
 
 
 //!   Sum over each of the 3 types of genotypes for two-population method (no admixture)
@@ -548,7 +558,7 @@ inline long double LogFinalTwoPBAM( const vector<singleSite> *  dataSitesVec,lon
 
 
 //  Log final posterior for two populations
-inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor){
+inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor,long double e2, long double pe){
 //     print(c(e,r,tau_C,tau_A))
 
 	// Case where the anchor population is the same as the putative contaminant population (3rd column of data file)
@@ -558,13 +568,14 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 	    //result <- sum(apply(table,1,function(x){
 	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
-	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
+	    long double toaddToSum = log(pad_given_reytau_twoerror(tableData->at(indexSite).ancCount,
 							  tableData->at(indexSite).derCount,
 							  r,
 							  e,
 							  tableData->at(indexSite).panelFreqCont,
 							  tableData->at(indexSite).panelFreqCont,
-							  tau_C,tau_A))*tableData->at(indexSite).num;
+								   tau_C,tau_A,
+								   e2, pe))*tableData->at(indexSite).num;
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
 	    sumterm+=toaddToSum;
 	}
@@ -575,13 +586,13 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 	for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
 
-	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
-							  tableData->at(indexSite).derCount,
-							  r,e,
-							  tableData->at(indexSite).panelFreqAnchor,
-							  tableData->at(indexSite).panelFreqCont,
-							  tau_C,
-							  tau_A))*tableData->at(indexSite).num;
+	    long double toaddToSum = log(pad_given_reytau_twoerror(tableData->at(indexSite).ancCount,
+								   tableData->at(indexSite).derCount,
+								   r,e,
+								   tableData->at(indexSite).panelFreqAnchor,
+								   tableData->at(indexSite).panelFreqCont,
+								   tau_C,
+								   tau_A,e2,pe))*tableData->at(indexSite).num;
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
 	    sumterm+=toaddToSum;
 	}
