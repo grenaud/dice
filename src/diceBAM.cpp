@@ -1,5 +1,5 @@
 /*
- * endoCaller
+ * diceBAM
  * Date: Mar-26-2014 
  * Author : Gabriel Renaud gabriel.reno [at sign here ] gmail.com
  *
@@ -14,7 +14,8 @@
   
 
  // #define DEBUGMST
-//#define DEBUGERRORP
+// #define DEBUGERRORP
+// #define DEBUGFREQ
 
 
 //GLOBAL CONSTANTS
@@ -84,72 +85,52 @@ long double probMismapping[MAXMAPPINGQUAL];
 
 
 
-probSubstition illuminaErrorsProb;
-vector<probSubstition> sub5p;
-vector<probSubstition> sub3p;
-vector<probSubstition> sub5pC;
-vector<probSubstition> sub3pC;
+// probSubstition illuminaErrorsProb;
+// vector<probSubstition> sub5p;
+// vector<probSubstition> sub3p;
+// vector<probSubstition> sub5pC;
+// vector<probSubstition> sub3pC;
 
-probSubstition defaultSubMatch;
+vector<substitutionRates> sub5p;
+vector<substitutionRates> sub3p;
+vector<substitutionRates> sub5pC;
+vector<substitutionRates> sub3pC;
+
+// probSubstition defaultSubMatch;
+substitutionRates defaultSubMatch;
 
 string dnaAlphabet="ACGT";
 map<int, PHREDgeno> pos2phredgeno;
 
-// map<string, long double > read2endoProb; //map seq id to probability that the read is endogenous using a deamination model
-// long double read2endoProbInit=false;
 
-
-// long double probCorrect(char b,bool isRev,int mpq,int bq, const probSubstition * probSubMatch){
-//     long double dnaProb[4];
-//     long double probError  =0.0;
-//     long double probCorrect=0.0;
-
-//     for(int i=0;i<4;i++){
-// 	int dinucIndex;
-// 	char bModel=dnaAlphabet[i];
-// 	if( isRev ){
-// 	    dinucIndex =      baseResolved2int(complement(b)) *4+baseResolved2int(complement(bModel));
-// 	}else{
-// 	    dinucIndex =      baseResolved2int(           b)  *4+baseResolved2int(           bModel);
-// 	}
-// 	//cout<<"model ="<<bModel<<" "<<b<<" "<<dinucIndex<<" "<<probSubMatch->s[dinucIndex] <<endl;
-// 	dnaProb[i]  = probMismapping[mpq]*0.25;
-// 	if(bModel == b){
-// 	    dnaProb[i] += probMapping[mpq]*( (probMatch[bq] * probSubMatch->s[dinucIndex]                          ) );
-// 	    probCorrect+=dnaProb[i];
-// 	}else{
-// 	    dnaProb[i] += probMapping[mpq]*( (probMatch[bq] * probSubMatch->s[dinucIndex]  + probMismatch[bq]/3.0  ) );
-// 	    probError+=dnaProb[i];
-// 	}
-
-// 	//cout<<"dnaProb ["<<i<<"]= "<<dnaProb[i]<<endl;
-//     }
-//     return (probCorrect/(probCorrect+probError));
-//     //return probCorrect;
-    
-// }
-
-
-pair<long double,long double> probCorrectcubed(char b, char bModel,bool isRev,int mpq,int bq, const probSubstition * probSubMatch){
-    mpq = min(mpq,20);
+pair<long double,long double> probCorrect(char b, char bModel,bool isRev,int mpq,int bq, const substitutionRates * probSubMatch){
+    //    mpq = min(mpq,20);
 
     int dinucIndex;
     if( isRev ){
-	dinucIndex =      baseResolved2int(complement(bModel)) *4+baseResolved2int(complement(b));
+	//dinucIndex =     baseResolved2int(complement(bModel)) *3+baseResolved2int(complement(b));
+	dinucIndex =	 dimer2index(complement(bModel),complement(b));
     }else{
-	dinucIndex =      baseResolved2int(           bModel)  *4+baseResolved2int(           b);
+	//dinucIndex =      baseResolved2int(           bModel)  *3+baseResolved2int(           b);
+	dinucIndex =	 dimer2index(           bModel ,           b);
     }
 
+#ifdef DEBUGERRORP
+    cout<<"probCorrect bModel\t"<<bModel<<"\tb\t"<<b<<"\t"<<dinucIndex<<"\t"<<isRev<<endl;
+#endif
 
-    long double probSubDeam  = probSubMatch->s[dinucIndex];
-    long double probSameDeam = 1.0-probSubDeam;
-   
-    long double probCorrectAll3    = powl(probMatch[bq],3.0);
-    long double probIncorrectAll3  = 1.0-probCorrectAll3;
+    // if(dinucIndex ==  7)
+    //    mpq = min(mpq,10);
+    long double probSubDeam              = probSubMatch->s[dinucIndex];
+    long double probSameDeam             = 1.0-probSubDeam;
+    //long double probSameDeam           = probSubMatch->s[dinucIndex];
+
+    long double probCorrect              =     probMatch[bq];
+    long double probIncorrect            = 1.0-probMatch[bq];
 
     
-    long double probCorrect2Params   = probCorrectAll3 * probSameDeam + probIncorrectAll3 * 0.5;
-    long double probIncorrect2Params = probCorrectAll3 * probSubDeam  + probIncorrectAll3 * 0.5;
+    long double probCorrect2Params       = probCorrect * probSameDeam + probIncorrect * 0.5;
+    long double probIncorrect2Params     = probCorrect * probSubDeam  + probIncorrect * 0.5;
 
     long double probCorrect2ParamsMQ     = probMapping[mpq]*  probCorrect2Params + probMismapping[mpq]*0.5;
     long double probIncorrect2ParamsMQ   = probMapping[mpq]*probIncorrect2Params + probMismapping[mpq]*0.5;
@@ -157,136 +138,14 @@ pair<long double,long double> probCorrectcubed(char b, char bModel,bool isRev,in
     pair<long double,long double>  toReturn;
     toReturn.first  = probCorrect2ParamsMQ;
     toReturn.second = probIncorrect2ParamsMQ;
+
+
+    //TO TEST, to remove
+    // toReturn.first  = 1.0;
+    // toReturn.second = 0.0;
     return toReturn;
 }
 
-pair<long double,long double> probCorrect(char b, char bModel,bool isRev,int mpq,int bq, const probSubstition * probSubMatch){
-    mpq = min(mpq,20);
-
-    int dinucIndex;
-    if( isRev ){
-	dinucIndex =      baseResolved2int(complement(bModel)) *4+baseResolved2int(complement(b));
-    }else{
-	dinucIndex =      baseResolved2int(           bModel)  *4+baseResolved2int(           b);
-    }
-
-
-    long double probSubDeam  = probSubMatch->s[dinucIndex];
-    long double probSameDeam = 1.0-probSubDeam;
-   
-    long double probCorrectAll3    = probMatch[bq];
-    long double probIncorrectAll3  = 1.0-probCorrectAll3;
-
-    
-    long double probCorrect2Params   = probCorrectAll3 * probSameDeam + probIncorrectAll3 * 0.5;
-    long double probIncorrect2Params = probCorrectAll3 * probSubDeam  + probIncorrectAll3 * 0.5;
-
-    long double probCorrect2ParamsMQ     = probMapping[mpq]*  probCorrect2Params + probMismapping[mpq]*0.5;
-    long double probIncorrect2ParamsMQ   = probMapping[mpq]*probIncorrect2Params + probMismapping[mpq]*0.5;
-    
-    pair<long double,long double>  toReturn;
-    toReturn.first  = probCorrect2ParamsMQ;
-    toReturn.second = probIncorrect2ParamsMQ;
-    return toReturn;
-}
-
-pair<long double,long double> probCorrect3(char b, char bModel,bool isRev,int mpq,int bq, const probSubstition * probSubMatch){
-     // mpq = min(mpq,30);
-     // mpq = max(mpq,60);
-
-    int dinucIndex;
-    if( isRev ){
-	dinucIndex =      baseResolved2int(complement(bModel)) *4+baseResolved2int(complement(b));
-    }else{
-	dinucIndex =      baseResolved2int(           bModel)  *4+baseResolved2int(           b);
-    }
-
-
-    long double probSubDeam  = probSubMatch->s[dinucIndex];
-    long double probSameDeam = 1.0-probSubDeam;
-   
-    long double probIncorrectAll3  = sqrtl(probMismatch[bq]);
-    long double probCorrectAll3    = 1.0-probIncorrectAll3;
-
-    
-    long double probCorrect2Params   = probCorrectAll3 * probSameDeam + probIncorrectAll3 * 0.5;
-    long double probIncorrect2Params = probCorrectAll3 * probSubDeam  + probIncorrectAll3 * 0.5;
-
-    long double probCorrect2ParamsMQ     = probMapping[mpq]*probCorrectAll3   + probMismapping[mpq]*0.5;
-    long double probIncorrect2ParamsMQ   = probMapping[mpq]*probIncorrectAll3 + probMismapping[mpq]*0.5;
-    
-    pair<long double,long double>  toReturn;
-    toReturn.first  = probCorrect2ParamsMQ;
-    toReturn.second = probIncorrect2ParamsMQ;
-    return toReturn;
-}
-
-
-pair<long double,long double> probCorrect4(char b, char bModel,bool isRev,int mpq,int bq, const probSubstition * probSubMatch){
-     // mpq = min(mpq,30);
-     // mpq = max(mpq,60);
-
-    int dinucIndex;
-    if( isRev ){
-	dinucIndex =      baseResolved2int(complement(bModel)) *4+baseResolved2int(complement(b));
-    }else{
-	dinucIndex =      baseResolved2int(           bModel)  *4+baseResolved2int(           b);
-    }
-
-
-    long double probSubDeam  = probSubMatch->s[dinucIndex];
-    long double probSameDeam = 1.0-probSubDeam;
-   
-    long double probIncorrectAll3  = sqrtl(probMismatch[bq]);
-    long double probCorrectAll3    = 1.0-probIncorrectAll3;
-
-    
-    long double probCorrect2Params   = probCorrectAll3 * probSameDeam + probIncorrectAll3 * 0.5;
-    long double probIncorrect2Params = probCorrectAll3 * probSubDeam  + probIncorrectAll3 * 0.5;
-
-    long double probCorrect2ParamsMQ     = probMapping[mpq]*  probCorrect2Params + probMismapping[mpq]*0.5;
-    long double probIncorrect2ParamsMQ   = probMapping[mpq]*probIncorrect2Params + probMismapping[mpq]*0.5;
-    
-    pair<long double,long double>  toReturn;
-    toReturn.first  = probCorrect2ParamsMQ;
-    toReturn.second = probIncorrect2ParamsMQ;
-    return toReturn;
-}
-
-
-
-//pair<long double,long double> probCorrect(char b, char bModel,bool isRev,int mpq,int bq, const probSubstition * probSubMatch){
-
-    // long double dnaProb[4];
-    // long double probError  =0.0;
-    // long double probCorrect=0.0;
-
-
-
-    // for(int i=0;i<4;i++){
-    // 	int dinucIndex;
-    // 	char bModel=dnaAlphabet[i];
-    // 	if( isRev ){
-    // 	    dinucIndex =      baseResolved2int(complement(b)) *4+baseResolved2int(complement(bModel));
-    // 	}else{
-    // 	    dinucIndex =      baseResolved2int(           b)  *4+baseResolved2int(           bModel);
-    // 	}
-    // 	//cout<<"model ="<<bModel<<" "<<b<<" "<<dinucIndex<<" "<<probSubMatch->s[dinucIndex] <<endl;
-    // 	dnaProb[i]  = probMismapping[mpq]*0.25;
-    // 	if(bModel == b){
-    // 	    dnaProb[i] += probMapping[mpq]*( (probMatch[bq] * probSubMatch->s[dinucIndex]                          ) );
-    // 	    probCorrect+=dnaProb[i];
-    // 	}else{
-    // 	    dnaProb[i] += probMapping[mpq]*( (probMatch[bq] * probSubMatch->s[dinucIndex]  + probMismatch[bq]/3.0  ) );
-    // 	    probError+=dnaProb[i];
-    // 	}
-
-    // 	//cout<<"dnaProb ["<<i<<"]= "<<dnaProb[i]<<endl;
-    // }
-    // return (probCorrect/(probCorrect+probError));
-    //return probCorrect;
-    
-//}
 
 
 pair<long double,long double> paramsComma(string tosplit){
@@ -365,16 +224,16 @@ public:
     // , singleCont(singleCont)
   { 
      
-      //cout<<"constr size="<<vectorOfMP.size()<<endl;
-    initFiles(vectorOfMP,
-	      // atLeastOneHasData,
-	      hasData,
-	      popSizePerFile,
-	      vecAlleleRecords,
-	      chr1,
-	      coordFirst,
-	      false);
-    //cout<<"constr"<<endl;
+      //      cout<<"constr size="<<vectorOfMP.size()<<endl;
+      initFiles(vectorOfMP,
+		// atLeastOneHasData,
+		hasData,
+		popSizePerFile,
+		vecAlleleRecords,
+		chr1,
+		coordFirst,
+		false);
+      //cout<<"constr"<<endl;
     hasCoordinate = vector<bool>(m_vectorOfMP.size(),true);//dummy value
 
 
@@ -460,6 +319,7 @@ public:
 	    stayLoop=false;
 	    break;
 
+#ifdef DEBUGFREQ
 	    if(0)
 	    for(unsigned int i=0;i<m_vectorOfMP.size();i++){ 
 		 
@@ -476,7 +336,7 @@ public:
 		}
 		
 	    }
-
+#endif
 
 	    // //all have add getData called, we need to reposition to the maximum coord
 	    // bool needToSetCoord=true;
@@ -588,8 +448,8 @@ public:
 	    return ;
 	}
 
-
-	if(1){
+#ifdef DEBUGFREQ
+	if(0){//testing
 
 	    if(derFreq[0] == 0.0){//skip sites with fixed bases
 		for(unsigned int i=0;i<pileupData.PileupAlignments.size();i++){				
@@ -633,6 +493,7 @@ public:
 
 	    }
 	}
+#endif
 
 	if( derAllele=='N' ||
 	    ancAllele=='N' )
@@ -715,13 +576,14 @@ public:
 		dist3p = pileupData.PileupAlignments[i].Alignment.QueryBases.size() - pileupData.PileupAlignments[i].PositionInAlignment-1;
 	    }
 		    		    
-	    probSubstition * probSubMatchToUseEndo = &defaultSubMatch ;
-	    probSubstition * probSubMatchToUseCont = &defaultSubMatch ;
+	    // probSubstition * probSubMatchToUseEndo = &defaultSubMatch ;
+	    // probSubstition * probSubMatchToUseCont = &defaultSubMatch ;
+	    substitutionRates * probSubMatchToUseEndo = &defaultSubMatch ;
+	    substitutionRates * probSubMatchToUseCont = &defaultSubMatch ;
 
 
 	    if(dist5p <= (int(sub5p.size()) -1)){
 		probSubMatchToUseEndo = &sub5p[  dist5p ];			
-
 	    }
 
 	    if(dist5p <= (int(sub5pC.size()) -1)){
@@ -759,132 +621,15 @@ public:
 		    
 	    }
 
-	    //int dinucIndexModelObs;
-	    int dinucIndexDD;
-	    int dinucIndexDA;
-	    int dinucIndexAD;
-	    int dinucIndexAA;
-
-	    //there are four possibilities:
-	    // model       observation
-	    // d           d
-	    // d           a
-	    // a           d
-	    // a           a
-
-	    if( pileupData.PileupAlignments[i].Alignment.IsReverseStrand() ){
-
-		dinucIndexDD =      baseResolved2int(complement(derAllele)) *4+baseResolved2int(complement(derAllele));
-		dinucIndexDA =      baseResolved2int(complement(derAllele)) *4+baseResolved2int(complement(ancAllele));
-		dinucIndexAD =      baseResolved2int(complement(ancAllele)) *4+baseResolved2int(complement(derAllele));
-		dinucIndexAA =      baseResolved2int(complement(ancAllele)) *4+baseResolved2int(complement(ancAllele));
-
-	    }else{
-
-		dinucIndexDD =      baseResolved2int(           derAllele)  *4+baseResolved2int(           derAllele);
-		dinucIndexDA =      baseResolved2int(           derAllele)  *4+baseResolved2int(           ancAllele);
-		dinucIndexAD =      baseResolved2int(           ancAllele)  *4+baseResolved2int(           derAllele);
-		dinucIndexAA =      baseResolved2int(           ancAllele)  *4+baseResolved2int(           ancAllele);
-
-	    }
 
 	    
-	    // if(b== derAllele){//b is the observation and b is derived
 
 
-	    // }else{
-
-	    // 	if( pileupData.PileupAlignments[i].Alignment.IsReverseStrand() ){
-	    // 	    dinucIndex =      baseResolved2int(complement(derAllele)) *4+baseResolved2int(complement(ancAllele));
-	    // 	}else{
-	    // 	    dinucIndex =      baseResolved2int(           derAllele)  *4+baseResolved2int(           ancAllele);
-	    // 	}
-
-
-	    // }
-	    // END DEAMINATION COMPUTATION
-
-
-	    long double probDDeCorrect = 1.0-probSubMatchToUseEndo->s[dinucIndexDA];
-	    long double probDAeCorrect =     probSubMatchToUseEndo->s[dinucIndexDA];
-
-	    long double probADeCorrect =     probSubMatchToUseEndo->s[dinucIndexAD];
-	    long double probAAeCorrect = 1.0-probSubMatchToUseEndo->s[dinucIndexAD];
-
-	    long double probDDcCorrect = 1.0-probSubMatchToUseCont->s[dinucIndexDA];
-	    long double probDAcCorrect =     probSubMatchToUseCont->s[dinucIndexDA];
-
-	    long double probADcCorrect =     probSubMatchToUseCont->s[dinucIndexAD];
-	    long double probAAcCorrect = 1.0-probSubMatchToUseCont->s[dinucIndexAD];
-
-
-
-	    // long double probDDe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDDeCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probDAe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDAeCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-
-	    // long double probADe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probADeCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probAAe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probAAeCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-
-	    // long double probDDc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDDcCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probDAc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDAcCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-
-	    // long double probADc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probADcCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probAAc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probAAcCorrect) + (probMismatch[sb.bq])*0.5) ) + probMismapping[sb.mpq]*0.5;
-
-	    // long double probDDe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDDeCorrect) + 0.0                      ) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probDAe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDAeCorrect) + (probMismatch[sb.bq])    ) ) + probMismapping[sb.mpq]*0.5;
-
-	    // long double probADe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probADeCorrect) + (probMismatch[sb.bq])    ) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probAAe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probAAeCorrect) + 0.0                      ) ) + probMismapping[sb.mpq]*0.5;
-
-	    // long double probDDc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDDcCorrect) + 0.0                      ) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probDAc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDAcCorrect) + (probMismatch[sb.bq])    ) ) + probMismapping[sb.mpq]*0.5;
-
-	    // long double probADc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probADcCorrect) + (probMismatch[sb.bq])    ) ) + probMismapping[sb.mpq]*0.5;
-	    // long double probAAc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probAAcCorrect) + 0.0                      ) ) + probMismapping[sb.mpq]*0.5;
-
-	    //test 4
-	    // long double probDDe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDDeCorrect) + 0.0                      ) ) ;
-	    // long double probDAe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDAeCorrect) + (probMismatch[sb.bq])    ) ) ;
-
-	    // long double probADe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probADeCorrect) + (probMismatch[sb.bq])    ) ) ;
-	    // long double probAAe = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probAAeCorrect) + 0.0                      ) ) ;
-
-	    // long double probDDc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDDcCorrect) + 0.0                      ) ) ;
-	    // long double probDAc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDAcCorrect) + (probMismatch[sb.bq])    ) ) ;
-
-	    // long double probADc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probADcCorrect) + (probMismatch[sb.bq])    ) ) ;
-	    // long double probAAc = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probAAcCorrect) + 0.0                      ) ) ;
-
-
-
-	    // long double probDDe = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseEndo->s[dinucIndexDD]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexDD]);
-	    // long double probDAe = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseEndo->s[dinucIndexDA]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexDA]);
-	    // long double probADe = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseEndo->s[dinucIndexAD]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexAD]);
-	    // long double probAAe = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseEndo->s[dinucIndexAA]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexAA]);
-
-	    // long double probDDc = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseCont->s[dinucIndexDD]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexDD]);
-	    // long double probDAc = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseCont->s[dinucIndexDA]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexDA]);
-	    // long double probADc = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseCont->s[dinucIndexAD]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexAD]);
-	    // long double probAAc = (likeMatchProb[sb.bq] * (0.0+probSubMatchToUseCont->s[dinucIndexAA]) + (1.0 - likeMatchProb[sb.bq])* illuminaErrorsProb.s[dinucIndexAA]);
-
-
-	    
-	    // long double probDDe =        probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseEndo);
-	    // long double probDAe = 1.0 -  probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseEndo);
-
-	    // long double probADe = 1.0 -  probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseEndo);
-	    // long double probAAe =        probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseEndo);
-
-	    // long double probDDc =        probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseCont);
-	    // long double probDAc = 1.0 -  probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseCont);
-
-	    // long double probADc = 1.0 -  probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseCont);
-	    // long double probAAc =        probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseCont);
 
 	    pair<long double,long double> probsub;
-
+	    //                    obs       model
 	    probsub = probCorrect(ancAllele,derAllele,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseEndo);
+
 
 	    long double probDDe = probsub.first;
 	    long double probDAe = probsub.second;
@@ -894,6 +639,7 @@ public:
 	    long double probDDc = probsub.first;
 	    long double probDAc = probsub.second;
 
+	    //                    obs       model
 	    probsub = probCorrect(derAllele,ancAllele,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseEndo);
 
 	    long double probAAe = probsub.first;
@@ -911,75 +657,47 @@ public:
 #ifdef DEBUGERRORP	    
 
 	    cout<<"qual "<<sb.bq<<" mq "<< sb.mpq<<endl;
-	    long double correct= probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDDeCorrect)                              ) ) + probMismapping[sb.mpq]*0.25;
-	    long double wrong  = probMapping[sb.mpq]*( (probMatch[sb.bq] * (probDAeCorrect) + (probMismatch[sb.bq])/3.0  ) ) + probMismapping[sb.mpq]*0.25;
-	    //cout<<"test "<<correct/(correct+wrong*3.0)<<"\t"<<(1- (correct/(correct+wrong*3.0)))<<endl;
-	    //long double probCorrect(char b,bool isRev,int mpq,int bq, const probSubstition * probSubMatch){
-	    //probCorrect(b,pileupData.PileupAlignments[i].Alignment.IsReverseStrand(),sb.mpq,sb.bq,probSubMatchToUseEndo);
+	    int dinucIndex;
+	    if( pileupData.PileupAlignments[i].Alignment.IsReverseStrand() ){
+		//dinucIndex =      baseResolved2int(complement(derAllele)) *4+baseResolved2int(complement(ancAllele));
+		dinucIndex =	  dimer2index(     complement(derAllele),  complement(ancAllele));
+	    }else{
+		//dinucIndex =      baseResolved2int(           derAllele)  *4+baseResolved2int(           ancAllele);
+		dinucIndex =	  dimer2index(                derAllele,              ancAllele);
+	    }
+
+	    cout<<"D="<<derAllele<<",A="<<ancAllele<<"\t"<<probSubMatchToUseEndo->s[dinucIndex]<<endl;
+	    for(int i=0;i<12;i++){
+		cout<<i<<"="<<probSubMatchToUseEndo->s[i]<<endl;
+	    }
 
 
-	    cout<<"dde\t"<<probDDeCorrect<<endl;	    
-	    cout<<"dae\t"<<probDAeCorrect<<endl;	    
-	    cout<<"ade\t"<<probADeCorrect<<endl;	    
-	    cout<<"aae\t"<<probAAeCorrect<<endl;	    
+	    cout<<"DDe"<<"\tdde\t"<<probDDe<<endl;	    
+	    cout<<"DAe"<<"\tdae\t"<<probDAe<<endl;	    
+	    cout<<"ADe"<<"\tade\t"<<probADe<<endl;	    
+	    cout<<"AAe"<<"\taae\t"<<probAAe<<endl;	    
 
+	    cout<<"DDc"<<"\tddc\t"<<probDDc<<endl;	    
+	    cout<<"DAc"<<"\tdac\t"<<probDAc<<endl;	    
+	    cout<<"ADc"<<"\tadc\t"<<probADc<<endl;	    
+	    cout<<"AAc"<<"\taac\t"<<probAAc<<endl;	    	    
 
-	    cout<<dinucIndexDD<<"\tdde\t"<<probDDe<<endl;	    
-	    cout<<dinucIndexDA<<"\tdae\t"<<probDAe<<endl;	    
-	    cout<<dinucIndexAD<<"\tade\t"<<probADe<<endl;	    
-	    cout<<dinucIndexAA<<"\taae\t"<<probAAe<<endl;	    
+	    // cout<<dinucIndexDD<<"\tdde\t"<<probDDe<<endl;	    
+	    // cout<<dinucIndexDA<<"\tdae\t"<<probDAe<<endl;	    
+	    // cout<<dinucIndexAD<<"\tade\t"<<probADe<<endl;	    
+	    // cout<<dinucIndexAA<<"\taae\t"<<probAAe<<endl;	    
 
-	    cout<<dinucIndexDD<<"\tddc\t"<<probDDc<<endl;	    
-	    cout<<dinucIndexDA<<"\tdac\t"<<probDAc<<endl;	    
-	    cout<<dinucIndexAD<<"\tadc\t"<<probADc<<endl;	    
-	    cout<<dinucIndexAA<<"\taac\t"<<probAAc<<endl;	    	    
+	    // cout<<dinucIndexDD<<"\tddc\t"<<probDDc<<endl;	    
+	    // cout<<dinucIndexDA<<"\tdac\t"<<probDAc<<endl;	    
+	    // cout<<dinucIndexAD<<"\tadc\t"<<probADc<<endl;	    
+	    // cout<<dinucIndexAA<<"\taac\t"<<probAAc<<endl;	    	    
 
 #endif
-
-	    // long double eest = 0.005;
-	    // probDDe = 1-eest;
-	    // probDAe = eest;
-	    // probADe = eest;
-	    // probAAe = 1-eest;
-
-	    // probDDc = 1-eest;
-	    // probDAc = eest;
-	    // probADc = eest;
-	    // probAAc = 1-eest;
-
-	    //test 5
-	    // probDAe=1.0-probDDe;
-	    // probADe=1.0-probAAe;
-	    // probDAc=1.0-probDDc;
-	    // probADc=1.0-probAAc;
 
 
 #ifdef DEBUGERRORP	    
 	    cout<<"i="<<i<<"\t"<<posAlign<<"\tref="<<referenceBase<<"\tb_obs="<<b<<"\tq="<<sb.bq<<"\t"<<pileupData.PileupAlignments[i].Alignment.Name<<"\t"<<"\td="<<derAllele<<"\ta="<<ancAllele <<"\t"<<dist5p<<"\t"<<dist3p<<"\t"<<(pileupData.PileupAlignments[i].Alignment.IsReverseStrand()?"R":"F")<<endl;
 
-	    // cout<<dinucIndexDD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDD]<<endl;	    
-	    // cout<<dinucIndexDA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDA]<<endl;	    
-	    // cout<<dinucIndexAD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAD]<<endl;	    
-	    // cout<<dinucIndexAA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAA]<<endl;	    
-
-	    // cout<<dinucIndexDD<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDD]<<endl;	    
-	    // cout<<dinucIndexDA<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexDA])<<"\t"<<probSubMatchToUseCont->s[dinucIndexDA]<<endl;	    
-	    // cout<<dinucIndexAD<<"\t"<<(0.0+probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAD]<<endl;	    
-	    // cout<<dinucIndexAA<<"\t"<<(1.0-probSubMatchToUseEndo->s[dinucIndexAD])<<"\t"<<probSubMatchToUseCont->s[dinucIndexAA]<<endl;	    
-
-
-	 
-
-
-	    cout<<dinucIndexDD<<"\tdde\t"<<probDDe<<endl;	    
-	    cout<<dinucIndexDA<<"\tdae\t"<<probDAe<<endl;	    
-	    cout<<dinucIndexAD<<"\tade\t"<<probADe<<endl;	    
-	    cout<<dinucIndexAA<<"\taae\t"<<probAAe<<endl;	    
-
-	    cout<<dinucIndexDD<<"\tddc\t"<<probDDc<<endl;	    
-	    cout<<dinucIndexDA<<"\tdac\t"<<probDAc<<endl;	    
-	    cout<<dinucIndexAD<<"\tadc\t"<<probADc<<endl;	    
-	    cout<<dinucIndexAA<<"\taac\t"<<probAAc<<endl;	    
 
 #endif
 
@@ -1111,37 +829,6 @@ void initScores(){
 	probMapping[m]    = correctMappingProb;    //1-m
 	probMismapping[m] = incorrectMappingProb;  //m
     }
-// #ifdef DEBUG1
-// 	cerr<<"m\t"<<m<<"\t"<<incorrectMappingProb<<"\t"<<correctMappingProb<<endl;
-// #endif
-	
-//     	for(int i=0;i<2;i++){
-//     	    likeMatchMQ[m][i]           = log(  correctMappingProb*(1.0-pow(10.0,2.0/-10.0)    ) + incorrectMappingProb/4.0   )/log(10);         
-//     	    likeMismatchMQ[m][i]        = log(  correctMappingProb*(    pow(10.0,2.0/-10.0)/3.0) + incorrectMappingProb/4.0   )/log(10);
-//     	    likeMatchProbMQ[m][i]       = correctMappingProb*(1.0-pow(10.0,2.0/-10.0)    ) + incorrectMappingProb/4.0;
-//     	    likeMismatchProbMQ[m][i]    = correctMappingProb*(    pow(10.0,2.0/-10.0)/3.0) + incorrectMappingProb/4.0;
-//     	}
-
-
-//     	//Computing for quality scores 2 and up
-//     	for(int i=2;i<MAXMAPPINGQUAL;i++){
-// 	    //  (1-m)(1-e) + m/4  = 1-m-e+me +m/4  = 1+3m/4-e+me
-//     	    likeMatchMQ[m][i]         = log(  correctMappingProb*(1.0-pow(10.0,i/-10.0)    ) + incorrectMappingProb/4.0    )/log(10);    
-// 	    //  (1-m)(e/3) + m/4  = e/3 -me/3 + m/4
-//     	    likeMismatchMQ[m][i]      = log(  correctMappingProb*(    pow(10.0,i/-10.0)/3.0) + incorrectMappingProb/4.0    )/log(10);    
-	    
-//     	    likeMatchProbMQ[m][i]           = correctMappingProb*(1.0-pow(10.0,i/-10.0)    ) + incorrectMappingProb/4.0;
-//     	    likeMismatchProbMQ[m][i]        = correctMappingProb*(    pow(10.0,i/-10.0)/3.0) + incorrectMappingProb/4.0;
-//     	}
-
-
-// #ifdef DEBUG1
-//     	for(int i=0;i<MAXMAPPINGQUAL;i++){
-// 	    cerr<<"m\t"<<m<<"\t"<<i<<"\t"<<likeMatchMQ[m][i]<<"\t"<<likeMismatchMQ[m][i]<<"\t"<<likeMatchProbMQ[m][i]<<"\t"<<likeMismatchProbMQ[m][i]<<endl;
-// 	}
-// #endif
-
-//     }
 
 }
 
@@ -1162,6 +849,9 @@ int main (int argc, char *argv[]) {
     setlocale(LC_ALL, "POSIX");
     // int sizeGenome=0;
     string output  = "/dev/stdout";
+    // string outTabPrefix     = "";
+    // bool   outTabPrefixBool = false;
+
     // string outlog  = "/dev/stderr";
     // string nameMT  = "MT";
 
@@ -1194,7 +884,7 @@ int main (int argc, char *argv[]) {
 
 
     // Set lower boundaries for optimization algorithm
-    long double elower         = 0.00001;
+    // long double elower         = 0.00001;
     long double rlower         = 0.00001;
     long double tau_Clower     = 0.000001;
     long double tau_Alower     = 0.000001;
@@ -1202,21 +892,21 @@ int main (int argc, char *argv[]) {
     long double admixtimelower = 0.05;
 
     // Set upper boundaries for optimization algorithm
-    long double eupper         = 0.1;
+    // long double eupper         = 0.1;
     long double rupper         = 0.5;
     long double tau_Cupper     = 1.0;
     long double tau_Aupper     = 1.0;
     long double admixrateupper = 0.5;
     long double admixtimeupper = 0.11;
 
-    long double e_i         ;
+    // long double e_i         ;
     long double r_i         ;
     long double tau_C_i     ;
     long double tau_A_i     ;
     long double admixrate_i ;
     long double admixtime_i ;
 
-    bool e_i_0         = false;
+    // bool e_i_0         = false;
     bool r_i_0         = false;
     bool tau_C_i_0     = false;
     bool tau_A_i_0     = false;
@@ -1267,16 +957,24 @@ int main (int argc, char *argv[]) {
     // bool specifiedLocc             = false;
     // bool specifiedScalee           = false;
     // bool specifiedScalec           = false;
+    string anchPop;
+    string admxPop;
+    string contPop;
+
+    int anchPopIDX;
+    int admxPopIDX;
+    int contPopIDX;
 
 
     const string usage=string("\nThis program takes an aligned BAM file for a mitonchondria and calls a\nconsensus for the endogenous material\n\n\t"+
 			      string(argv[0])+			      
 			      " [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... "+"\n\n"+
 			      
-  "\t\t"+"-2p" +"\t\t\t\t"+"Use 2pop mode (default: none)"+"\n"+
+			      "\t\t"+"-2p" +"\t\t\t\t"+"Use 2pop mode (default: none)"+"\n"+
                               "\t\t"+"-3p" +"\t\t\t\t"+"Use 3pop mode (default: none)"+"\n"+
 
                               "\t\t"+"-o     [output log]" +"\t\t"+"Output log (default: stdout)"+"\n"+
+                              // "\t\t"+"-otab  [output tab]" +"\t\t"+"Produce a tab delimited output, enter the prefix here but no MCMC computation (default: none)"+"\n"+
 			      
                               "\n\tComputation options:\n"+
                               "\t\t"+"-s     [step]" +"\t\t\t"+"MCMC interval space step (default: "+stringify(step)+")"+"\n"+
@@ -1291,7 +989,7 @@ int main (int argc, char *argv[]) {
 			      "\t\t"+"-aT0    [admT]" +"\t\t\t"+"Admixture rate     (default: random)"+"\n"+
                               
 			      "\n\tRange for parameter values:\n"+
-			      "\t\t"+"-e     el,eh"+"\t\t\t"+"Error rate range          (default: "+stringify(elower)         +","+stringify(eupper)+" )"+"\n"+
+			      // "\t\t"+"-e     el,eh"+"\t\t\t"+"Error rate range          (default: "+stringify(elower)         +","+stringify(eupper)+" )"+"\n"+
 			      "\t\t"+"-r     rl,rh" +"\t\t\t"+"Contamination rate range  (default: "+stringify(rlower)         +","+stringify(rupper)+" )"+"\n"+
 			      "\t\t"+"-tA    tauAl,tauAh" +"\t\t"+"Tau Archaic range         (default: "+stringify(tau_Alower)     +","+stringify(tau_Aupper)+"   )"+"\n"+
 			      "\t\t"+"-tC    tauCl,tauCh" +"\t\t"+"Tau Contaminant range     (default: "+stringify(tau_Clower)     +","+stringify(tau_Cupper)+"   )"+"\n"+
@@ -1318,6 +1016,12 @@ int main (int argc, char *argv[]) {
 			      "\t\t"+"-deam3pc [.prof file]" +"\t\t"+"3p deamination frequency for the contaminant (default: "+deam3pfreqC+")"+"\n"+
 
 
+			      "\n\t\Population options:\n"+ 
+			      "\tThe name of the populations much be the same (case sensitive) in the frequency files\n"+
+			      "\t\t"+"--anch"+  "\t\t\t\t"+"Anchor population         (default: all)"+"\n"+
+			      "\t\t"+"--cont"+  "\t\t\t\t"+"Contaminant population    (default: all)"+"\n"+
+			      "\t\t"+"--admx"+  "\t\t\t\t"+"Admixing populations      (default: all)"+"\n"+
+			      
 			      // "\t\t"+"-deamread" +"\t\t\t"+"Set a prior on reads according to their deamination pattern (default: "+ booleanAsString(deamread) +")"+"\n"+
 			      // "\t\t"+"-cont    [cont prior]"+"\t\t"+"If the -deamread option is specified, this is the contamination prior (default: "+ stringify(contaminationPrior) +")"+"\n"+
 			      // "\t\t"+"                  "+"\t\t"+"Otherwise the contamination prior will be  "+ stringify(contaminationPriorNoDeam) +""+"\n\n"+
@@ -1338,10 +1042,10 @@ int main (int argc, char *argv[]) {
 			      // "\t\t"+"--locc"+  "\t\t\t\t"+"Location for lognormal dist for the contaminant sequences (default none)"+"\n"+
 			      // "\t\t"+"--scalec"+"\t\t\t"+"Scale for lognormal dist for the contaminant sequences (default none)"+"\n"+
 
-			      // "\n\tComputation options:\n"+	
+			      "\n\tComputation options:\n"+	
 			      // "\t\t"+"-nomq" +"\t\t\t\t"+"Ignore mapping quality (default: "+booleanAsString(ignoreMQ)+")"+"\n"+
 			      // "\t\t"+"-err" +"\t\t\t\t"+"Illumina error profile (default: "+errFile+")"+"\n"+
-			      "\t\t"+"--phred64" +"\t\t"+"Use PHRED 64 as the offset for QC scores (default : PHRED33)"+"\n"+
+			      "\t\t"+"--phred64" +"\t\t\t"+"Use PHRED 64 as the offset for QC scores (default : PHRED33)"+"\n"+
 
 			      // "\n\tReference options:\n"+	
 			      // "\t\t"+"-l [length]" +"\t\t\t"+"Actual length of the genome used for"+"\n"+
@@ -1360,6 +1064,7 @@ int main (int argc, char *argv[]) {
 
 
     int lastOpt=1;
+    string cwdProg=getCWD(argv[0]);
 
     for(int i=1;i<(argc);i++){ 
 
@@ -1460,21 +1165,6 @@ int main (int argc, char *argv[]) {
          }
 
 
-        if(string(argv[i]) == "-e0"  ){
-	    e_i = destringify<double>(argv[i+1]);
-	    e_i_0=true;
-            i++;
-            continue;
-        }
-
-         if(string(argv[i]) == "-e"  ){
-	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
-	     elower = t.first;
-	     eupper = t.second;	     
-             i++;
-             continue;
-         }
-
         if(string(argv[i]) == "-r0"  ){
 	    r_i = destringify<double>(argv[i+1]);
 	    r_i_0=true;
@@ -1509,6 +1199,13 @@ int main (int argc, char *argv[]) {
             continue;
         }
 
+	// if( string(argv[i]) == "-otab"  ){
+        //     outTabPrefix=string(argv[i+1]);
+	//     outTabPrefixBool=true;
+        //     i++;
+        //     continue;
+        // }
+
         if(string(argv[i]) == "-s"  ){
             step = destringify<double>(argv[i+1]);
             i++;
@@ -1523,39 +1220,6 @@ int main (int argc, char *argv[]) {
         }
 
 
-	// if(string(argv[i]) == "--loce" ){
-	//     locatione =destringify<long double>(argv[i+1]);
-	//     i++;
-	//     specifiedLoce=true;
-	//     continue;
-	// }
-
-	// if(string(argv[i]) == "--scalee" ){
-	//     scalee =destringify<long double>(argv[i+1]);
-	//     i++;
-	//     specifiedScalee=true;
-	//     continue;
-	// }
-
-	// if(string(argv[i]) == "--locc" ){
-	//     locationc =destringify<long double>(argv[i+1]);
-	//     i++;
-	//     specifiedLocc=true;
-	//     continue;
-	// }
-
-	// if(string(argv[i]) == "--scalec" ){
-	//     scalec =destringify<long double>(argv[i+1]);
-	//     i++;
-	//     specifiedScalec=true;
-	//     continue;
-	// }
-
-	// if(string(argv[i]) == "-err"  ){
-	//     errFile=string(argv[i+1]);
-	//     i++;
-	//     continue;
-	// }
 
 	if(string(argv[i]) == "-deam5p"  ){
 	    deam5pfreqE=string(argv[i+1]);
@@ -1581,95 +1245,45 @@ int main (int argc, char *argv[]) {
 	    continue;
 	}
 
-	// if(string(argv[i]) == "-deamread"  ){
-	//     deamread=true;
-	//     continue;
-	// }
-
-
-	// if(string(argv[i]) == "-single"  ){
-	//     singleCont=true;
-	//     continue;
-	// }
-
-
-	// if(string(argv[i]) ==  "-cont" ){
-	//     contaminationPrior=destringify<long double>(argv[i+1]);
-	//     specifiedContPrior=true;
-	//     i++;
-	//     continue;
-	// }
-
-	// if(strcmp(argv[i],"-deam5") == 0 ){
-	//     deam5File=string(argv[i+1]);
-	//     i++;
-	//     continue;
-	// }
-
-	// if(string(argv[i]) == "-nomq" ){
-	//     ignoreMQ=true;
-	//     continue;
-	// }
-
 	if(string(argv[i]) == "-o" ){
 	    output=string(argv[i+1]);
 	    i++;
 	    continue;
 	}
 
-	// if(string(argv[i]) == "-log" ){
-	//     outlog=string(argv[i+1]);
-	//     i++;
-	//     continue;
-	// }
-
-	// if(string(argv[i]) == "-name" ){
-	//     nameMT=string(argv[i+1]);
-	//     i++;
-	//     continue;
-	// }
 
 
-	// if(string(argv[i]) == "-seqc" ){
-	//     outSeqC=string(argv[i+1]);
-	//     outSeqCflag = true;
-	//     userWantsContProduced=true;
-	//     i++;
-	//     continue;
-	// }
+	if( string(argv[i]) == "--anch"  ){
+	    anchPop= string(argv[i+1]) ;
+            i++;
+            continue;
+        }
 
-	// if(string(argv[i]) == "-logc" ){
-	//     outLogC=string(argv[i+1]);
-	//     outLogCflag = true;
-	//     userWantsContProduced=true;
-	//     i++;
-	//     continue;
-	// }
+	if( string(argv[i]) == "--cont"  ){
+	    contPop= string(argv[i+1]) ;
+            i++;
+            continue;
+        }
 
-	// if(string(argv[i]) == "-namec" ){
-	//     nameMTC=string(argv[i+1]);
-	//     userWantsContProduced=true;
-	//     i++;
-	//     continue;
-	// }
-
-	// if(string(argv[i]) == "-qual" ){
-	//     minQual=destringify<int>(argv[i+1]);
-	//     i++;
-	//     continue;
-	// }
+	if( string(argv[i]) == "--admx"  ){
+	    admxPop= string(argv[i+1]) ;
+            i++;
+            continue;
+        }
 
 
-
-	// if(string(argv[i]) == "-l" ){
-	//     sizeGenome=atoi(argv[i+1]);
-	//     i++;
-	//     continue;
-	// }
 
 
 	cerr<<"Error: unknown option "<<string(argv[i])<<endl;
 	return 1;
+    }
+
+
+    if(twoPopMode
+       &&
+       !admxPop.empty() ){
+	cerr<<"Cannot specify --admx with -2p"<<endl;
+        return 1;
     }
 
     // if(output == outlog){
@@ -1685,10 +1299,10 @@ int main (int argc, char *argv[]) {
     }
 
     vector<string>  filesAlFreq;
-    string fastaFile    = string(argv[lastOpt]);//fasta file
-    string bamfiletopen = string(argv[lastOpt+1]);//bam file
-    //string fastaFile    = string(argv[argc-2]);//fasta file
-    string regionStr       = string(argv[lastOpt+2]);//fasta file
+    string fastaFile       = string(argv[lastOpt]);   //fasta file
+    string bamfiletopen    = string(argv[lastOpt+1]); //bam file
+    //string fastaFile     = string(argv[argc-2]);    //fasta file
+    string regionStr       = string(argv[lastOpt+2]); //fasta file
 
 
     cout<<lastOpt<<endl;
@@ -1724,7 +1338,7 @@ int main (int argc, char *argv[]) {
     //
     ////////////////////////////////////////////////////////////////////////
 
-    readIlluminaError(errFile,illuminaErrorsProb);
+    // readIlluminaError(errFile,illuminaErrorsProb);
 
     // for(int nuc1=0;nuc1<4;nuc1++){
     // 	for(int nuc2=0;nuc2<4;nuc2++){
@@ -1756,12 +1370,17 @@ int main (int argc, char *argv[]) {
     // BEGIN DEAMINATION PROFILE
     //
     ////////////////////////////////////////////////////////////////////////
-    readNucSubstitionFreq(deam5pfreqE,sub5p);
-    readNucSubstitionFreq(deam3pfreqE,sub3p);
-    readNucSubstitionFreq(deam5pfreqC,sub5pC);
-    readNucSubstitionFreq(deam3pfreqC,sub3pC);
+    readNucSubstitionRatesFreq(deam5pfreqE,sub5p);
+    readNucSubstitionRatesFreq(deam3pfreqE,sub3p);
+    readNucSubstitionRatesFreq(deam5pfreqC,sub5pC);
+    readNucSubstitionRatesFreq(deam3pfreqC,sub3pC);
 
-
+    // for(int l=0;l<sub5p.size();l++){
+    // 	cout<<l<<"";
+    // 	for(int i=0;i<16;i++){
+    // 	    cout<<"\t"<<sub5p[l].s[i]<<endl;
+    // 	}
+    // }
 
     // cout<<sub5p.size()<<endl;
     // cout<<sub3p.size()<<endl;
@@ -1769,16 +1388,23 @@ int main (int argc, char *argv[]) {
     // return 1;
     
 
-    int defaultSubMatchIndex=0;
+    // int defaultSubMatchIndex=0;
 
-    for(int nuc1=0;nuc1<4;nuc1++){
-    	for(int nuc2=0;nuc2<4;nuc2++){	    
-    	    if(nuc1==nuc2)
-		defaultSubMatch.s[ defaultSubMatchIndex++ ] = 1.0;
-	    else
-		defaultSubMatch.s[ defaultSubMatchIndex++ ] = 0.0;
-    	}
+    // for(int nuc1=0;nuc1<4;nuc1++){
+    // 	for(int nuc2=0;nuc2<4;nuc2++){	    
+    // 	    if(nuc1==nuc2)
+    // 		defaultSubMatch.s[ defaultSubMatchIndex++ ] = 1.0;
+    // 	    else
+    // 		defaultSubMatch.s[ defaultSubMatchIndex++ ] = 0.0;
+    // 	}
     	
+    // }
+
+    for(int nuc=0;nuc<12;nuc++){
+	defaultSubMatch.s[ nuc ] = 0.0;
+	//     else
+	// 	defaultSubMatch.s[ defaultSubMatchIndex++ ] = 0.0;
+    	// }    	
     }
 
 
@@ -1936,7 +1562,30 @@ int main (int argc, char *argv[]) {
 	cerr<<"Error: File with allele frequencies must be defined"<<endl;
 	return 1;	
     }
-    
+
+
+
+    if(!anchPop.empty()){
+	for(unsigned int n=0;n<namesCont.size();n++){
+	    if(anchPop==namesCont[n])
+		anchPopIDX=int(n);
+	}
+    }
+
+    if(!contPop.empty()){
+	for(unsigned int n=0;n<namesCont.size();n++){
+	    if(contPop==namesCont[n])
+		contPopIDX=int(n);
+	}
+    }
+
+
+    if(!admxPop.empty()){
+	for(unsigned int n=0;n<namesCont.size();n++){
+	    if(admxPop==namesCont[n])
+		admxPopIDX=int(n);
+	}
+    }
     // for(unsigned int i=0;i<vectorOfMP.size();i++){ 
     // 	vectorOfMP[i]->repositionIterator(tokens[0], destringify<int>(tokens2[0]) ,  destringify<int>(tokens2[1]));
     // }
@@ -1969,13 +1618,14 @@ int main (int argc, char *argv[]) {
 	for(unsigned int mstIndex=0;mstIndex<vectorOfMP.size();mstIndex++){
 	    vectorOfMP[mstIndex]->repositionIterator( regionVec[regionIdx].id , regionVec[regionIdx].leftCoord , regionVec[regionIdx].rightCoord );
 	}
-	//cout<<"fine3 id "<<id<<endl;
+	// cout<<"fine3 id "<<id<<endl;
 	
 	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec);
+	// cout<<"fine4 id "<<id<<endl;
 	PileupEngine pileup;
 	pileup.AddVisitor(cv);
 
-	//cout<<"fine4 id "<<id<<endl;
+	// cout<<"fine5 id "<<id<<endl;
 	BamAlignment al;
 	unsigned int numReads=0;
 	//cerr<<"Reading BAM file ..."<<endl;
@@ -2006,18 +1656,54 @@ int main (int argc, char *argv[]) {
     cerr<<"done reading bam files"<<endl;
     //return 0;
 
-    cout<<"Anc\tDer\tPanelFreq\tNum"<<endl;
-    for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){
-	//cout<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived,"\t")<<"\t"<<1<<endl;
-	cout<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived,"\t")<<"\t"<<"\t"<<dataSitesVec->at(sitesIdx).chr<<"\t"<<dataSitesVec->at(sitesIdx).coord<<"\t"<<dataSitesVec->at(sitesIdx).ancAllele<<"\tanc"<<endl;
-	cout<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived,"\t")<<"\t"<<"\t"<<dataSitesVec->at(sitesIdx).chr<<"\t"<<dataSitesVec->at(sitesIdx).coord<<"\t"<<dataSitesVec->at(sitesIdx).derAllele<<"\tder"<<endl;
-    }
+
+    // if(outTabPrefixBool){
+    // 	for(int indexCont=0;indexCont<numberOfPopulationForCont;indexCont++){
+    // 	    for(int indexAnchor=0;indexAnchor<numberOfPopulationForCont;indexAnchor++){
+
+    // 		string filenameTab=outTabPrefix+"_C_"+namesCont[indexCont]+"_A_"+namesCont[indexAnchor]+".dice";
+    // 		ofstream outTabFP;
+
+    // 		outTabFP.open(filenameTab.c_str());
+		
+    // 		if (!outTabFP.is_open()){
+    // 		    cerr << "Unable to write to output file "<<filenameTab<<endl;
+    // 		    return 1;
+    // 		}
+
+    // 		//cout<<"C "<<namesCont[indexCont]<<"\tA "<<namesCont[indexAnchor]<<endl;
+    // 		if(indexCont == indexAnchor){	       
+    // 		    outTabFP<<"Anc\tDer\tPanelFreq\tNum"<<endl;
+    // 		    for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){		
+    // 			outTabFP<<
+    // 			    dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<
+    // 			    dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<
+    // 			    dataSitesVec->at(sitesIdx).freqDerived[indexCont]<<"\t"<<
+    // 			    "1"<<endl;
+    // 		    }
+    // 		}else{
+    // 		    //TODO , also do 3 pop
+    // 		}
+    // 		outTabFP.close();
+
+    // 	    }
+    // 	}
+    // 	return 0;
+    // }
+
+
+    // cout<<"Anc\tDer\tPanelFreq\tNum"<<endl;
+    // for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){
+    // 	//cout<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived,"\t")<<"\t"<<1<<endl;
+    // 	cout<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived,"\t")<<"\t"<<"\t"<<dataSitesVec->at(sitesIdx).chr<<"\t"<<dataSitesVec->at(sitesIdx).coord<<"\t"<<dataSitesVec->at(sitesIdx).ancAllele<<"\tanc"<<endl;
+    // 	cout<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived,"\t")<<"\t"<<"\t"<<dataSitesVec->at(sitesIdx).chr<<"\t"<<dataSitesVec->at(sitesIdx).coord<<"\t"<<dataSitesVec->at(sitesIdx).derAllele<<"\tder"<<endl;
+    // }
 
 
 
     //vector Variables
-   if(!e_i_0)
-       e_i       = randomLongDouble(elower,         eupper);
+   // if(!e_i_0)
+   //     e_i       = randomLongDouble(elower,         eupper);
 
    if(!r_i_0)
      r_i         = randomLongDouble(rlower,         rupper);
@@ -2035,7 +1721,7 @@ int main (int argc, char *argv[]) {
      admixtime_i = randomLongDouble(admixtimelower, admixtimeupper);
 
 
-    long double e_i_1;
+    // long double e_i_1;
     long double r_i_1;
     long double tau_C_i_1;
     long double tau_A_i_1;
@@ -2049,201 +1735,214 @@ int main (int argc, char *argv[]) {
    long double x_i_1l;
    //long double llik = LogFinalTwoPBAM( dataSitesVec, 0.05, 0.45, 0.5, indexCont, indexAnchor );
 
+   outLogFP<<"chain"<<"\tllik"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance"<<endl;
 
-    for(int indexCont=0;indexCont<numberOfPopulationForCont;indexCont++){
-	for(int indexAnchor=0;indexAnchor<numberOfPopulationForCont;indexAnchor++){
-	     cout<<"C "<<namesCont[indexCont]<<"\tA "<<namesCont[indexAnchor]<<endl;
+    // for(int indexCont=0;indexCont<numberOfPopulationForCont;indexCont++){
+    // 	for(int indexAnchor=0;indexAnchor<numberOfPopulationForCont;indexAnchor++){
+   //cout<<"C "<<namesCont[indexCont]<<"\tA "<<namesCont[indexAnchor]<<endl;
+   
+   if(twoPopMode){
+       x_il     = LogFinalTwoPBAM( dataSitesVec, r_i, tau_C_i,tau_A_i, contPopIDX, anchPopIDX );
+   }else{
+       if(threePopMode){
+	   //LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols );
+	   x_il = LogFinalThreePBAM( dataSitesVec, r_i, tau_C_i,tau_A_i,admixrate_i_1,admixtime_i_1, innerdriftY,innerdriftZ,nC,nB,cwdProg, contPopIDX, anchPopIDX, admxPopIDX );
+       }else{
+	   cerr<<"Invalid state"<<endl;
+	   return 1;
+       }
+   }
 
-	    x_il = LogFinalTwoPBAM( dataSitesVec, r_i, tau_C_i,tau_A_i, indexCont, indexAnchor );
-
-	    cout<<"init\t"<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<endl;
-	     // cout<<x_il<<endl;
+   //cout<<"init\t"<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<endl;
+   // cout<<x_il<<endl;
 	    
-	    int accept=0;
+   int accept=0;
 
-	    random_device rd;
-	    default_random_engine dre (rd());
+   random_device rd;
+   default_random_engine dre (rd());
 
-	    for(int chain=0;chain<maxChains;chain++){
+   for(int chain=0;chain<maxChains;chain++){
 		
-		long double partition= (long double)(step);
+       long double partition= (long double)(step);
 
 
-		// e_i_1         = randomLongDouble(elower,         eupper);
-		// r_i_1         = randomLongDouble(rlower,         rupper);
-		// tau_C_i_1     = randomLongDouble(tau_Clower,     tau_Cupper);
-		// tau_A_i_1     = randomLongDouble(tau_Alower,     tau_Aupper);
-		// admixrate_i_1 = randomLongDouble(admixratelower, admixrateupper);
-		// admixtime_i_1 = randomLongDouble(admixtimelower, admixtimeupper);
 		
-		//e
-		normal_distribution<long double> distribution_e(e_i,     (eupper-elower)/partition  );
-		e_i_1      = distribution_e(dre);
-		// e_i_1      = e_i;
+       // //e
+       // normal_distribution<long double> distribution_e(e_i,     (eupper-elower)/partition  );
+       // e_i_1      = distribution_e(dre);
+       // // e_i_1      = e_i;
 
-		if(e_i_1 <= elower     ||  e_i_1 >= eupper     ){
-		    e_i_1      = e_i;
-		    //chain--;
-		    //continue;
-		}
+       // if(e_i_1 <= elower     ||  e_i_1 >= eupper     ){
+       //     e_i_1      = e_i;
+       //     //chain--;
+       //     //continue;
+       // }
 
-		normal_distribution<long double> distribution_r(r_i,     (rupper-rlower)/partition  );
-		r_i_1      = distribution_r(dre);
-		// r_i_1      = r_i;
+       normal_distribution<long double> distribution_r(r_i,     (rupper-rlower)/partition  );
+       r_i_1      = distribution_r(dre);
+       // r_i_1      = r_i;
 
 
-		if(r_i_1 <= rlower     ||  r_i_1 >= rupper     ){
-		    r_i_1      = r_i;
-		    //chain--;
-		    //continue;
-		}
-		// cout<<tau_Aupper<<endl;
-		// cout<<tau_Cupper<<endl;
+       if(r_i_1 <= rlower     ||  r_i_1 >= rupper     ){
+	   r_i_1      = r_i;
+	   //chain--;
+	   //continue;
+       }
+       // cout<<tau_Aupper<<endl;
+       // cout<<tau_Cupper<<endl;
 
-		normal_distribution<long double> distribution_tau_C(tau_C_i, (tau_Cupper-tau_Clower)/partition  );
-		tau_C_i_1  = distribution_tau_C(dre);
+       normal_distribution<long double> distribution_tau_C(tau_C_i, (tau_Cupper-tau_Clower)/partition  );
+       tau_C_i_1  = distribution_tau_C(dre);
 
-		if(tau_C_i_1 <= tau_Clower ||  tau_C_i_1 >= tau_Cupper ){
-		    tau_C_i_1  = tau_C_i;
-		    //chain--;
-		    //continue;
-		}
+       if(tau_C_i_1 <= tau_Clower ||  tau_C_i_1 >= tau_Cupper ){
+	   tau_C_i_1  = tau_C_i;
+	   //chain--;
+	   //continue;
+       }
 
-		normal_distribution<long double> distribution_tau_A(tau_A_i, (tau_Aupper-tau_Alower)/partition  );
-		tau_A_i_1  = distribution_tau_A(dre);
+       normal_distribution<long double> distribution_tau_A(tau_A_i, (tau_Aupper-tau_Alower)/partition  );
+       tau_A_i_1  = distribution_tau_A(dre);
      
-		if(tau_A_i_1 <= tau_Alower ||  tau_A_i_1 >= tau_Aupper ){
-		    tau_A_i_1  = tau_A_i;
-		}
+       if(tau_A_i_1 <= tau_Alower ||  tau_A_i_1 >= tau_Aupper ){
+	   tau_A_i_1  = tau_A_i;
+       }
 
 
-		// cout<<"tC\t"<<tau_C_i<<"\t"<<tau_C_i_1<<"\t"<<(tau_C_i_1-tau_C_i)<< endl;
-		// cout<<"tA\t"<<tau_A_i<<"\t"<<tau_A_i_1<<"\t"<<(tau_A_i_1-tau_A_i)<<endl<<endl;
+       // cout<<"tC\t"<<tau_C_i<<"\t"<<tau_C_i_1<<"\t"<<(tau_C_i_1-tau_C_i)<< endl;
+       // cout<<"tA\t"<<tau_A_i<<"\t"<<tau_A_i_1<<"\t"<<(tau_A_i_1-tau_A_i)<<endl<<endl;
       
 
 
 		
-		// if(chain!=0)
-		// outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<endl;
-		cout<<"currt\t"<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<endl;
-		// cout<<"e"<<e_i<<"\te_1\t"<<e_i_1<<endl;
-		// return 1;
+       // if(chain!=0)
+       outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<endl;
+       //cout<<"currt\t"<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<endl;
+       // cout<<"e"<<e_i<<"\te_1\t"<<e_i_1<<endl;
+       // return 1;
 
 
-		// long double facte = fmod((long double)(randomProb()), (eupper-elower)/partition );
-		// //cout<<facte<<endl;
-		// if(randomBool()){
-		//      r_i_1=e_i+facte;
-		//  }else{
-		// 	   e_i_1=e_i-facte;
-		//  }
+       // long double facte = fmod((long double)(randomProb()), (eupper-elower)/partition );
+       // //cout<<facte<<endl;
+       // if(randomBool()){
+       //      r_i_1=e_i+facte;
+       //  }else{
+       // 	   e_i_1=e_i-facte;
+       //  }
 
-		// //r
-		// long double factr = fmod((long double)(randomProb()), (rupper-rlower)/partition );
-		// if(randomBool()){
-		//      r_i_1=r_i+factr;
-		//  }else{
-		//      r_i_1=r_i-factr;
-		//  }
+       // //r
+       // long double factr = fmod((long double)(randomProb()), (rupper-rlower)/partition );
+       // if(randomBool()){
+       //      r_i_1=r_i+factr;
+       //  }else{
+       //      r_i_1=r_i-factr;
+       //  }
 
-		// //tau_C
-		// long double facttau_C = fmod((long double)(randomProb()), (tau_Cupper-tau_Clower)/partition);
-		// if(randomBool()){
-		//      tau_C_i_1=tau_C_i+facttau_C;
-		//  }else{
-		//      tau_C_i_1=tau_C_i-facttau_C;
-		//  }
+       // //tau_C
+       // long double facttau_C = fmod((long double)(randomProb()), (tau_Cupper-tau_Clower)/partition);
+       // if(randomBool()){
+       //      tau_C_i_1=tau_C_i+facttau_C;
+       //  }else{
+       //      tau_C_i_1=tau_C_i-facttau_C;
+       //  }
 
-		// //tau_A
-		// long double facttau_A = fmod( (long double)(randomProb()), (tau_Aupper-tau_Alower)/partition);
-		// if(randomBool()){
-		//      tau_A_i_1=tau_A_i+facttau_A;
-		//  }else{
-		//      tau_A_i_1=tau_A_i-facttau_A;
-		//  }
+       // //tau_A
+       // long double facttau_A = fmod( (long double)(randomProb()), (tau_Aupper-tau_Alower)/partition);
+       // if(randomBool()){
+       //      tau_A_i_1=tau_A_i+facttau_A;
+       //  }else{
+       //      tau_A_i_1=tau_A_i-facttau_A;
+       //  }
 
-		if(!twoPopMode){
+       if(!twoPopMode){
 
-		    //admix_rate  
+	   //admix_rate  
 
-		    normal_distribution<long double> distribution_admixrate(admixrate_i, (admixrateupper-admixratelower)/partition  );
-		    admixrate_i_1  = distribution_admixrate(dre);
+	   normal_distribution<long double> distribution_admixrate(admixrate_i, (admixrateupper-admixratelower)/partition  );
+	   admixrate_i_1  = distribution_admixrate(dre);
      
-		    if(admixrate_i_1 <= admixratelower ||  admixrate_i_1 >= admixrateupper ){
-			admixrate_i_1  = admixrate_i;
-		    }
+	   if(admixrate_i_1 <= admixratelower ||  admixrate_i_1 >= admixrateupper ){
+	       admixrate_i_1  = admixrate_i;
+	   }
 
-		    normal_distribution<long double> distribution_admixtime(admixtime_i, (admixtimeupper-admixtimelower)/partition  );
-		    admixtime_i_1  = distribution_admixtime(dre);
+	   normal_distribution<long double> distribution_admixtime(admixtime_i, (admixtimeupper-admixtimelower)/partition  );
+	   admixtime_i_1  = distribution_admixtime(dre);
      
-		    if(admixtime_i_1 <= admixtimelower ||  admixtime_i_1 >= admixtimeupper ){
-			admixtime_i_1  = admixtime_i;
-		    }
+	   if(admixtime_i_1 <= admixtimelower ||  admixtime_i_1 >= admixtimeupper ){
+	       admixtime_i_1  = admixtime_i;
+	   }
 	   
-		    // long double factadmixrate = fmod( (long double)(randomProb()), (admixrateupper-admixratelower)/partition);
-		    // if(randomBool()){
-		    //     admixrate_i_1=admixrate_i+factadmixrate;
-		    // }else{
-		    //     admixrate_i_1=admixrate_i-factadmixrate;
-		    // }
+	   // long double factadmixrate = fmod( (long double)(randomProb()), (admixrateupper-admixratelower)/partition);
+	   // if(randomBool()){
+	   //     admixrate_i_1=admixrate_i+factadmixrate;
+	   // }else{
+	   //     admixrate_i_1=admixrate_i-factadmixrate;
+	   // }
 	   
-		    //admix_time  
-		    // long double factadmixtime = fmod( (long double)(randomProb()), (admixtimeupper-admixtimelower)/partition);
-		    // if(randomBool()){
-		    //     admixtime_i_1=admixtime_i+factadmixtime;
-		    // }else{
-		    //     admixtime_i_1=admixtime_i-factadmixtime;
-		    // }
-		}
-		//cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
-		if(twoPopMode){
-		    //x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols );
-		    x_i_1l = LogFinalTwoPBAM( dataSitesVec, r_i_1, tau_C_i_1,tau_A_i_1, indexCont, indexAnchor );
+	   //admix_time  
+	   // long double factadmixtime = fmod( (long double)(randomProb()), (admixtimeupper-admixtimelower)/partition);
+	   // if(randomBool()){
+	   //     admixtime_i_1=admixtime_i+factadmixtime;
+	   // }else{
+	   //     admixtime_i_1=admixtime_i-factadmixtime;
+	   // }
+       }
+       //cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
+       if(twoPopMode){
+	   //x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols );
+	   x_i_1l        = LogFinalTwoPBAM(   dataSitesVec, r_i_1, tau_C_i_1,tau_A_i_1, contPopIDX, anchPopIDX );
 
-		}else{
-		    //x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols );
+       }else{
+	   //x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols );
+	   //x_il = LogFinalThreePBAM( dataSitesVec, r_i, tau_C_i,tau_A_i,admixrate_i_1,admixtime_i_1, innerdriftY,innerdriftZ,nC,nB,cwdProg, contPopIDX, anchPopIDX, admxPopIDX );
+	   if(threePopMode){
+	       x_i_1l    = LogFinalThreePBAM( dataSitesVec, r_i_1, tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg, contPopIDX, anchPopIDX, admxPopIDX);
+	   }else{
+	       cerr<<"Invalid state"<<endl;
+	       return 1;
 
-		}
+	   }
+		    
+       }
 
-		long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
+       long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
 
-		cout<< "new   "<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
-		// outLogFP<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<"\t"<<acceptance<<endl;
+       //		cout<< "new   "<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
+       // outLogFP<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<"\t"<<acceptance<<endl;
 
-		// outLogFP<<chain<<"p\t"<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
-		cout<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<"\t"<<acceptance<<endl;
+       // outLogFP<<chain<<"p\t"<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
+       //cout<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<"\t"<<acceptance<<endl;
 
-		cout<<chain<<"p\t"<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
+       //cout<<chain<<"p\t"<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
 
-		if( (long double)(randomProb()) < acceptance){
-		    e_i           =  e_i_1;
-		    r_i           =  r_i_1;
-		    tau_C_i       =  tau_C_i_1;
-		    tau_A_i       =  tau_A_i_1;	  
-		    admixrate_i   =  admixrate_i_1;
-		    admixtime_i   =  admixtime_i_1;
-		    x_il      = x_i_1l;
-		    accept++;
-		    //outLogFP<<"new state"<<endl;
-		}else{
-		    //outLogFP<<"reject"<<endl;
-		}
+       if( (long double)(randomProb()) < acceptance){
+	   // e_i           =  e_i_1;
+	   r_i           =  r_i_1;
+	   tau_C_i       =  tau_C_i_1;
+	   tau_A_i       =  tau_A_i_1;	  
+	   admixrate_i   =  admixrate_i_1;
+	   admixtime_i   =  admixtime_i_1;
+	   x_il      = x_i_1l;
+	   accept++;
+	   //outLogFP<<"new state"<<endl;
+       }else{
+	   //outLogFP<<"reject"<<endl;
+       }
 
-		// cout<<endl;
-		//break;
-	    }
+       // cout<<endl;
+       //break;
+   }
 
-	    // cout<<"C"<<namesCont[indexCont]<<"\tA"<<namesCont[indexAnchor]<<endl;
-	    // long double llik = LogFinalTwoPBAM( dataSitesVec, 0.05, 0.45, 0.5, indexCont, indexAnchor );
-	    // cout<<llik<<endl;
-	}
-    }
-    // for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){
+   // cout<<"C"<<namesCont[indexCont]<<"\tA"<<namesCont[indexAnchor]<<endl;
+   // long double llik = LogFinalTwoPBAM( dataSitesVec, 0.05, 0.45, 0.5, indexCont, indexAnchor );
+   // cout<<llik<<endl;
+   // 	}
+   // }
+   // for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){
 	
 
-    // 	cout<<dataSitesVec->at(sitesIdx).ancAllele<<"\t"<<dataSitesVec->at(sitesIdx).derAllele<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived)<<endl;
-    // }
+   // 	cout<<dataSitesVec->at(sitesIdx).ancAllele<<"\t"<<dataSitesVec->at(sitesIdx).derAllele<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMd.size()<<"\t"<<dataSitesVec->at(sitesIdx).sitesBAMa.size()<<"\t"<<vectorToString(dataSitesVec->at(sitesIdx).freqDerived)<<endl;
+   // }
 
-    return 0;
+   return 0;
 }
 

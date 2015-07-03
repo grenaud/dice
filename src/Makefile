@@ -10,7 +10,7 @@ LDFLAGS  = tabix/libtabix.a ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-util
 
 
 
-all: nucular  nucularMCMC nucularMCMCBAM
+all: dice diceBAM BAM2DICE
 
 
 tabix/tabix.h:
@@ -43,33 +43,29 @@ miscfunc.o:	${LIBGAB}/utils.o miscfunc.cpp
 	${CXX} ${CXXFLAGS} miscfunc.cpp
 
 
-nucular.o:	nucular.cpp  libnuc.o
-	${CXX} ${CXXFLAGS} nucular.cpp
-
-nucularMCMC.o:	nucularMCMC.cpp libnuc.o
-	${CXX} ${CXXFLAGS} nucularMCMC.cpp
+diceBAM.o:	diceBAM.cpp 
+	${CXX} ${CXXFLAGS} diceBAM.cpp
 
 
-nucularMCMCBAM.o:	nucularMCMCBAM.cpp 
-	${CXX} ${CXXFLAGS} nucularMCMCBAM.cpp
+diceBAM:	diceBAM.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
+BAM2DICE.o:     BAM2DICE.cpp 
+	${CXX} ${CXXFLAGS} BAM2DICE.cpp
 
-
-nucularMCMCBAM:	nucularMCMCBAM.o tabix/libtabix.a miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
-
-nucularMCMCBAM:	nucularMCMCBAM.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+BAM2DICE:       BAM2DICE.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 libnuc.o:	libnuc.cpp  ${LIBGAB}/utils.o ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} ${CXXFLAGS} libnuc.cpp
 
 
-nucular:	nucular.o  tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
-	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
+dice.o:	dice.cpp libnuc.o
+	${CXX} ${CXXFLAGS} dice.cpp
 
-nucularMCMC:	nucularMCMC.o tabix/libtabix.a ${BAMTOOLS}/lib/libbamtools.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+dice:	dice.o tabix/libtabix.a ${BAMTOOLS}/lib/libbamtools.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
-	rm -f *.o nucular  nucularMCMC  nucularMCMCBAM
+	rm -f *.o dice  diceBAM BAM2DICE
 

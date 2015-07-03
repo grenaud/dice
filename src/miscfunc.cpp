@@ -178,6 +178,64 @@ void readNucSubstitionFreq(const string filename,vector<probSubstition> & subVec
 }
 
 
+
+void readNucSubstitionRatesFreq(const string filename,vector<substitutionRates> & subVec){
+    igzstream subFP;
+
+    subFP.open(filename.c_str(), ios::in);
+
+    //    unsigned int counterCont=0;
+    if (subFP.good()){
+	vector<string> fields;
+	string line;
+
+	//header
+	if ( !getline (subFP,line)){
+	    cerr << "Unable to open file "<<filename<<endl;
+	    exit(1);
+	}
+	fields = allTokens(line,'\t');
+	
+	if(fields.size() != 12){
+	    cerr << "line from error profile does not have 12 fields "<<line<<endl;
+	    exit(1);
+	}
+
+
+	//probs
+	while ( getline (subFP,line)){
+	    
+	    fields = allTokens(line,'\t');
+
+	    if(fields.size() != 12){
+		cerr << "line from error profile does not have 12 fields "<<line<<endl;
+		exit(1);
+	    }
+
+	    substitutionRates tempFreq;	
+
+
+	    for(unsigned int k=0;k<12;k++){	
+		//for(unsigned int t=0;t<=2;t++){	
+		tempFreq.s[k]=destringify<double>(fields[k]);
+		//}
+	    }
+
+
+
+	    subVec.push_back( tempFreq );
+	}	             	              
+	subFP.close();
+    }else{
+	cerr << "Unable to open file "<<filename<<endl;
+	exit(1);
+    }
+
+
+
+}
+
+
 void readMTConsensus(const string consensusFile,
 		     map<int, PHREDgeno> & pos2phredgeno,
 		     int & sizeGenome,

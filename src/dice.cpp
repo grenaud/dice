@@ -1,5 +1,5 @@
 /*
- * nucular
+ * dice
  * Date: Jan-22-2015 
  * Author : Gabriel Renaud gabriel.reno [at sign here ] gmail.com
  *
@@ -68,14 +68,18 @@ int main (int argc, char *argv[]) {
     long double admixrateupper = 0.5;
     long double admixtimeupper = 0.11;
 
-    long double e_i         ;
+    long double e_i         ; //TS
+    long double eTS_i       ; //TV
+
     long double r_i         ;
     long double tau_C_i     ;
     long double tau_A_i     ;
     long double admixrate_i ;
     long double admixtime_i ;
 
-    bool e_i_0         = false;
+    bool e_i_0         = false; //TS
+    bool eTS_i_0       = false;
+
     bool r_i_0         = false;
     bool tau_C_i_0     = false;
     bool tau_A_i_0     = false;
@@ -97,6 +101,7 @@ int main (int argc, char *argv[]) {
 
                               "\n\tStarting values:\n"+
 			      "\t\t"+"-e0     [error]"+"\t\t\t"+"Error rate         (default: random)"+"\n"+
+			      "\t\t"+"-ets0   [error]"+"\t\t\t"+"Error rate at TSs  (default: random)"+"\n"+
 			      "\t\t"+"-r0     [cont]" +"\t\t\t"+"Contamination rate (default: random)"+"\n"+
 			      "\t\t"+"-tA0    [tauA]" +"\t\t\t"+"Tau Archaic        (default: random)"+"\n"+
 			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau Contaminant    (default: random)"+"\n"+
@@ -234,6 +239,13 @@ int main (int argc, char *argv[]) {
             continue;
         }
 
+        if(string(argv[i]) == "-ets0"  ){
+	    eTS_i   = destringify<double>(argv[i+1]);
+	    eTS_i_0 = true;
+            i++;
+            continue;
+        }
+
          if(string(argv[i]) == "-e"  ){
 	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
 	     elower = t.first;
@@ -321,21 +333,36 @@ int main (int argc, char *argv[]) {
    bool has4Cols        = false;
    bool has5Cols        = false;
    bool has6Cols        = false;
+   bool hasTSInfo           = false;
 
    if (myFile.good()){
        getline (myFile,line);//header
+       vector<string> fieldsHeader = allTokens(line,'\t');
+       // cout<<line<<endl;
+       if(fieldsHeader[ fieldsHeader.size() - 1 ] == "Ts"){
+	   hasTSInfo=true;
+       }
+
+
        while ( getline (myFile,line)){
 	   vector<string> fields = allTokens(line,'\t');
+
+	   // cout<<line<<"\t"<<hasTSInfo<<endl;
+
 	   // if(fields.size() != 4 &&
 	   //    fields.size() != 5){
 	   //     cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
 	   //     exit(1);
 	   // }
+	   // unsigned int fieldSize = fields.size();
+	   // if(hasTS){	       
+	   //}
+	   
 	   
 	   if(firstIteration){
-	       has4Cols =  ( fields.size() == 4 );
-	       has5Cols =  ( fields.size() == 5 );
-	       has6Cols =  ( fields.size() == 6 );
+	       has4Cols =  ( (fields.size() - (unsigned int)hasTSInfo)  == 4 );
+	       has5Cols =  ( (fields.size() - (unsigned int)hasTSInfo)  == 5 );
+	       has6Cols =  ( (fields.size() - (unsigned int)hasTSInfo)  == 6 );
 
 	       if(has4Cols == false && 
 		  has5Cols == false &&
@@ -358,12 +385,21 @@ int main (int argc, char *argv[]) {
 		   toaddF.panelFreqAnchor   = destringify<long double >(fields[2]);
 		   toaddF.panelFreqCont     = destringify<long double >(fields[3]);
 		   toaddF.num               = destringify<int>         (fields[4]);
+
+		   if(hasTSInfo)
+		       toaddF.isTS          = ( fields[5] == "1" );
+		       
+
 	       }else{
 		   if(has4Cols){
 		       toaddF.ancCount          = destringify<int>         (fields[0]);
 		       toaddF.derCount          = destringify<int>         (fields[1]);
 		       toaddF.panelFreqCont     = destringify<long double >(fields[2]); //anchor is the contaminant
 		       toaddF.num               = destringify<int>         (fields[3]);
+		       
+		       if(hasTSInfo)
+			   toaddF.isTS          = ( fields[4] == "1" );
+
 		   }else{
 		       cerr<<"Line "<<line<<" does not contain 4 or 5 fields but "<<fields.size()<<" fields"<<endl;
 		       exit(1);
@@ -378,6 +414,10 @@ int main (int argc, char *argv[]) {
 		       toaddF.panelFreqCont   = destringify<long double >(fields[2]); //w and y Contaminant is the admixing population
 		       toaddF.panelFreqAnchor = destringify<long double >(fields[3]); //z anchor 
 		       toaddF.num             = destringify<int>         (fields[4]); //count
+
+		       if(hasTSInfo)
+			   toaddF.isTS          = ( fields[5] == "1" );
+
 		   }else{ //6 cols
 		       if(has6Cols){
 			   toaddF.ancCount        = destringify<int>         (fields[0]);
@@ -385,7 +425,12 @@ int main (int argc, char *argv[]) {
 			   toaddF.panelFreqAdmx   = destringify<long double >(fields[2]); //y recipient admixing
 			   toaddF.panelFreqAnchor = destringify<long double >(fields[3]); //z anchor
 			   toaddF.panelFreqCont   = destringify<long double >(fields[4]); //w contamination freq
-			   toaddF.num             = destringify<int>         (fields[5]); 
+			   toaddF.num             = destringify<int>         (fields[5]);
+
+			   if(hasTSInfo)
+			       toaddF.isTS          = ( fields[6] == "1" );
+
+			   
 		       }else{
 			   cerr<<"Line "<<line<<" does not contain 5 or 6 fields but "<<fields.size()<<" fields"<<endl;
 			   exit(1);
@@ -416,6 +461,9 @@ int main (int argc, char *argv[]) {
    if(!e_i_0)
        e_i       = randomLongDouble(elower,         eupper);
 
+   if(!eTS_i_0)
+       eTS_i     = randomLongDouble(elower,         eupper);
+
    if(!r_i_0)
      r_i         = randomLongDouble(rlower,         rupper);
 
@@ -432,6 +480,8 @@ int main (int argc, char *argv[]) {
      admixtime_i = randomLongDouble(admixtimelower, admixtimeupper);
 
     long double e_i_1;
+    long double eTS_i_1;
+
     long double r_i_1;
     long double tau_C_i_1;
     long double tau_A_i_1;
@@ -456,11 +506,16 @@ int main (int argc, char *argv[]) {
    long double x_i_1l;
 
    if(twoPopMode){
-       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,has4Cols);
+       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,                                                              has4Cols,hasTSInfo,eTS_i);
    }else{
-       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols);
+       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i);
    }
-   outLogFP<<"chain"<<"\tllik"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance"<<endl;
+   outLogFP<<"chain"<<"\tllik"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance";
+   if(hasTSInfo){
+       outLogFP<<"\terrorTV";
+   }
+   outLogFP<<endl;
+
    int accept=0;
 
    random_device rd;
@@ -479,7 +534,7 @@ int main (int argc, char *argv[]) {
         // admixtime_i_1 = randomLongDouble(admixtimelower, admixtimeupper);
 
        //e
-       normal_distribution<long double> distribution_e(e_i,     (eupper-elower)/partition  );
+       normal_distribution<long double> distribution_e(e_i,             (eupper-elower)/partition  );
        e_i_1      = distribution_e(dre);
        // e_i_1      = e_i;
 
@@ -487,6 +542,18 @@ int main (int argc, char *argv[]) {
 	   e_i_1      = e_i;
 	   //chain--;
 	   //continue;
+       }
+
+       if(hasTSInfo){
+	   normal_distribution<long double> distribution_eTS(eTS_i,     (eupper-elower)/partition  );
+	   eTS_i_1      = distribution_eTS(dre);
+	   // e_i_1      = e_i;
+	   
+	   if(eTS_i_1 <= elower     ||  eTS_i_1 >= eupper     ){
+	       eTS_i_1      = eTS_i;
+	       //chain--;
+	       //continue;
+	   }
        }
 
        normal_distribution<long double> distribution_r(r_i,     (rupper-rlower)/partition  );
@@ -525,8 +592,15 @@ int main (int argc, char *argv[]) {
 
 
 	  
-       if(chain!=0)
-	   outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain)<<endl;
+       if(chain!=0){
+	   outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain);
+
+	   if(hasTSInfo){
+	       outLogFP<<"\t"<<eTS_i;
+	   }
+
+	   outLogFP<<endl;
+       }
        // cout<<"e"<<e_i<<"\te_1\t"<<e_i_1<<endl;
        // return 1;
 
@@ -598,9 +672,9 @@ int main (int argc, char *argv[]) {
        }
        //cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
        if(twoPopMode){
-	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols );
+	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols,hasTSInfo,eTS_i_1 );
        }else{
-	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols );
+	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i_1 );
        }
 
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
@@ -612,6 +686,8 @@ int main (int argc, char *argv[]) {
 
        if( (long double)(randomProb()) < acceptance){
 	   e_i           =  e_i_1;
+	   eTS_i         =  eTS_i_1;
+
 	   r_i           =  r_i_1;
 	   tau_C_i       =  tau_C_i_1;
 	   tau_A_i       =  tau_A_i_1;	  

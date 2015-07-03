@@ -30,6 +30,7 @@ typedef struct{
     long double panelFreqAdmx;
     long double panelFreqAnchor;
     int num;
+    bool isTS;
 } freqSite;
 
 //! A method that computes the probability of seeing the derived allele for a given genotype model, to incorporate contamination and error rates
@@ -548,7 +549,7 @@ inline long double LogFinalTwoPBAM( const vector<singleSite> *  dataSitesVec,lon
 
 
 //  Log final posterior for two populations
-inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor){
+inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor,bool hasTSInfo, long double eTS){
 //     print(c(e,r,tau_C,tau_A))
 
 	// Case where the anchor population is the same as the putative contaminant population (3rd column of data file)
@@ -558,13 +559,30 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 	    //result <- sum(apply(table,1,function(x){
 	    //sumterm += log(Pad_given_reytau(x[1],x[2],r,e,x[3],x[3],tau_C,tau_A))*x[4]
-	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
-							  tableData->at(indexSite).derCount,
-							  r,
-							  e,
-							  tableData->at(indexSite).panelFreqCont,
-							  tableData->at(indexSite).panelFreqCont,
-							  tau_C,tau_A))*tableData->at(indexSite).num;
+	    long double toaddToSum;
+
+	    if(hasTSInfo && 
+	       tableData->at(indexSite).isTS){ //transition
+
+	       toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
+						 tableData->at(indexSite).derCount,
+						 r,
+						 eTS,
+						 tableData->at(indexSite).panelFreqCont,
+						 tableData->at(indexSite).panelFreqCont,
+						 tau_C,tau_A))*tableData->at(indexSite).num;
+		
+	    }else{
+
+	       toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
+						 tableData->at(indexSite).derCount,
+						 r,
+						 e,
+						 tableData->at(indexSite).panelFreqCont,
+						 tableData->at(indexSite).panelFreqCont,
+						 tau_C,tau_A))*tableData->at(indexSite).num;
+
+	    }
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
 	    sumterm+=toaddToSum;
 	}
@@ -575,13 +593,31 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 
 	for(unsigned int indexSite=0;indexSite<tableData->size();indexSite++){
 
-	    long double toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
-							  tableData->at(indexSite).derCount,
-							  r,e,
-							  tableData->at(indexSite).panelFreqAnchor,
-							  tableData->at(indexSite).panelFreqCont,
-							  tau_C,
-							  tau_A))*tableData->at(indexSite).num;
+	    long double toaddToSum;
+	    if(hasTSInfo && 
+	       tableData->at(indexSite).isTS){ //transition
+
+		toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
+						  tableData->at(indexSite).derCount,
+						  r,
+						  eTS,
+						  tableData->at(indexSite).panelFreqAnchor,
+						  tableData->at(indexSite).panelFreqCont,
+						  tau_C,
+						  tau_A))*tableData->at(indexSite).num;
+
+	    }else{
+
+		toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
+						  tableData->at(indexSite).derCount,
+						  r,
+						  e,
+						  tableData->at(indexSite).panelFreqAnchor,
+						  tableData->at(indexSite).panelFreqCont,
+						  tau_C,
+						  tau_A))*tableData->at(indexSite).num;
+
+	    }
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
 	    sumterm+=toaddToSum;
 	}
@@ -593,9 +629,13 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 }
 
 
+inline long double LogFinalThreePBAM(const vector<singleSite> *  dataSitesVec,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,int contIndex,int anchorIndex,int admxIndex){
+    //to implement
+    return -1;
+}
 
 //  Log final posterior for three populations
-inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor){
+inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor,bool hasTSInfo, long double eTS){
     //     print(c(e,r,tau_C,tau_A))
     //cout<<cwdProg<<"\t"<<contequalanchor<<endl;
     //exit(1);
@@ -626,17 +666,36 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 		//cout<<"LogFinalThreeP1 "<<indexSite<<endl;
 		long double toaddToSum=0;
 
-		toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
-							      tableData->at(indexSite).derCount,
-							      r,
-							      e,
-							      tableData->at(indexSite).panelFreqCont,
-							      tableData->at(indexSite).panelFreqAnchor ,
-							      tableData->at(indexSite).panelFreqCont,
-							      dadiTable,
-							      nC,
-							      nB)
-					     ) * tableData->at(indexSite).num;
+		if(hasTSInfo && 
+		   tableData->at(indexSite).isTS){ //transition
+
+		    toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
+								  tableData->at(indexSite).derCount,
+								  r,
+								  eTS,
+								  tableData->at(indexSite).panelFreqCont,
+								  tableData->at(indexSite).panelFreqAnchor ,
+								  tableData->at(indexSite).panelFreqCont,
+								  dadiTable,
+								  nC,
+								  nB)
+				     ) * tableData->at(indexSite).num;
+		    
+		}else{
+		
+		    toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
+								  tableData->at(indexSite).derCount,
+								  r,
+								  e,
+								  tableData->at(indexSite).panelFreqCont,
+								  tableData->at(indexSite).panelFreqAnchor ,
+								  tableData->at(indexSite).panelFreqCont,
+								  dadiTable,
+								  nC,
+								  nB)
+				     ) * tableData->at(indexSite).num;
+
+		}
 		/* cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t" */
 		/*     <<"\t"<<r */
 		/*     <<"\t"<<e */
@@ -673,18 +732,38 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 		//int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz
 		//int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz
 
-		toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
-							      tableData->at(indexSite).derCount,
-							      r,
-							      e,
-							      tableData->at(indexSite).panelFreqAdmx,
-							      tableData->at(indexSite).panelFreqAnchor ,
-							      tableData->at(indexSite).panelFreqCont,
-							      dadiTable,
-							      nC,
-							      nB)
-					     ) * tableData->at(indexSite).num;
-		//cout<<"LogFinalThreeP2 "<<indexSite<<endl;
+
+
+		if(hasTSInfo && 
+		   tableData->at(indexSite).isTS){ //transition
+
+		    toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
+								  tableData->at(indexSite).derCount,
+								  r,
+								  eTS,
+								  tableData->at(indexSite).panelFreqAdmx,
+								  tableData->at(indexSite).panelFreqAnchor ,
+								  tableData->at(indexSite).panelFreqCont,
+								  dadiTable,
+								  nC,
+								  nB)
+				     ) * tableData->at(indexSite).num;
+
+		}else{
+
+		    toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,
+								  tableData->at(indexSite).derCount,
+								  r,
+								  e,
+								  tableData->at(indexSite).panelFreqAdmx,
+								  tableData->at(indexSite).panelFreqAnchor ,
+								  tableData->at(indexSite).panelFreqCont,
+								  dadiTable,
+								  nC,
+								  nB)
+				     ) * tableData->at(indexSite).num;
+		    //cout<<"LogFinalThreeP2 "<<indexSite<<endl;
+		}
 		sumterm+=toaddToSum;
 	    }
 	}
