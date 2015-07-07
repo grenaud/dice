@@ -164,6 +164,28 @@ bool sanityCheck(vector<MistarParser * > & vectorOfMP,
 
 
 
+bool hasCpG(vector<MistarParser * > & vectorOfMP,
+	    vector<bool> & hasData,
+	    vector<bool> & hasCoordinate,
+	    vector<int> & popSizePerFile,
+	    vector<AlleleRecords *> & vecAlleleRecords){
+
+    bool oneIsCpG=false;
+
+    for(unsigned int i=0;i<vectorOfMP.size();i++){ 
+	if(hasData[i] && hasCoordinate[i]){
+
+
+	    for(int k=0;k<popSizePerFile[i];k++){
+		
+		oneIsCpG = oneIsCpG || (vecAlleleRecords[i]->vectorAlleles->at(k).getIsCpg() );
+
+	    }
+	}
+    }
+
+    return oneIsCpG;
+}
 
 
 bool populateFreqVec(vector<MistarParser * > & vectorOfMP,

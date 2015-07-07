@@ -57,6 +57,13 @@ bool printAllele(vector<MistarParser * > & vectorOfMP,
 		 unsigned int & coordCurrent,
 		 bool force=false);
 
+
+bool hasCpG(vector<MistarParser * > & vectorOfMP,
+	    vector<bool> & hasData,
+	    vector<bool> & hasCoordinate,
+	    vector<int> & popSizePerFile,
+	    vector<AlleleRecords *> & vecAlleleRecords);
+
 bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
 		     vector<bool> & hasData,
 		     vector<bool> & hasCoordinate,
