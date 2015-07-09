@@ -185,13 +185,25 @@ inline long double pad_given_reytau(int a,int d,long double r,long double e,long
 
 
 
-//Sum over each of the 3 types of genotypes for three-population method (incorporating admixture)
+//!   Sum over each of the 3 types of genotypes for the three-population method (incorporating admixture)
+/*
+  \param a : ancestral count
+  \param d : derived count
+  \param r : cont. rate
+  \param e : error. rate
+  \param y : admx pop. derived allele frequency
+  \param z : anchor pop. derived allele frequency
+  \param freqcont : contaminant pop.  derived allele frequency
+  \param dadiTable : reference to the dadi matrix 
+  \param numhumy :  Number nC
+  \param numhumz :  Number nB
+*/
 inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz){
     /* cout<<"pad_given_reytau_dadi_threeP1\t"<<a<<"\t"<<d<<endl; */
 
     long double  ycoord     = roundl( y * numhumy );
     long double  zcoord     = roundl( z * numhumz );
-    long double  finalcoord = ycoord*(numhumy+1) + zcoord ; //TODO check for 
+    long double  finalcoord = ycoord*(numhumy+1) + zcoord ;
     long double  sumResult=0.0;
     for(int i=0;i<=2;i++){
 	/* cout<<"pad_given_reytau_dadi_threeP1\ts="<<dadiTable->size()<<"\ts="<<dadiTable->at(finalcoord)->size()<<"\t"<<ycoord<<"\t"<<zcoord<<"\t"<<finalcoord<<"\t"<<i<<endl; */
@@ -629,8 +641,104 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 }
 
 
+
 inline long double LogFinalThreePBAM(const vector<singleSite> *  dataSitesVec,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,int contIndex,int anchorIndex,int admxIndex){
     //to implement
+
+
+    if( (r < 0)     || 
+	(tau_C < 0) || 
+	(tau_A < 0) || 
+	(admixrate < 0) || admixtime < 0){
+        return(-1000000000000000);
+    }else{
+        long double nA = 2.0;
+	vector< vector<long double> * > * dadiTable= getDadiTableThreeP(tau_C,
+									tau_A,
+									admixrate,
+									admixtime,
+									innerdriftY,
+									innerdriftZ,
+									nC,
+									nB,
+									nA,
+									cwdProg);
+	//cout<<"after getDadiTableThreeP"<<endl;
+	long double sumterm=0.0;
+
+
+	for(unsigned int indexSite=0;indexSite<dataSitesVec->size();indexSite++){
+	    //cout<<"LogFinalThreeP1 "<<indexSite<<endl;
+	    long double toaddToSum=0;
+	    
+	    //previous 
+	    /* toaddToSum = log(pad_given_reytau_dadi_threeP(tableData->at(indexSite).ancCount,         //a */
+	    /* 					      tableData->at(indexSite).derCount,         //d */
+	    /* 					      r,                                         //r */
+	    /* 					      e,                                         //e */
+	    /* 					      tableData->at(indexSite).panelFreqCont,    //y */
+	    /* 					      tableData->at(indexSite).panelFreqAnchor , //z */
+	    /* 					      tableData->at(indexSite).panelFreqCont,    //freqcont */
+	    /* 					      dadiTable,                                 //dadiTable */
+	    /* 					      nC,                                        //numhumy */
+	    /* 					      nB)                                        //numhumz */
+	    /* 		 ) * tableData->at(indexSite).num; */
+
+	    /* long double  ycoord     = roundl( y * numhumy ); */
+	    /* long double  zcoord     = roundl( z * numhumz ); */
+	    /* long double  finalcoord = ycoord*(numhumy+1) + zcoord ; */
+
+	    long double  ycoord     = roundl( dataSitesVec->at(indexSite).freqDerived[admxIndex]  * nC );
+	    long double  zcoord     = roundl( dataSitesVec->at(indexSite).freqDerived[anchorIndex] * nB );
+	    long double  finalcoord = ycoord*(nC+1) + zcoord ; 
+	    long double  sumResult=0.0;
+
+	    int i; //"true" genotype
+	    i=0; //AA (pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]));
+	    long double sumResult0l = pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]); //already log
+	    long double sumResult0p = logl(dadiTable->at(finalcoord)->at(i)); 
+	    long double sumResult0  = sumResult0l+sumResult0p; //product
+
+	    i=1; //AD (pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]));
+	    //sumResult += pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex])*dadiTable->at(finalcoord)->at(i); 
+	    long double sumResult1l = pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]); //already log
+	    long double sumResult1p = logl(dadiTable->at(finalcoord)->at(i)); 
+	    long double sumResult1  = sumResult1l+sumResult1p; //product
+
+
+
+	    i=1; //DD (pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]));
+	    //sumResult += pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex])*dadiTable->at(finalcoord)->at(i); 
+	    long double sumResult2l = pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]); //already log
+	    long double sumResult2p = logl(dadiTable->at(finalcoord)->at(i)); 
+	    long double sumResult2  = sumResult2l+sumResult2p; //product
+		
+	    toaddToSum = oplusl( oplusl(sumResult0,sumResult1), sumResult2);//sum already in log
+		
+	    sumterm+=toaddToSum;
+	}
+
+
+
+	//destroy table	
+	for(unsigned int i=0;i<dadiTable->size();i++){
+	
+	    /* for(unsigned int j=0;j<dadiTable->at(i)->size();j++){ */
+	    /* 	delete dadiTable->at(i)->at(j); */
+	    /* 	//     cout<<dadiTable->at(i)->at(j).x <<","<<dadiTable->at(i)->at(j).y <<"\t"; */
+	    /* } */
+	    // cout<<endl;
+	    delete dadiTable->at(i);
+	}
+	
+	delete dadiTable;
+	return sumterm;
+
+
+    }
+
+
+
     return -1;
 }
 
