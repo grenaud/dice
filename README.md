@@ -146,11 +146,14 @@ Population specific constants:
 
 # 3-Pop model: calculating drifts specific to each anchor population
 
-We provide an R script to calculate the drift times (inner drift Y and inner drift Z) specific to each anchor population, which should be inputted into the command line in the options -idy and -idz when running the 3-pop method. The input for this R script is a file that should contain 4 rows…
+We provide an R script to calculate the drift times (inner drift Y and inner drift Z) specific to each anchor population, which should be inputted into the command line in the options -idy and -idz when running the 3-pop method. The input for this R script is a tab-separated file that should contain 5 rows, each describing a particular configuration of derived allele frequencies in the two populations. An example line would be:
 
-[ TO ADD ]
+11	100	78	100	21
 
-We provide an example input file for the R script in the testData folder, under the name "input_inner_drifts.txt".
+This would mean that there are 21 sites where the panel from the first population has 11 derived alleles out of 100 sampled alleles, and the panel from the second population has 78 derived alleles out of 100 sampled alleles. We provide an example input file for the R script in the testData folder, under the name "test_calcdrifts_input.txt". To calculate drifts on this file, one would need to run the following script:
+
+Rscript CalcDrifts.R test_calcdrifts_input.txt > test_calcdrifts_output.txt
+
 
 # 3-Pop model: BAM file option
 
