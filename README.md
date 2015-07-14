@@ -53,4 +53,4 @@ This will print the steps of the MCMC chain onto the output.txt file.
 [TO ADD]
 
 # 3-Pop model - Calculating drifts specific to each anchor population.
-[TO ADDs]
+[TO ADD]
