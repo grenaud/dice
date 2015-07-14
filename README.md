@@ -156,9 +156,9 @@ Population specific constants:
 
 -idz     [drift]		Drift specific to non-admixing panel (default: 0.16)
 
--nc      [num c]		Number of sampled chromosomes from the admixing panel (default: 20)
+-nc      [num c]		Number of sampled chromosomes from the admixing panel (default: 100)
 
--nb      [num b]		Number of sampled chromosomes from the non-admixing panel (default: 20)
+-nb      [num b]		Number of sampled chromosomes from the non-admixing panel (default: 100)
 
 # 3-Pop method: calculating drifts specific to each anchor population
 
