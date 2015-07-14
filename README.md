@@ -40,36 +40,54 @@ This row means there are 8 sites where the ancient genome has 3 ancestral reads 
 ./nucularMCMC [options]  [input file]
 
 -2p				Use 2pop mode (default: none)
+
 -3p				Use 3pop mode (default: none)
+
 -o     [output log]		Output log (default: stdout)
 
 Computation options:
+
 -s     [step]			MCMC interval space step (default: 1000)
+
 -c     [#chains]		Max. number of Markov chains (default: 100000)
 
 Starting values:
+
 -e0     [error]			Error rate         (default: random)
+
 -r0     [cont]			Contamination rate (default: random)
+
 -tA0    [tauA]			Tau Archaic        (default: random)
+
 -tC0    [tauC]			Tau Contaminant    (default: random)
+
 -aR0    [admR]			Admixture time     (default: random)
+
 -aT0    [admT]			Admixture rate     (default: random)
 
 Range for parameter values:
+
 -e     el,eh			Error rate range          (default: 1e-05,0.1 )
+
 -r     rl,rh			Contamination rate range  (default: 1e-05,0.5 )
+
 -tA    tauAl,tauAh		Tau Archaic range         (default: 1e-06,1   )
+
 -tC    tauCl,tauCh		Tau Contaminant range     (default: 1e-06,1   )
+
 -aR    admRl,admRh		Admixture time range      (default: 1e-06,0.5 )
+
 -aT    admTl,admTh		Admixture rate range      (default: 0.05,0.11 )
 
 Population specific constants:
+
 -idy     [drift]		Inner drift Y (default: 0.16)
+
 -idz     [drift]		Inner drift Z (default: 0.16)
+
 -nc      [num c]		Number nC (default: 20)
+
 -nb      [num b]		Number nB (default: 20)
-
-
 
 # 2-Pop model - BAM file option
 [TO ADD]
