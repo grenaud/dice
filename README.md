@@ -135,18 +135,22 @@ Range for parameter values:
 
 Population specific constants:
 
--idy     [drift]		Inner drift Y (default: 0.16)
+-idy     [drift]		Drift specific to admixing panel (default: 0.16)
 
--idz     [drift]		Inner drift Z (default: 0.16)
+-idz     [drift]		Drift specific to non-admixing panel (default: 0.16)
 
--nc      [num c]		Number nC (default: 20)
+-nc      [num c]		Number of sampled chromosomes from the admixing panel (default: 20)
 
--nb      [num b]		Number nB (default: 20)
+-nb      [num b]		Number of sampled chromosomes from the non-admixing panel (default: 20)
 
 
 # 3-Pop model: calculating drifts specific to each anchor population
 
-[TO ADD]
+We provide an R script to calculate the drift times (inner drift Y and inner drift Z) specific to each anchor population, which should be inputted into the command line in the options -idy and -idz when running the 3-pop method. The input for this R script is a file that should contain 4 rows…
+
+[ TO ADD ]
+
+We provide an example input file for the R script in the testData folder, under the name "input_inner_drifts.txt".
 
 # 3-Pop model: BAM file option
 
