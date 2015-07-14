@@ -42,7 +42,11 @@ NOTE: when comparing multiple candidate contaminant populations, it is best to u
 
 # 2-Pop method: usage
 
+To run type:
+
 ./dice -2p [options]  [input file]
+
+Options:
 
 -o     [output log]		Output log (default: stdout)
 
@@ -98,7 +102,11 @@ NOTE: when comparing multiple candidate contaminant populations, it is best to u
 
 # 3-Pop method: usage
 
+To run type:
+
 ./dice -3p [options]  [input file]
+
+Options:
 
 -o     [output log]		Output log (default: stdout)
 
