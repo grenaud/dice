@@ -37,7 +37,7 @@ This row means there are 8 sites where the ancient genome has 3 ancestral reads 
 
 # 2-Pop model: usage
 
-./nucularMCMC -2p [options]  [input file]
+./dice -2p [options]  [input file]
 
 -o     [output log]		Output log (default: stdout)
 
@@ -70,6 +70,7 @@ Range for parameter values:
 
 
 # 2-Pop model: BAM file option
+
 [TO ADD]
 
 # 3-Pop model: input data format
@@ -90,7 +91,7 @@ This row means there are 4 sites where the ancient genome has 8 ancestral reads 
 
 # 3-Pop model: usage
 
-./nucularMCMC -3p [options]  [input file]
+./dice -3p [options]  [input file]
 
 -o     [output log]		Output log (default: stdout)
 
@@ -139,8 +140,10 @@ Population specific constants:
 -nb      [num b]		Number nB (default: 20)
 
 
-# 3-Pop model: calculating drifts specific to each anchor population.
+# 3-Pop model: calculating drifts specific to each anchor population
+
 [TO ADD]
 
 # 3-Pop model: BAM file option
+
 [TO ADD]
