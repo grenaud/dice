@@ -878,8 +878,8 @@ int main (int argc, char *argv[]) {
     //Constants
     long double innerdriftY =   0.16;
     long double innerdriftZ =   0.16;
-    long double nC          =  20.0 ;
-    long double nB          =  20.0 ;
+    long double nC          =  100.0 ;
+    long double nB          =  100.0 ;
     
 
 
@@ -983,8 +983,8 @@ int main (int argc, char *argv[]) {
                               "\n\tStarting values:\n"+
 			      "\t\t"+"-e0     [error]"+"\t\t\t"+"Error rate         (default: random)"+"\n"+
 			      "\t\t"+"-r0     [cont]" +"\t\t\t"+"Contamination rate (default: random)"+"\n"+
-			      "\t\t"+"-tA0    [tauA]" +"\t\t\t"+"Tau Archaic        (default: random)"+"\n"+
-			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau Contaminant    (default: random)"+"\n"+
+			      "\t\t"+"-tA0    [tauA]" +"\t\t\t"+"Tau ancient genome        (default: random)"+"\n"+
+			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau anchor    (default: random)"+"\n"+
 			      "\t\t"+"-aR0    [admR]" +"\t\t\t"+"Admixture time     (default: random)"+"\n"+
 			      "\t\t"+"-aT0    [admT]" +"\t\t\t"+"Admixture rate     (default: random)"+"\n"+
                               
