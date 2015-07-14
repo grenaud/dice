@@ -22,7 +22,7 @@ cd ..
 
 # 2-Pop model: input data format
 
-The input data for the 2-pop method is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies. An example row would be:
+The input data for the 2-pop method is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies. All columns should be separated by tabs. Here is an example row:
 
 3	5	0.48	8
 
