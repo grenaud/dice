@@ -13,11 +13,15 @@ R libraries:
 # Compiling and installing
 
 cd libgab/
+
 make
+
 cd ..
 
 cd src/
+
 make
+
 cd ..
 
 # 2-Pop model: input data format
