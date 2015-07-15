@@ -47,7 +47,7 @@ NOTES:
 
 To run type:
 
-./dice -2p [options]  [input file]
+./src/dice -2p [options]  [input file]
 
 Options:
 
@@ -110,7 +110,7 @@ NOTES:
 
 To run type:
 
-./dice -3p [options]  [input file]
+./src/dice -3p [options]  [input file]
 
 Options:
 
