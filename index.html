@@ -64,6 +64,7 @@ alt="shopify site analytics"></a></div></noscript>
 
 <p>dice is a program to infer nuclear contamination from present-day humans in ancient DNA datasets using a Bayesian Markov Chain Monte-Carlo (MCMC). It also co-infers the demography and determines the most likely contamination source</p>
 
+        <h3>
 <a id="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>How does it work?.</h3>
 
 <p>DICE works by computing the likelihood of finding a certain derived allele as contaminant by using the derived allele frequency in a potentially contaminating population. It is also possible that this derived allele is found endogenously in the sample. Given drift parameters, we compute the probability of observing the 3 following genotypes: 
@@ -73,6 +74,7 @@ alt="shopify site analytics"></a></div></noscript>
 
 given the derived allele frequency in an anchor population. Since both the contamination rate and the demographic parameters depend on each other, we jointly infer them.</p>
 
+        <h3>
 <a id="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>How do I download and install dice ?</h3>
 
 We recommend to git clone the repository:
@@ -83,10 +85,11 @@ git clone  --depth=1 --recursive https://github.com/grenaud/dice.git
 The installation instructions are found in the README. To build the software, please have installed the following:
 
 For C++:
-- cmake
-- zlib
-- git 
-
+<ul>
+<li> cmake </li>
+<li> zlib  </li>
+<li> git   </li>
+</ul>
 
 
 
