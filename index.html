@@ -68,9 +68,11 @@ alt="shopify site analytics"></a></div></noscript>
 <a id="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>How does it work?.</h3>
 
 <p>DICE works by computing the likelihood of finding a certain derived allele as contaminant by using the derived allele frequency in a potentially contaminating population. It is also possible that this derived allele is found endogenously in the sample. Given drift parameters, we compute the probability of observing the 3 following genotypes: 
- - (ancestral , ancestral)
- - (derived   , ancestral)
- - (derived   , derived)
+<ul>
+<li> (ancestral , ancestral)
+<li> (derived   , ancestral)
+<li> (derived   , derived)
+</ul>
 
 given the derived allele frequency in an anchor population. Since both the contamination rate and the demographic parameters depend on each other, we jointly infer them.</p>
 
@@ -82,7 +84,7 @@ We recommend to git clone the repository:
 git clone  --depth=1 --recursive https://github.com/grenaud/dice.git
 </pre>
 
-The installation instructions are found in the README. To build the software, please have installed the following: <BR>
+The installation instructions are found in the README. Details about running the software are also found in the README. To build the software, please have installed the following: <BR>
 
 For C++:
 <ul>
