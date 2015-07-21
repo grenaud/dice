@@ -96,9 +96,9 @@ For example:
 
 For example: 
 
-chr	coord	REF,ALT	root	anc	IndividualA
+	       chr	coord	REF,ALT	root	anc	IndividualA
 
-7	35190	G,T	0,1:0	0,1:0	122,1:0
+	       7	35190	G,T	0,1:0	0,1:0	122,1:0
 
 DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
 
