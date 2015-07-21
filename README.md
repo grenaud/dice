@@ -278,5 +278,5 @@ Where the first base is the one next to the end of the read. Ideally, you should
 By default, DICE uses a single error parameter for the entire dataset. However, in ancient DNA datasets, transitions tend to have a greater error rate due to deamination. Hence we have the following alternative error rate models:
 
 - a single error parameter (default)
-- a separate error parameter for transitions and transversions. This mode can be triggered using the "-..." option. It requires the data to have been flagged previously by BAM2DICE using the "-t" option. 
+- a separate error parameter for transitions and transversions. This mode will be triggered automatically if the input data was  previously flagged by BAM2DICE using the "-t" option. 
 - a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option.
