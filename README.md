@@ -165,13 +165,6 @@ Range for parameter values:
 
 -tC    tauCl,tauCh		Tau Anchor range     (default: 1e-06,1   )
 
-# 2-Pop method: BAM file option
-
-[TO ADD]
-
-# 2-Pop method: alternative error rate models
-
-[TODO]
 
 # 3-Pop method: input data format
 
