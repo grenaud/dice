@@ -114,13 +114,13 @@ TODO
 
 The input data for the 2-pop method is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies. An example row would be:
 
-3	5	0.48	8
+	       3	5	0.48	8
 
 This means there are 8 sites in the genome where the ancient genome has 3 ancestral reads and 5 derived reads, and where the anchor/contaminant panel has a derived allele frequency of 0.48. If the file only has 4 columns, the program will assume the contaminant panel is the same as the anchor panel. The file should also have a header. We provide an example test file in the testData folder, under the name "test_twopop_4col.txt".
 
 If the file has 5 columns, the program will assume that the contaminant and anchor panels are distinct. In this case, the third column refers to the anchor panel, while the fourth column refers to the contaminant panel. For example:
 
-3	5	0.48	0.96	8
+	       3	5	0.48	0.96	8
 
 This row means there are 8 sites where the ancient genome has 3 ancestral reads and 5 derived reads, and where the anchor panel has a derived allele frequency of 0.48 and where the contaminant panel has a derived allele frequency of 0.96. We provide an example test file in the testData folder, under the name "test_twopop_5col.txt".
 
@@ -170,13 +170,13 @@ Range for parameter values:
 
 The input data for the 3-pop method is a file that should have at least five columns. An example row would be:
 
-7	0	0.33	0.23	10
+	       7	0	0.33	0.23	10
 
 This means there are 10 sites in the genome where the ancient genome has 7 ancestral reads and 0 derived reads, where the contaminant/first anchor (admixing) panel has a derived allele frequency of 0.33, and where the second anchor (non-admixing) panel has a derived allele frequency of 0.23. If the file only has 5 columns, the program will assume the contaminant panel is the same as the first anchor panel. The file should also have a header. We provide an example test file in the testData folder, under the name "test_threepop_5col.txt".
 
 If the file has 6 columns, the program will assume that the contaminant and the two anchor panels are distinct. In this case, the third column refers to the first anchor (admixing) panel, the fourth column refers to the second anchor (non-admixing) panel, and the fifth column refers to the contaminant panel. For example:
 
-8	1	0.40	0.55	0.83	4
+	       8	1	0.40	0.55	0.83	4
 
 This row means there are 4 sites where the ancient genome has 8 ancestral reads and 1 derived read, and where the admixing anchor panel has a derived allele frequency of 0.40, the non-admixing anchor panel has a derived allele frequency of 0.55, and where the contaminant panel has a derived allele frequency of 0.83. We provide an example test file in the testData folder, under the name "test_twopop_6col.txt".
 
@@ -243,7 +243,7 @@ Population specific constants:
 
 We provide an R script to calculate the drift times (inner drift Y and inner drift Z) specific to each anchor population, which should be inputted into the command line in the options -idy and -idz when running the 3-pop method. The input for this R script is a tab-separated file that should contain 5 rows, each describing a particular configuration of derived allele frequencies in the two populations. An example line would be:
 
-11	100	78	100	21
+	       11	100	78	100	21
 
 This would mean that there are 21 sites where the panel from the first population has 11 derived alleles out of 100 sampled alleles, and the panel from the second population has 78 derived alleles out of 100 sampled alleles. We provide an example input file for the R script in the testData folder, under the name "test_calcdrifts_input.txt". To calculate drifts on this file, one would need to run the following script:
 
