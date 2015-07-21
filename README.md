@@ -1,6 +1,6 @@
 # Readme for DICE
 
-DICE is a Bayesian method to jointly infer contamination from present-day humans in ancient DNA samples, error and drift parameters using MCMC. Our approach is applicable to nuclear data. DICE works by computing the likelihood of finding a certain derived allele as contaminant by using the derived allele frequency in a potentially contaminating population.
+DICE is a Bayesian method to jointly infer contamination from present-day humans in ancient DNA samples, error and drift parameters using MCMC. Our approach is applicable to nuclear data. It can also determine the most probable ancestry of the individual(s) that contaminated the sample. 
  
 # Contact
 
