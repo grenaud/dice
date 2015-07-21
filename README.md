@@ -63,22 +63,37 @@ An intersection of the base count at each position in the BAM file and the deriv
 src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
 
 Description:
+
 [fasta file] : This is the fasta file you supplied the aligner
+
 [bam]        : Sorted and indexed BAM file
+
 [region]     : A list of regions that the program will produce data for. 
 	       We recommend using regions evolving under neutrality with a high
                mapability score. Try to aim to have a least 1M defined sites.
+               
                This file has the following format:
+               
 	       ------
+	       
 	       refID1:start-end
+	       
 	       refID2:start-end
+	       
 	       refID3:start-end
-	       ...	       
+	       
 	       ...
+	       
+	       ...
+	       
                ------
+               
                For example:
+               
                -----
+               
 	       chr1:304012-419131
+	       
 	       chr1:518593-712340
 
 
@@ -90,10 +105,10 @@ Description:
                ex: 
 
 #chr	coord	REF,ALT	root	anc	IndividualA
+
 7	35190	G,T	0,1:0	0,1:0	122,1:0
 
 DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
-
 
 Example:
 TODO
