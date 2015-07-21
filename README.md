@@ -279,7 +279,7 @@ You can also run DICE directly on the BAM file. This mode however is a bit slowe
 	       0.0  0.0  0.0  0.0  0.0  0.0163688  0.0  0.0  0.0  0.0  0.0  0.0
 
 
-The columns here denote the probability of post-mortem substitition for all 12 types of nucleotide changes. Starting from the top, each line represents the position with respect to the 5' end of the read. So, for example, the first row corresponds to the position next to the 5' end, the second row corresponds to 2 positions away from the 5' end, the third row to 3 positions away from the 5' end, etc.
+The columns here denote the probability of post-mortem substitution for all 12 types of nucleotide changes. Starting from the top, each line represents the position with respect to the 5' end of the read. So, for example, the first row corresponds to the position next to the 5' end, the second row corresponds to 2 positions away from the 5' end, the third row to 3 positions away from the 5' end, etc.
 
 Ideally, you should have two separate deamination profiles, one for the 5' end and one for the 3' end. You can use the simple "bam2prof" tool to generate those: https://github.com/grenaud/schmutzi/blob/master/bam2prof.cpp
 
