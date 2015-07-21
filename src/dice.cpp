@@ -70,6 +70,10 @@ int main (int argc, char *argv[]) {
 
     long double e_i         ; //TS
     long double eTS_i       ; //TV
+    long double pe_i         ; //2 error parameter, proportion
+    long double e2_i         ; //2 error parameter, 2nd error parameter
+
+
 
     long double r_i         ;
     long double tau_C_i     ;
@@ -79,6 +83,8 @@ int main (int argc, char *argv[]) {
 
     bool e_i_0         = false; //TS
     bool eTS_i_0       = false;
+    bool pe_i_0        = false; //TS
+    bool e2_i_0        = false; //TS
 
     bool r_i_0         = false;
     bool tau_C_i_0     = false;
@@ -86,6 +92,7 @@ int main (int argc, char *argv[]) {
     bool admixrate_i_0 = false;
     bool admixtime_i_0 = false;
 
+    bool param2E       = false; //two errors
 
     const string usage=string("\t"+string(argv[0])+
                               " [options]  [input file]"+"\n\n"+
@@ -98,10 +105,14 @@ int main (int argc, char *argv[]) {
                               "\n\tComputation options:\n"+
                               "\t\t"+"-s     [step]" +"\t\t\t"+"MCMC interval space step (default: "+stringify(step)+")"+"\n"+
                               "\t\t"+"-c     [#chains]" +"\t\t"+"Max. number of Markov chains (default: "+stringify(maxChains)+")"+"\n"+
+			      "\t\t"+"-2e     " +"\t\t\t"+"Use a 2 parameter error model (default: "+boolStringify(param2E)+")"+"\n"+
 
                               "\n\tStarting values:\n"+
-			      "\t\t"+"-e0     [error]"+"\t\t\t"+"Error rate         (default: random)"+"\n"+
-			      "\t\t"+"-ets0   [error]"+"\t\t\t"+"Error rate at TSs  (default: random)"+"\n"+
+			      "\t\t"+"-e0     [error]"+"\t\t\t"+"Error rate                  (default: random)"+"\n"+
+			      "\t\t"+"-ets0   [error]"+"\t\t\t"+"Error rate at TSs           (default: random)"+"\n"+
+			      "\t\t"+"-e20    [error]"+"\t\t\t"+"Error rate 2nd error param. (default: random)"+"\n"+
+			      "\t\t"+"-pe0    [error]"+"\t\t\t"+"Error proportion            (default: random)"+"\n"+
+
 			      "\t\t"+"-r0     [cont]" +"\t\t\t"+"Contamination rate (default: random)"+"\n"+
 			      "\t\t"+"-tA0    [tauA]" +"\t\t\t"+"Tau ancient genome        (default: random)"+"\n"+
 			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau anchor    (default: random)"+"\n"+
@@ -144,6 +155,11 @@ int main (int argc, char *argv[]) {
 	    lastOpt=i;
 	    break;
 	}
+
+        if(string(argv[i]) == "-2e"  ){
+	    param2E = true;
+            continue;
+        }
 
         if(string(argv[i]) == "-nc"  ){
 	    nC  = destringify<long double>(argv[i+1]);
@@ -246,6 +262,21 @@ int main (int argc, char *argv[]) {
             continue;
         }
 
+        if(string(argv[i]) == "-pe0"  ){
+	    pe_i = destringify<double>(argv[i+1]);
+	    pe_i_0=true;
+            i++;
+            continue;
+        }
+
+        if(string(argv[i]) == "-e20"  ){
+	    e2_i   = destringify<double>(argv[i+1]);
+	    e2_i_0 = true;
+            i++;
+            continue;
+        }
+
+
          if(string(argv[i]) == "-e"  ){
 	     pair<long double,long double> t = paramsComma(string(argv[i+1]));
 	     elower = t.first;
@@ -333,7 +364,7 @@ int main (int argc, char *argv[]) {
    bool has4Cols        = false;
    bool has5Cols        = false;
    bool has6Cols        = false;
-   bool hasTSInfo           = false;
+   bool hasTSInfo       = false;
 
    if (myFile.good()){
        getline (myFile,line);//header
@@ -449,6 +480,12 @@ int main (int argc, char *argv[]) {
        cerr << "Unable to open file "<<filename<<endl;
        return 1;
    }
+   
+   if(param2E && hasTSInfo){
+       cerr << "Cannot specify both the two error parameter mode and use ts/tv"<<endl;
+       return 1;       
+   }
+
    //cout<<"done\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
    //return 1;
    if( twoPopMode  == threePopMode ){
@@ -463,6 +500,13 @@ int main (int argc, char *argv[]) {
 
    if(!eTS_i_0)
        eTS_i     = randomLongDouble(elower,         eupper);
+
+   if(!e2_i_0)
+       e2_i       = randomLongDouble(elower,        eupper);
+
+   if(!pe_i_0)
+       pe_i       = randomLongDouble(0.0,           1.0);
+
 
    if(!r_i_0)
      r_i         = randomLongDouble(rlower,         rupper);
@@ -481,6 +525,8 @@ int main (int argc, char *argv[]) {
 
     long double e_i_1;
     long double eTS_i_1;
+    long double e2_i_1;
+    long double pe_i_1;
 
     long double r_i_1;
     long double tau_C_i_1;
@@ -506,11 +552,17 @@ int main (int argc, char *argv[]) {
    long double x_i_1l;
 
    if(twoPopMode){
-       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,                                                              has4Cols,hasTSInfo,eTS_i);
+       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,                                                              has4Cols,hasTSInfo,eTS_i,e2_i_0,pe_i_0,param2E);
    }else{
-       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i);
+       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i,e2_i_0,pe_i_0,param2E);
    }
    outLogFP<<"chain"<<"\tllik"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance";
+
+
+   if(param2E){
+       outLogFP<<"\terror2"<<"\tpe"<<"";
+   }
+
    if(hasTSInfo){
        outLogFP<<"\terrorTV";
    }
@@ -544,6 +596,8 @@ int main (int argc, char *argv[]) {
 	   //continue;
        }
 
+
+
        if(hasTSInfo){
 	   normal_distribution<long double> distribution_eTS(eTS_i,     (eupper-elower)/partition  );
 	   eTS_i_1      = distribution_eTS(dre);
@@ -555,7 +609,27 @@ int main (int argc, char *argv[]) {
 	       //continue;
 	   }
        }
+       
+       if(param2E){
 
+	   normal_distribution<long double> distribution_e2(e2_i,             (eupper-elower)/partition  );
+	   e2_i_1      = distribution_e2(dre);
+
+
+	   if(e2_i_1 <= elower     ||  e2_i_1 >= eupper     ){
+	       e2_i_1      = e2_i;
+	   }
+
+	   normal_distribution<long double> distribution_pe(pe_i,             (1.0)/partition  );
+	   pe_i_1      = distribution_pe(dre);
+
+	   if(pe_i_1 <= 0     ||  pe_i_1 >= 1.0     ){
+	       pe_i_1      = pe_i;
+	   }
+
+
+       }
+       
        normal_distribution<long double> distribution_r(r_i,     (rupper-rlower)/partition  );
        r_i_1      = distribution_r(dre);
        // r_i_1      = r_i;
@@ -594,6 +668,10 @@ int main (int argc, char *argv[]) {
 	  
        if(chain!=0){
 	   outLogFP<<chain<<"\t"<<std::setprecision(10)<<x_il<<"\t"<<e_i<<"\t"<<r_i<<"\t"<<tau_C_i<<"\t"<<tau_A_i<<"\t"<<admixrate_i<<"\t"<<admixtime_i<<"\t"<<double(accept)/double(chain);
+
+	   if(param2E){
+	       outLogFP<<"\t"<<e2_i<<"\t"<<pe_i;
+	   }
 
 	   if(hasTSInfo){
 	       outLogFP<<"\t"<<eTS_i;
@@ -672,9 +750,9 @@ int main (int argc, char *argv[]) {
        }
        //cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
        if(twoPopMode){
-	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols,hasTSInfo,eTS_i_1 );
+	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols,hasTSInfo,eTS_i_1,e2_i_1,pe_i_1,param2E );
        }else{
-	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i_1 );
+	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i_1,e2_i_1,pe_i_1,param2E );
        }
 
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
@@ -687,7 +765,9 @@ int main (int argc, char *argv[]) {
        if( (long double)(randomProb()) < acceptance){
 	   e_i           =  e_i_1;
 	   eTS_i         =  eTS_i_1;
-
+	   e2_i          =  e2_i_1;
+	   pe_i          =  pe_i_1;
+	   
 	   r_i           =  r_i_1;
 	   tau_C_i       =  tau_C_i_1;
 	   tau_A_i       =  tau_A_i_1;	  

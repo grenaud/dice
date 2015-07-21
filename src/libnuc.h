@@ -161,12 +161,20 @@ inline long double Pgeno_given_ytau(int i,long double y,long double tau_C,long d
   \param freqcont : frequency of the derived allele for the contaminant
   \param tau_C : drift for the contaminant lineage
   \param tau_A : drift for the archaic lineage 
+  \param e2  : second error paramater
+  \param pe  : proportion of the second error parameter
+  \param param2E : flag to know whether we use a second error parameter
 */
-inline long double pad_given_reytau(int a,int d,long double r,long double e,long double y,long double freqcont,long double tau_C,long double tau_A){
+inline long double pad_given_reytau(int a,int d,long double r,long double e,long double y,long double freqcont,long double tau_C,long double tau_A ,long double e2,long double pe,bool param2E){
 
     long double  sumResult=0.0;
     for(int i=0;i<=2;i++){
-        sumResult += pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);
+	if(param2E){ 
+	    sumResult += (      pe *pad_given_irey(a,d,i,r,e, freqcont) + 
+		     	   (1.0-pe)*pad_given_irey(a,d,i,r,e2,freqcont) )*Pgeno_given_ytau(i,y,tau_C,tau_A);
+	}else{
+	    sumResult += pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);
+	}
     }
 
     return sumResult;
@@ -198,7 +206,7 @@ inline long double pad_given_reytau(int a,int d,long double r,long double e,long
   \param numhumy :  Number nC
   \param numhumz :  Number nB
 */
-inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz){
+inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz,long double e2,long double pe,bool param2E){
     /* cout<<"pad_given_reytau_dadi_threeP1\t"<<a<<"\t"<<d<<endl; */
 
     long double  ycoord     = roundl( y * numhumy );
@@ -209,7 +217,15 @@ inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long d
 	/* cout<<"pad_given_reytau_dadi_threeP1\ts="<<dadiTable->size()<<"\ts="<<dadiTable->at(finalcoord)->size()<<"\t"<<ycoord<<"\t"<<zcoord<<"\t"<<finalcoord<<"\t"<<i<<endl; */
 	/* cout<<"P "<<pad_given_irey(a,d,i,r,e,freqcont)<<endl; */
 	/* cout<<"d "<<dadiTable->at(finalcoord)->at(i)<<endl; */
-        sumResult += pad_given_irey(a,d,i,r,e,freqcont)*dadiTable->at(finalcoord)->at(i);
+	if(param2E){
+	    sumResult += (     pe*pad_given_irey(a,d,i,r,e, freqcont) +
+			   (1-pe)*pad_given_irey(a,d,i,r,e2,freqcont) 
+			   )
+		*dadiTable->at(finalcoord)->at(i);
+	}else{
+	    sumResult += pad_given_irey(a,d,i,r,e,freqcont)*dadiTable->at(finalcoord)->at(i);
+	}
+
 	//pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);	             
     }
 
@@ -561,7 +577,7 @@ inline long double LogFinalTwoPBAM( const vector<singleSite> *  dataSitesVec,lon
 
 
 //  Log final posterior for two populations
-inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor,bool hasTSInfo, long double eTS){
+inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor,bool hasTSInfo, long double eTS,long double e2,long double pe,bool param2E){
 //     print(c(e,r,tau_C,tau_A))
 
 	// Case where the anchor population is the same as the putative contaminant population (3rd column of data file)
@@ -582,7 +598,9 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 						 eTS,
 						 tableData->at(indexSite).panelFreqCont,
 						 tableData->at(indexSite).panelFreqCont,
-						 tau_C,tau_A))*tableData->at(indexSite).num;
+						 tau_C,tau_A,
+						 e2,pe,param2E
+						 ))*tableData->at(indexSite).num;
 		
 	    }else{
 
@@ -592,7 +610,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 						 e,
 						 tableData->at(indexSite).panelFreqCont,
 						 tableData->at(indexSite).panelFreqCont,
-						 tau_C,tau_A))*tableData->at(indexSite).num;
+						 tau_C,tau_A,e2,pe,param2E) )*tableData->at(indexSite).num;
 
 	    }
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
@@ -616,7 +634,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 						  tableData->at(indexSite).panelFreqAnchor,
 						  tableData->at(indexSite).panelFreqCont,
 						  tau_C,
-						  tau_A))*tableData->at(indexSite).num;
+						  tau_A,e2,pe,param2E))*tableData->at(indexSite).num;
 
 	    }else{
 
@@ -627,7 +645,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 						  tableData->at(indexSite).panelFreqAnchor,
 						  tableData->at(indexSite).panelFreqCont,
 						  tau_C,
-						  tau_A))*tableData->at(indexSite).num;
+						  tau_A,e2,pe,param2E))*tableData->at(indexSite).num;
 
 	    }
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
@@ -743,7 +761,7 @@ inline long double LogFinalThreePBAM(const vector<singleSite> *  dataSitesVec,lo
 }
 
 //  Log final posterior for three populations
-inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor,bool hasTSInfo, long double eTS){
+inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor,bool hasTSInfo, long double eTS,long double e2,long double pe,bool param2E){
     //     print(c(e,r,tau_C,tau_A))
     //cout<<cwdProg<<"\t"<<contequalanchor<<endl;
     //exit(1);
@@ -786,8 +804,11 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  tableData->at(indexSite).panelFreqCont,
 								  dadiTable,
 								  nC,
-								  nB)
-				     ) * tableData->at(indexSite).num;
+								  nB,
+								  e2,
+								  pe,
+								  param2E)
+				     )* tableData->at(indexSite).num;
 		    
 		}else{
 		
@@ -800,7 +821,10 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  tableData->at(indexSite).panelFreqCont,
 								  dadiTable,
 								  nC,
-								  nB)
+								  nB,
+								  e2,
+								  pe,
+								  param2E)
 				     ) * tableData->at(indexSite).num;
 
 		}
@@ -854,7 +878,11 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  tableData->at(indexSite).panelFreqCont,
 								  dadiTable,
 								  nC,
-								  nB)
+								  nB,
+								  e2,
+								  pe,
+								  param2E								  
+								  )
 				     ) * tableData->at(indexSite).num;
 
 		}else{
@@ -868,7 +896,10 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  tableData->at(indexSite).panelFreqCont,
 								  dadiTable,
 								  nC,
-								  nB)
+								  nB,
+								  e2,
+								  pe,
+								  param2E)
 				     ) * tableData->at(indexSite).num;
 		    //cout<<"LogFinalThreeP2 "<<indexSite<<endl;
 		}

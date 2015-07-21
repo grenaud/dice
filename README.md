@@ -1,28 +1,111 @@
 # Readme for DICE
 
+DICE is a Bayesian method to jointly infer contamination from present-day humans in ancient DNA samples and drift parameters using MCMC. Our approach is applicable to nuclear data. DICE works by computing the likelihood of finding a certain derived allele as contaminant by using the derived allele frequency in a potentially contaminating population. It is also possible that this derived allele is found endogenously in the sample. Given drift parameters, we compute the probability of observing the 3 following genotypes: 
+ - (ancestral , ancestral)
+ - (derived   , ancestral)
+ - (derived   , derived)
+
+given the derived allele frequency in an anchor population. Since both the contamination rate and the demographic parameters depend on each other, we jointly infer them.
+ 
+# Contact
+
+Fernando Racimo fernandoracimo@gmail.com
+Gabriel Renaud    gabriel.reno@gmail.com
+
+
 # Prerequisites
 
-Python libraries:
-- dadi
-- numpy
-- scipy
+For C++:
+- cmake
+- zlib
+- git 
 
-R libraries:
-- bbmle
 
 # Compiling and installing
 
+# Make sure you are connected to the internet when you build the code. It needs to retrieve tabix from the samtools package.
+
+cd bamtools/
+cmake ..
+make
+cd ../..
 cd libgab/
-
 make
-
 cd ..
-
 cd src/
-
 make
-
 cd ..
+
+# Running DICE
+
+The starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted (wrt coordinates) and indexed. 
+
+There are two ways to run DICE:
+- Convert to native format (recommended)
+- Run DICE directly on the BAM and use deamination profiles and quality scores to to infer the error rate. This mode is a bit slower (see section below).
+
+The native format is a simple text file that contains the derived/ancestral base count and their frequencies in different panel populations (see examples below).
+
+An intersection of the base count at each position in the BAM file and the derived allele frequency must be made. You can do this whichever way you want but we have created a small program to do this src/BAM2DICE. This program takes the following arguments:
+
+src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
+
+Description:
+[fasta file] : This is the fasta file you supplied the aligner
+[bam]        : Sorted and indexed BAM file
+[region]     : A list of regions that the program will produce data for. 
+	       We recommend using regions evolving under neutrality with a high
+               mapability score. Try to aim to have a least 1M defined sites.
+               This file has the following format:
+	       ------
+	       refID1:start-end
+	       refID2:start-end
+	       refID3:start-end
+	       ...	       
+	       ...
+               ------
+               For example:
+               -----
+	       chr1:304012-419131
+	       chr1:518593-712340
+
+
+[freq ..]    : A set of files containing allele frequencies from panel 
+               population. Which will be used as contaminant, anchor or admixed 
+               need to be specified as options. These frequencies use the same 
+               used for a software package designed to import, store and 
+               process allele frequencies (grenaud.github.io/mistartools).
+               ex: 
+
+#chr	coord	REF,ALT	root	anc	IndividualA
+7	35190	G,T	0,1:0	0,1:0	122,1:0
+
+DICE can handle gzipped text file so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
+
+
+
+Example:
+TODO
+
+This will produce the files.. TODO. We combine sites with the same allele frequency base count in the BAM file to increase speed.
+
+	
+
+# Test data
+
+TODO
+
+
+# Running directly on the BAM file
+
+You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode since we cannot combine sites together and read fragment needs to be computed independently. The advantage of this mode is that no error is being estimated as is it computed directly using mapping quality, base quality and deamination rates. 
+
+Example:
+
+TODO
+
+
+
 
 # 2-Pop method: input data format
 
@@ -85,7 +168,7 @@ Range for parameter values:
 
 # 2-Pop method: alternative error rate models
 
-[TO ADD]
+[TODO]
 
 # 3-Pop method: input data format
 
@@ -170,10 +253,30 @@ This would mean that there are 21 sites where the panel from the first populatio
 
 Rscript CalcDrifts.R test_calcdrifts_input.txt > test_calcdrifts_output.txt
 
-# 3-Pop method: BAM file option
+# BAM file option
 
-[TO ADD]
+If you wish, you can run DICE directly on the BAM file. It has the advantage of foregoing the error parameter(s) estimates and uses directly the mapping quality, the base quality and overall deamination rates.  The disadvantage is that it will run much slower than the normal mode. 
 
-# 3-Pop method: alternative error rate models
+- First, you need to compute your deamination rates. The deamination profile is a simple substitution matrix with the following tab-delimited format:
 
-[TO ADD]
+-------------
+A>C  A>G  A>T  C>A  C>G  C>T        G>A  G>C  G>T  T>A  T>C  T>G
+0.0  0.0  0.0  0.0  0.0  0.0792496  0.0  0.0  0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0  0.0  0.0204847  0.0  0.0  0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0  0.0  0.0183053  0.0  0.0  0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0  0.0  0.0163882  0.0  0.0  0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0  0.0  0.0163684  0.0  0.0  0.0  0.0  0.0  0.0
+0.0  0.0  0.0  0.0  0.0  0.0163688  0.0  0.0  0.0  0.0  0.0  0.0
+-------------
+
+Where the first base is the one next to the end. Ideally, you should have a deamination profile for the 5' and 3' end. You can use the simple "bam2prof" tool to generate those: https://github.com/grenaud/schmutzi/blob/master/bam2prof.cpp
+
+- Second, run diceBAM
+
+# Alternative error rate models
+
+By default, DICE uses a single error parameter for the entire dataset. However, in ancient DNA datasets, transitions tend to have a greater error rate due to deamination. Hence we have the following error models:
+
+- a single error parameter (default)
+- a separate error parameter for transitions and transversion. This requires the data to have been flagged previously by BAM2DICE using the "-t" option. 
+- Two different error parameters and a error balance parameter (pe) that will use the first error parameter with probability pe and the second one with probability 1-pe. This mode can be triggered using "-2e" option.

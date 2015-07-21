@@ -1016,7 +1016,7 @@ int main (int argc, char *argv[]) {
 			      "\t\t"+"-deam3pc [.prof file]" +"\t\t"+"3p deamination frequency for the contaminant (default: "+deam3pfreqC+")"+"\n"+
 
 
-			      "\n\t\Population options:\n"+ 
+			      "\n\tPopulation options:\n"+ 
 			      "\tThe name of the populations much be the same (case sensitive) in the frequency files\n"+
 			      "\t\t"+"--anch"+  "\t\t\t\t"+"Anchor population         (default: all)"+"\n"+
 			      "\t\t"+"--cont"+  "\t\t\t\t"+"Contaminant population    (default: all)"+"\n"+
