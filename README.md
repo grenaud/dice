@@ -272,14 +272,14 @@ A>C  A>G  A>T  C>A  C>G  C>T        G>A  G>C  G>T  T>A  T>C  T>G
 
 -------------
 
-Where the first base is the one next to the end. Ideally, you should have a deamination profile for the 5' and 3' end. You can use the simple "bam2prof" tool to generate those: https://github.com/grenaud/schmutzi/blob/master/bam2prof.cpp
+Where the first base is the one next to the end of the read. Ideally, you should have a deamination profile for the 5' and 3' end. You can use the simple "bam2prof" tool to generate those: https://github.com/grenaud/schmutzi/blob/master/bam2prof.cpp
 
 - Second, run diceBAM
 
 # Alternative error rate models
 
-By default, DICE uses a single error parameter for the entire dataset. However, in ancient DNA datasets, transitions tend to have a greater error rate due to deamination. Hence we have the following error models:
+By default, DICE uses a single error parameter for the entire dataset. However, in ancient DNA datasets, transitions tend to have a greater error rate due to deamination. Hence we have the following alternative error rate models:
 
 - a single error parameter (default)
-- a separate error parameter for transitions and transversion. This requires the data to have been flagged previously by BAM2DICE using the "-t" option. 
-- Two different error parameters and a error probability parameter (pe) that will use the first error parameter with probability pe and the second one with probability 1-pe (see Fu et al. 2014). This mode can be triggered using the "-2e" option.
+- a separate error parameter for transitions and transversions. This mode can be triggered using the "-..." option. It requires the data to have been flagged previously by BAM2DICE using the "-t" option. 
+- a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option.
