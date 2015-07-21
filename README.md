@@ -15,7 +15,7 @@ C++ libraries:
 - cmake
 - zlib
 - git 
-- 
+
 Python libraries:
 - dadi
 - numpy
