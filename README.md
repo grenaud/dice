@@ -255,7 +255,6 @@ You can also run DICE directly on the BAM file. This mode however is a bit slowe
 
 - First, you need to compute your deamination rates. The deamination profile is a simple substitution matrix with the following tab-delimited format:
 
--------------
 	       A>C  A>G  A>T  C>A  C>G  C>T        G>A  G>C  G>T  T>A  T>C  T>G
 
 	       0.0  0.0  0.0  0.0  0.0  0.0792496  0.0  0.0  0.0  0.0  0.0  0.0
@@ -269,8 +268,6 @@ You can also run DICE directly on the BAM file. This mode however is a bit slowe
 	       0.0  0.0  0.0  0.0  0.0  0.0163684  0.0  0.0  0.0  0.0  0.0  0.0
 
 	       0.0  0.0  0.0  0.0  0.0  0.0163688  0.0  0.0  0.0  0.0  0.0  0.0
-
--------------
 
 Where the first base is the one next to the end of the read. Ideally, you should have a deamination profile for the 5' and 3' end. You can use the simple "bam2prof" tool to generate those: https://github.com/grenaud/schmutzi/blob/master/bam2prof.cpp
 
