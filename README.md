@@ -292,3 +292,8 @@ By default, DICE uses a single error parameter for the entire dataset. However, 
 - a single error parameter model (default)
 - a model with two separate error parameters, one for transitions and one for transversions. This mode will be triggered automatically if the input data was  previously flagged by BAM2DICE using the "-t" option. 
 - a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option when running DICE.
+
+# Ancestral state misidentification
+
+TO DO
+
