@@ -1,11 +1,6 @@
 # Readme for DICE
 
-DICE is a Bayesian method to jointly infer contamination from present-day humans in ancient DNA samples and drift parameters using MCMC. Our approach is applicable to nuclear data. DICE works by computing the likelihood of finding a certain derived allele as contaminant by using the derived allele frequency in a potentially contaminating population. It is also possible that this derived allele is found endogenously in the sample. Given drift parameters, we compute the probability of observing the 3 following genotypes: 
- - (ancestral , ancestral)
- - (derived   , ancestral)
- - (derived   , derived)
-
-given the derived allele frequency in an anchor population. Since both the contamination rate and the demographic parameters depend on each other, we jointly infer them.
+DICE is a Bayesian method to jointly infer contamination from present-day humans in ancient DNA samples, error and drift parameters using MCMC. Our approach is applicable to nuclear data. DICE works by computing the likelihood of finding a certain derived allele as contaminant by using the derived allele frequency in a potentially contaminating population.
  
 # Contact
 
@@ -15,11 +10,18 @@ Gabriel Renaud    gabriel.reno@gmail.com
 
 # Prerequisites
 
-For C++:
+C++ libraries:
 - cmake
 - zlib
 - git 
+- 
+Python libraries:
+- dadi
+- numpy
+- scipy
 
+R libraries:
+- bbmle
 
 # Compiling and installing
 
@@ -51,11 +53,11 @@ The starting data is raw aDNA fragments aligned to the nuclear genome in BAM for
 
 There are two ways to run DICE:
 - Convert to native format (recommended)
-- Run DICE directly on the BAM and use deamination profiles and quality scores to to infer the error rate. This mode is a bit slower (see section below).
+- Run DICE directly on the BAM and use deamination profiles and quality scores to infer the error rate. This mode is a bit slower (see section below).
 
-The native format is a simple text file that contains the derived/ancestral base count and their frequencies in different panel populations (see examples below).
+The native format is a simple text file that contains the derived/ancestral base counts and their frequencies in different panel populations (see examples below).
 
-An intersection of the base count at each position in the BAM file and the derived allele frequency must be made. You can do this whichever way you want but we have created a small program to do this src/BAM2DICE. This program takes the following arguments:
+An intersection of the base count at each position in the BAM file and the derived allele frequency must be made. You can do this whichever way you want but we have created a small program to do this: src/BAM2DICE. This program takes the following arguments:
 
 src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
 
@@ -89,8 +91,7 @@ Description:
 #chr	coord	REF,ALT	root	anc	IndividualA
 7	35190	G,T	0,1:0	0,1:0	122,1:0
 
-DICE can handle gzipped text file so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
-
+DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
 
 
 Example:
