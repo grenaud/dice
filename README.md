@@ -88,7 +88,7 @@ For example:
 	       chr1:518593-712340
 
 
-[freq ..]    : A set of files containing allele frequencies from panel 
+[freq ..]    : A set of tab-separated files containing allele frequencies from panel 
                population. Which will be used as contaminant, anchor or admixed 
                need to be specified as options. These frequencies use the same 
                used for a software package designed to import, store and 
@@ -96,7 +96,7 @@ For example:
 
 For example: 
 
-#chr	coord	REF,ALT	root	anc	IndividualA
+chr	coord	REF,ALT	root	anc	IndividualA
 
 7	35190	G,T	0,1:0	0,1:0	122,1:0
 
