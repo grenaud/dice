@@ -69,10 +69,11 @@ Description:
 [bam]        : Sorted and indexed BAM file
 
 [region]     : A list of regions that the program will produce data for. 
-	       We recommend using regions evolving under neutrality with a high
+	       We recommend using regionswith a high
                mapability score. Try to aim to have a least 1M defined sites.
-               
-               This file has the following format:
+            
+
+This file has the following format:
                
 	       ------
 	       
@@ -83,12 +84,11 @@ Description:
 	       refID3:start-end
 	       
 	       ...
-	       
-	       ...
-	       
+
                ------
                
-               For example:
+
+For example:
                
                -----
                
