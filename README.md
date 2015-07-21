@@ -5,6 +5,7 @@ DICE is a Bayesian method to jointly infer contamination from present-day humans
 # Contact
 
 Fernando Racimo fernandoracimo@gmail.com
+
 Gabriel Renaud    gabriel.reno@gmail.com
 
 
@@ -102,15 +103,6 @@ This will produce the files.. TODO. We combine sites with the same allele freque
 	
 
 # Test data
-
-TODO
-
-
-# Running directly on the BAM file
-
-You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode since we cannot combine sites together and read fragment needs to be computed independently. The advantage of this mode is that no error is being estimated as is it computed directly using mapping quality, base quality and deamination rates. 
-
-Example:
 
 TODO
 
@@ -265,7 +257,7 @@ Rscript CalcDrifts.R test_calcdrifts_input.txt > test_calcdrifts_output.txt
 
 # BAM file option
 
-If you wish, you can run DICE directly on the BAM file. It has the advantage of foregoing the error parameter(s) estimates and uses directly the mapping quality, the base quality and overall deamination rates.  The disadvantage is that it will run much slower than the normal mode. 
+You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode since we cannot combine sites together and read fragment needs to be computed independently. The advantage is that, in this mode, the error rate parameter is not estimated genome-wide, but is computed directly at each site, using mapping quality, base quality and deamination rates. 
 
 - First, you need to compute your deamination rates. The deamination profile is a simple substitution matrix with the following tab-delimited format:
 
@@ -289,4 +281,4 @@ By default, DICE uses a single error parameter for the entire dataset. However, 
 
 - a single error parameter (default)
 - a separate error parameter for transitions and transversion. This requires the data to have been flagged previously by BAM2DICE using the "-t" option. 
-- Two different error parameters and a error balance parameter (pe) that will use the first error parameter with probability pe and the second one with probability 1-pe. This mode can be triggered using "-2e" option.
+- Two different error parameters and a error probability parameter (pe) that will use the first error parameter with probability pe and the second one with probability 1-pe (see Fu et al. 2014). This mode can be triggered using the "-2e" option.
