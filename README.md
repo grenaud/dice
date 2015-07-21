@@ -253,7 +253,7 @@ Rscript CalcDrifts.R test_calcdrifts_input.txt > test_calcdrifts_output.txt
 
 You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode since we cannot combine sites together and read fragment needs to be computed independently. The advantage is that, in this mode, the error rate parameter is not estimated genome-wide, but is computed directly at each site, using mapping quality, base quality and deamination rates. 
 
-- First, you need to compute your deamination rates. The deamination profile is a simple substitution matrix with the following tab-delimited format:
+- First, you need to compute a post-mortem deamination profile. This is a simple substitution matrix with the following tab-delimited format:
 
 	       A>C  A>G  A>T  C>A  C>G  C>T        G>A  G>C  G>T  T>A  T>C  T>G
 
@@ -269,7 +269,10 @@ You can also run DICE directly on the BAM file. This mode however is a bit slowe
 
 	       0.0  0.0  0.0  0.0  0.0  0.0163688  0.0  0.0  0.0  0.0  0.0  0.0
 
-Where the first base is the one next to the end of the read. Ideally, you should have a deamination profile for the 5' and 3' end. You can use the simple "bam2prof" tool to generate those: https://github.com/grenaud/schmutzi/blob/master/bam2prof.cpp
+
+The columns here denote the probability of post-mortem substitition for all 12 types of nucleotide changes. Starting from the top, each line represents the position with respect to the 5' end of the read. So, for example, the first row corresponds to the position next to the 5' end, the second row corresponds to 2 positions away from the 5' end, the third row to 3 positions away from the 5' end, etc.
+
+Ideally, you should have two separate deamination profiles, one for the 5' end and one for the 3' end. You can use the simple "bam2prof" tool to generate those: https://github.com/grenaud/schmutzi/blob/master/bam2prof.cpp
 
 - Second, run diceBAM
 
@@ -279,4 +282,4 @@ By default, DICE uses a single error parameter for the entire dataset. However, 
 
 - a single error parameter (default)
 - a separate error parameter for transitions and transversions. This mode will be triggered automatically if the input data was  previously flagged by BAM2DICE using the "-t" option. 
-- a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option when running dice.
+- a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option when running DICE.
