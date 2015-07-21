@@ -71,12 +71,8 @@ Description:
 [region]     : A list of regions that the program will produce data for. 
 	       We recommend using regionswith a high
                mapability score. Try to aim to have a least 1M defined sites.
-            
-
 This file has the following format:
                
-	       ------
-	       
 	       refID1:start-end
 	       
 	       refID2:start-end
@@ -85,12 +81,7 @@ This file has the following format:
 	       
 	       ...
 
-               ------
-               
-
 For example:
-               
-               -----
                
 	       chr1:304012-419131
 	       
@@ -102,7 +93,8 @@ For example:
                need to be specified as options. These frequencies use the same 
                used for a software package designed to import, store and 
                process allele frequencies (grenaud.github.io/mistartools).
-               ex: 
+
+For example: 
 
 #chr	coord	REF,ALT	root	anc	IndividualA
 
@@ -110,12 +102,6 @@ For example:
 
 DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
 
-Example:
-TODO
-
-This will produce the files.. TODO. We combine sites with the same allele frequency base count in the BAM file to increase speed.
-
-	
 
 # Test data
 
