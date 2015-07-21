@@ -26,7 +26,7 @@ R libraries:
 
 # Compiling and installing
 
-NOTE: Make sure you are connected to the internet when you build the code. It needs to retrieve tabix from the samtools package.
+NOTE: Make sure you are connected to the internet when you build the code. The compiler needs to be able to retrieve tabix from the samtools package.
 
 cd bamtools/
 
