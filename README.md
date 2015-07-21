@@ -1,6 +1,6 @@
 # Readme for DICE
 
-DICE is a Bayesian method to jointly infer contamination from present-day humans in ancient DNA samples, error and drift parameters using MCMC. Our approach is applicable to nuclear data. It can also determine the most probable ancestry of the individual(s) that contaminated the sample. 
+DICE is a Bayesian method to jointly estimate error, drift parameters and contamination from present-day humans in ancient DNA samples, using MCMC. Our approach is applicable to nuclear autosomal data. It can also determine the most probable ancestry of the individual(s) that contaminated the sample. 
  
 # Contact
 
@@ -58,7 +58,7 @@ There are two ways to run DICE:
 
 The native format is a simple text file that contains the derived/ancestral base counts and their frequencies in different panel populations (see examples below).
 
-An intersection of the base count at each position in the BAM file and the derived allele frequency must be made. You can do this whichever way you want but we have created a small program to do this: src/BAM2DICE. This program takes the following arguments:
+An intersection of the base count at each position in the BAM file and the derived allele frequency must be made. You can do this whichever way you want, but we have created a small program to do this: src/BAM2DICE. This program takes the following arguments:
 
 src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
 
@@ -112,7 +112,9 @@ TODO
 
 # 2-Pop method: input data format
 
-The input data for the 2-pop method is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies. An example row would be:
+DICE has two main demographic inference methods: the 2-pop method and the 3-pop method. The former is faster, but the latter allows for the inference of admixture between a present-day human population and the population to which the aDNA sample belongs.
+
+The input data for the 2-pop method in DICE is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies. An example row would be:
 
 	       3	5	0.48	8
 
@@ -131,7 +133,7 @@ NOTES:
 
 # 2-Pop method: usage
 
-To run type:
+To run DICE with the 2-pop method, type:
 
 ./src/dice -2p [options]  [input file]
 
@@ -168,7 +170,7 @@ Range for parameter values:
 
 # 3-Pop method: input data format
 
-The input data for the 3-pop method is a file that should have at least five columns. An example row would be:
+The input data for the 3-pop method in DICE is a file that should have at least five columns. An example row would be:
 
 	       7	0	0.33	0.23	10
 
@@ -187,7 +189,7 @@ NOTES:
 
 # 3-Pop method: usage
 
-To run type:
+To run type DICE with the 3-pop method, type:
 
 ./src/dice -3p [options]  [input file]
 
