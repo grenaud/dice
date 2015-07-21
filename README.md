@@ -1,6 +1,6 @@
 # Readme for DICE
 
-DICE is a Bayesian method to jointly estimate error, drift and contamination rate parameters from present-day humans in ancient DNA samples, using MCMC. Our approach is applicable to nuclear autosomal data. It can also determine the most probable ancestry of the individual(s) that contaminated the sample. 
+DICE is a Bayesian method to jointly estimate error, drift and contamination rate parameters from present-day humans in ancient DNA samples, using MCMC. Our approach is applicable to nuclear autosomal data. It can also serve to determine the most probable ancestry of the individual(s) that contaminated the sample. 
  
 # Contact
 
