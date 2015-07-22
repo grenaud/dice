@@ -105,7 +105,8 @@ int main (int argc, char *argv[]) {
                               "\n\tComputation options:\n"+
                               "\t\t"+"-s     [step]" +"\t\t\t"+"MCMC interval space step (default: "+stringify(step)+")"+"\n"+
                               "\t\t"+"-c     [#chains]" +"\t\t"+"Max. number of Markov chains (default: "+stringify(maxChains)+")"+"\n"+
-			      "\t\t"+"-2e     " +"\t\t\t"+"Use a 2 parameter error model (default: "+boolStringify(param2E)+")"+"\n"+
+			      "\t\t"+"-2e   " +"\t\t\t"+"Use a 2 parameter error model (default: "+boolStringify(param2E)+")"+"\n"+
+			      "\t\t"+"-pol   " +"\t\t\t"+"Compute the probability of mis-polarization (default: "+boolStringify(param2E)+")"+"\n"+
 
                               "\n\tStarting values:\n"+
 			      "\t\t"+"-e0     [error]"+"\t\t\t"+"Error rate                  (default: random)"+"\n"+
@@ -573,7 +574,7 @@ int main (int argc, char *argv[]) {
    random_device rd;
    default_random_engine dre (rd());
 
-   for(int chain=0;chain<maxChains;chain++){
+   for(int chain=0;chain<=maxChains;chain++){
      
        long double partition= (long double)(step);
 

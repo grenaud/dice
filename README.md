@@ -26,6 +26,8 @@ For C++:
 # Make sure you are connected to the internet when you build the code. It needs to retrieve tabix from the samtools package.
 
 cd bamtools/
+mkdir build
+cd build
 cmake ..
 make
 cd ../..
