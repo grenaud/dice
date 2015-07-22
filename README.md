@@ -33,7 +33,10 @@ Make sure you have git installed and type:
 
 # Compiling and installing
 
-NOTE: Make sure you are connected to the internet when you build the code. The compiler needs to be able to retrieve tabix from the samtools package.
+Make sure you are connected to the internet when you build the code. The compiler needs to be able to retrieve tabix from the samtools package.
+
+First, go to the folder where you downloaded the dice folder, and then type the following commands:
+
 
     cd bamtools/
     mkdir build
