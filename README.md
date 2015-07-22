@@ -43,17 +43,15 @@ NOTE: Make sure you are connected to the internet when you build the code. The c
 
 # BAM to DICE format conversion
 
-NOTE: if you already have data in DICE's native format (see section below), you can skip this section. Otherwise, continue reading.
+NOTE: if you already have data in DICE's native format (see "input data format" section), you can skip this section. Otherwise, continue reading.
 
-This section assumes that the starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted (wrt coordinates) and indexed. 
+This section assumes that the starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted with respect to coordinates, and indexed. 
 
 There are two ways to run DICE:
-- Convert to native format (recommended)
-- Run DICE directly on the BAM and use deamination profiles and quality scores to infer the error rate. This mode is a bit slower (see section below).
+- Convert your BAM file to DICE's native format. This is recommended for first-time users.
+- Run DICE directly on the BAM and use deamination profiles and quality scores to infer the error rates at each position. This mode is a bit slower (see "BAM file option" below).
 
-The native format is a simple text file that contains the derived/ancestral base counts and their frequencies in different panel populations (see examples below).
-
-An intersection of the base count at each position in the BAM file and the derived allele frequency must be made. You can do this whichever way you want, but we have created a small program to do this: src/BAM2DICE. This program takes the following arguments:
+DICE's native format is a simple text file that contains the derived/ancestral base counts and their frequencies in different panel populations (see "input data format" section). To convert your BAM file to DICE's native format, we have created a small program: src/BAM2DICE. This program takes the following arguments:
 
     src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
 
@@ -103,7 +101,7 @@ DICE can handle gzipped text files so gzip whenever possible to save space.  By 
 TODO
 
 
-# DICE 2-Pop method: input data format
+# 2-Pop method: input data format
 
 DICE has two main demographic inference methods: the 2-pop method and the 3-pop method. The former is faster, but the latter allows for the inference of admixture between a present-day human population and the population to which the aDNA sample belongs.
 
@@ -124,7 +122,7 @@ NOTES:
 - The allele frequencies for the anchor population should be larger than 0 and smaller than 1. This is not required for the contaminant population, if different from the anchor.
 - When comparing multiple candidate contaminant populations, it is best to use only sites that are segregating in all populations that are tested as contaminants, so that the likelihood is composed of the same number of sites in each case.
 
-# DICE 2-Pop method: usage
+# 2-Pop method: usage
 
 To run DICE with the 2-pop method, type:
 
@@ -160,11 +158,11 @@ Range for parameter values:
 
 -tC    tauCl,tauCh		Tau Anchor range     (default: 1e-06,1   )
 
-# DICE: output
+# Output
 
 The output of running  DICE is a set of columns, each containing the steps in the MCMC for a particular parameter. The first column denotes the number of the step in the chain, the second is the log-posterior for that particular step, the third is the error rate, the fourth is the contamination rate, the fifth is the drift parameter for the anchor side of the tree ("tau C"), the sixth is the drift paramer for the ancient individual's side of the tree ("tau A"), the sixth and seventh columns are the admixture rate and time parameters (which are always zero in the two-pop method), and finally the eight column is the acceptance rate of the chain. We recommend plotting all the parameters to ensure convergence has been reached. As in any other MCMC method, when estimating the posterior distribution, we recommend sampling after a certain burn-in period and every X number of steps, to ensure the chain is well-mixed.
 
-# DICE 3-Pop method: input data format
+# 3-Pop method: input data format
 
 The input data for the 3-pop method in DICE is a file that should have at least five columns. An example row would be:
 
@@ -183,7 +181,7 @@ NOTES:
 - The allele frequencies for the anchor population should be larger than 0 and smaller than 1. This is not required for the contaminant population, if different from the anchor.
 - When comparing multiple candidate contaminant populations, it is best to use only sites that are segregating in all populations that are tested as contaminants, so that the likelihood is composed of the same number of sites in each case.
 
-# DICE 3-Pop method: usage
+# 3-Pop method: usage
 
 To run type DICE with the 3-pop method, type:
 
@@ -237,7 +235,7 @@ Population specific constants:
 
 -nb      [num b]		Number of sampled chromosomes from the non-admixing panel (default: 100)
 
-# DICE 3-Pop method: calculating drifts specific to each anchor population
+# 3-Pop method: calculating drifts specific to each anchor population
 
 We provide an R script to calculate the drift times (inner drift Y and inner drift Z) specific to each anchor population, which should be inputted into the command line in the options -idy and -idz when running the 3-pop method. The input for this R script is a tab-separated file that should contain 5 rows, each describing a particular configuration of derived allele frequencies in the two populations. An example line would be:
 
