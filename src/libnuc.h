@@ -11,6 +11,7 @@
 /* #define DEBUGL1 */
 /* #define DEBUGL2 */
 /* #define DEBUGL3 */
+/* #define DEBUGTWOPOP */
 
 /* #define DEBUGBAML1 */
 /* #define DEBUGBAML2 */
@@ -90,6 +91,7 @@ inline long double qterm(int i,long double r,long double e,long double y){
   \param y : frequency of the derived allele for the contaminant
  */
 inline long double pad_given_irey(int a,int d,int i,long double r,long double e,long double y){
+
 #ifdef DEBUGL2
     //cout<<"qterm begin\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
     cout<<"pad_given_irey begin\t"<< a<<"\t"<<d<<"\t"<<i<<"\t"<<r<<"\t"<<e<<"\t"<<y<<endl;
@@ -164,8 +166,10 @@ inline long double Pgeno_given_ytau(int i,long double y,long double tau_C,long d
   \param e2  : second error paramater
   \param pe  : proportion of the second error parameter
   \param param2E : flag to know whether we use a second error parameter
+  \param mid :     mis-polarization factor
+  \param mispol : flag to know whether we use mis-polarization
 */
-inline long double pad_given_reytau(int a,int d,long double r,long double e,long double y,long double freqcont,long double tau_C,long double tau_A ,long double e2,long double pe,bool param2E){
+inline long double pad_given_reytau(int a,int d,long double r,long double e,long double y,long double freqcont,long double tau_C,long double tau_A ,long double e2,long double pe,bool param2E,long double mid,bool mispol){
 
     long double  sumResult=0.0;
     for(int i=0;i<=2;i++){
@@ -173,7 +177,12 @@ inline long double pad_given_reytau(int a,int d,long double r,long double e,long
 	    sumResult += (      pe *pad_given_irey(a,d,i,r,e, freqcont) + 
 		     	   (1.0-pe)*pad_given_irey(a,d,i,r,e2,freqcont) )*Pgeno_given_ytau(i,y,tau_C,tau_A);
 	}else{
-	    sumResult += pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);
+	    if(mispol){
+		sumResult += ( (1.0-mid) * pad_given_irey(a,d,i,r,e,freqcont)*      Pgeno_given_ytau(i,      y,tau_C,tau_A) +  //we did not mis-polarize
+			            mid  * pad_given_irey(d,a,i,r,e,(1.0-freqcont))*Pgeno_given_ytau(i,(1.0-y),tau_C,tau_A) ); //we did mis-polarize
+	    }else{	    
+		sumResult += pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);
+	    }
 	}
     }
 
@@ -206,7 +215,7 @@ inline long double pad_given_reytau(int a,int d,long double r,long double e,long
   \param numhumy :  Number nC
   \param numhumz :  Number nB
 */
-inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz,long double e2,long double pe,bool param2E){
+inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long double e,long double y,long double z,long double freqcont, vector< vector<long double> * > * dadiTable,long double numhumy,long double numhumz,long double e2,long double pe,bool param2E,long double mid,bool mispol){
     /* cout<<"pad_given_reytau_dadi_threeP1\t"<<a<<"\t"<<d<<endl; */
 
     long double  ycoord     = roundl( y * numhumy );
@@ -219,11 +228,24 @@ inline long double pad_given_reytau_dadi_threeP(int a,int d,long double r,long d
 	/* cout<<"d "<<dadiTable->at(finalcoord)->at(i)<<endl; */
 	if(param2E){
 	    sumResult += (     pe*pad_given_irey(a,d,i,r,e, freqcont) +
-			   (1-pe)*pad_given_irey(a,d,i,r,e2,freqcont) 
-			   )
+			       (1-pe)*pad_given_irey(a,d,i,r,e2,freqcont) 
+			       )
 		*dadiTable->at(finalcoord)->at(i);
 	}else{
-	    sumResult += pad_given_irey(a,d,i,r,e,freqcont)*dadiTable->at(finalcoord)->at(i);
+	    if(mispol){	    
+		
+		long double  ycoordM     = roundl( (1.0-y) * numhumy );
+		long double  zcoordM     = roundl( (1.0-z) * numhumz );
+		long double  finalcoordM = ycoordM*(numhumy+1) + zcoordM ;
+
+		sumResult += ( (1.0-mid) * pad_given_irey(a,d,i,r,e,     freqcont ) * dadiTable->at(finalcoord )->at(i)   //we did not mis-polarize
+			       +
+			            mid  * pad_given_irey(d,a,i,r,e,(1.0-freqcont)) * dadiTable->at(finalcoordM)->at(i) ); //we did mis-polarize
+	    
+	    }else{
+
+		sumResult += pad_given_irey(a,d,i,r,e,freqcont)*dadiTable->at(finalcoord)->at(i);
+	    }
 	}
 
 	//pad_given_irey(a,d,i,r,e,freqcont)*Pgeno_given_ytau(i,y,tau_C,tau_A);	             
@@ -577,7 +599,24 @@ inline long double LogFinalTwoPBAM( const vector<singleSite> *  dataSitesVec,lon
 
 
 //  Log final posterior for two populations
-inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor,bool hasTSInfo, long double eTS,long double e2,long double pe,bool param2E){
+inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,bool contequalanchor,bool hasTSInfo, long double eTS,long double e2,long double pe,bool param2E,long double mid,bool mispol){
+
+#ifdef DEBUGTWOPOP
+    cerr<<"LogFinalTwoP"<<endl;
+    cerr<<"e\t"<<e<<endl;
+    cerr<<"r\t"<<r<<endl;
+    cerr<<"tau_C\t"<<tau_C<<endl;
+    cerr<<"tau_A\t"<<tau_A<<endl;
+    cerr<<"contequalanchor\t"<<contequalanchor<<endl;
+    cerr<<"hasTSInfo\t"<<hasTSInfo<<endl;
+    cerr<<"eTS\t"<<eTS<<endl;
+    cerr<<"e2\t"<<e2<<endl;
+    cerr<<"pe\t"<<pe<<endl;
+    cerr<<"param2E\t"<<param2E<<endl;
+    cerr<<"mid\t"<<mid<<endl;
+    cerr<<"mispol\t"<<mispol<<endl;
+#endif
+
 //     print(c(e,r,tau_C,tau_A))
 
 	// Case where the anchor population is the same as the putative contaminant population (3rd column of data file)
@@ -599,18 +638,20 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 						 tableData->at(indexSite).panelFreqCont,
 						 tableData->at(indexSite).panelFreqCont,
 						 tau_C,tau_A,
-						 e2,pe,param2E
+						 e2,pe,param2E,
+						 mid,mispol
 						 ))*tableData->at(indexSite).num;
-		
+	       
 	    }else{
 
+		
 	       toaddToSum = log(pad_given_reytau(tableData->at(indexSite).ancCount,
 						 tableData->at(indexSite).derCount,
 						 r,
 						 e,
 						 tableData->at(indexSite).panelFreqCont,
 						 tableData->at(indexSite).panelFreqCont,
-						 tau_C,tau_A,e2,pe,param2E) )*tableData->at(indexSite).num;
+						 tau_C,tau_A,e2,pe,param2E,mid,mispol) )*tableData->at(indexSite).num;
 
 	    }
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
@@ -634,7 +675,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 						  tableData->at(indexSite).panelFreqAnchor,
 						  tableData->at(indexSite).panelFreqCont,
 						  tau_C,
-						  tau_A,e2,pe,param2E))*tableData->at(indexSite).num;
+						  tau_A,e2,pe,param2E,mid,mispol))*tableData->at(indexSite).num;
 
 	    }else{
 
@@ -645,7 +686,7 @@ inline long double LogFinalTwoP(vector<freqSite> * tableData,long double e,long 
 						  tableData->at(indexSite).panelFreqAnchor,
 						  tableData->at(indexSite).panelFreqCont,
 						  tau_C,
-						  tau_A,e2,pe,param2E))*tableData->at(indexSite).num;
+						  tau_A,e2,pe,param2E,mid,mispol))*tableData->at(indexSite).num;
 
 	    }
 	    //cout<<tableData->at(indexSite).ancCount<<"\t"<<tableData->at(indexSite).derCount<<"\t"<<tableData->at(indexSite).panelFreqCont<<"\t"<<tableData->at(indexSite).num<<"\t"<<toaddToSum<<endl;
@@ -709,7 +750,7 @@ inline long double LogFinalThreePBAM(const vector<singleSite> *  dataSitesVec,lo
 	    long double  ycoord     = roundl( dataSitesVec->at(indexSite).freqDerived[admxIndex]  * nC );
 	    long double  zcoord     = roundl( dataSitesVec->at(indexSite).freqDerived[anchorIndex] * nB );
 	    long double  finalcoord = ycoord*(nC+1) + zcoord ; 
-	    long double  sumResult=0.0;
+	    //long double  sumResult  = 0.0;
 
 	    int i; //"true" genotype
 	    i=0; //AA (pad_given_ireyBAM(dataSitesVec->at(indexSite),i,r,dataSitesVec->at(indexSite).freqDerived[contIndex]));
@@ -761,7 +802,7 @@ inline long double LogFinalThreePBAM(const vector<singleSite> *  dataSitesVec,lo
 }
 
 //  Log final posterior for three populations
-inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor,bool hasTSInfo, long double eTS,long double e2,long double pe,bool param2E){
+inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,long double r,long double tau_C,long double tau_A,long double admixrate,long double admixtime,long double innerdriftY,long double innerdriftZ,long double nC,long double nB,const string & cwdProg,bool contequalanchor,bool hasTSInfo, long double eTS,long double e2,long double pe,bool param2E,long double mid,bool mispol){
     //     print(c(e,r,tau_C,tau_A))
     //cout<<cwdProg<<"\t"<<contequalanchor<<endl;
     //exit(1);
@@ -807,7 +848,9 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  nB,
 								  e2,
 								  pe,
-								  param2E)
+								  param2E,
+								  mid,
+								  mispol)
 				     )* tableData->at(indexSite).num;
 		    
 		}else{
@@ -824,7 +867,9 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  nB,
 								  e2,
 								  pe,
-								  param2E)
+								  param2E,
+								  mid,
+								  mispol)
 				     ) * tableData->at(indexSite).num;
 
 		}
@@ -881,7 +926,9 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  nB,
 								  e2,
 								  pe,
-								  param2E								  
+								  param2E,
+								  mid,
+								  mispol
 								  )
 				     ) * tableData->at(indexSite).num;
 
@@ -899,7 +946,9 @@ inline long double LogFinalThreeP(vector<freqSite> * tableData,long double e,lon
 								  nB,
 								  e2,
 								  pe,
-								  param2E)
+								  param2E,
+								  mid,
+								  mispol)
 				     ) * tableData->at(indexSite).num;
 		    //cout<<"LogFinalThreeP2 "<<indexSite<<endl;
 		}

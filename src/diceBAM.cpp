@@ -1735,7 +1735,7 @@ int main (int argc, char *argv[]) {
    long double x_i_1l;
    //long double llik = LogFinalTwoPBAM( dataSitesVec, 0.05, 0.45, 0.5, indexCont, indexAnchor );
 
-   outLogFP<<"chain"<<"\tllik"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance"<<endl;
+   outLogFP<<"chain"<<"\tlpos"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance"<<endl;
 
     // for(int indexCont=0;indexCont<numberOfPopulationForCont;indexCont++){
     // 	for(int indexAnchor=0;indexAnchor<numberOfPopulationForCont;indexAnchor++){

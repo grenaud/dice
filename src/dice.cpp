@@ -68,11 +68,11 @@ int main (int argc, char *argv[]) {
     long double admixrateupper = 0.5;
     long double admixtimeupper = 0.11;
 
-    long double e_i         ; //TS
+    long double e_i         ; //TS or overall error
     long double eTS_i       ; //TV
-    long double pe_i         ; //2 error parameter, proportion
-    long double e2_i         ; //2 error parameter, 2nd error parameter
-
+    long double pe_i        ; //2 error parameter, proportion
+    long double e2_i        ; //2 error parameter, 2nd error parameter
+    long double mid_i       ; //mis polarization rate
 
 
     long double r_i         ;
@@ -81,10 +81,12 @@ int main (int argc, char *argv[]) {
     long double admixrate_i ;
     long double admixtime_i ;
 
-    bool e_i_0         = false; //TS
-    bool eTS_i_0       = false;
-    bool pe_i_0        = false; //TS
-    bool e2_i_0        = false; //TS
+    bool e_i_0         = false; //TV or overall
+    bool eTS_i_0       = false; //TS
+    bool pe_i_0        = false; 
+    bool e2_i_0        = false; 
+    bool mid_i_0       = false; 
+
 
     bool r_i_0         = false;
     bool tau_C_i_0     = false;
@@ -93,32 +95,33 @@ int main (int argc, char *argv[]) {
     bool admixtime_i_0 = false;
 
     bool param2E       = false; //two errors
+    bool mispol        = false; //account for mispolarization
 
     const string usage=string("\t"+string(argv[0])+
                               " [options]  [input file]"+"\n\n"+
 
-                              "\t\t"+"-2p" +"\t\t\t\t"+"Use 2pop mode (default: none)"+"\n"+
-                              "\t\t"+"-3p" +"\t\t\t\t"+"Use 3pop mode (default: none)"+"\n"+
-
-                              "\t\t"+"-o     [output log]" +"\t\t"+"Output log (default: stdout)"+"\n"+
+                              "\t\t"+"-2p" +"\t\t\t\t"            +"Use 2pop mode (default: none)"+"\n"+
+                              "\t\t"+"-3p" +"\t\t\t\t"            +"Use 3pop mode (default: none)"+"\n"+
+                              "\t\t"+"-o     [output log]" +"\t\t"+"Output log    (default: stdout)"+"\n"+
 			      
                               "\n\tComputation options:\n"+
-                              "\t\t"+"-s     [step]" +"\t\t\t"+"MCMC interval space step (default: "+stringify(step)+")"+"\n"+
-                              "\t\t"+"-c     [#chains]" +"\t\t"+"Max. number of Markov chains (default: "+stringify(maxChains)+")"+"\n"+
-			      "\t\t"+"-2e   " +"\t\t\t"+"Use a 2 parameter error model (default: "+boolStringify(param2E)+")"+"\n"+
-			      "\t\t"+"-pol   " +"\t\t\t"+"Compute the probability of mis-polarization (default: "+boolStringify(param2E)+")"+"\n"+
+                              "\t\t"+"-s     [step]" +"\t\t\t" +"MCMC interval space step                     (default: "+stringify(step)+")"+"\n"+
+                              "\t\t"+"-c     [#chains]" +"\t\t"+"Max. number of Markov chains                 (default: "+stringify(maxChains)+")"+"\n"+
+			      "\t\t"+"-2e   " +"\t\t\t\t"      +"Use a 2 parameter error model                (default: "+boolStringify(param2E)+")"+"\n"+
+			      "\t\t"+"-pol   " +"\t\t\t\t"     +"Compute the probability of mis-polarization  (default: "+boolStringify(param2E)+")"+"\n"+
 
                               "\n\tStarting values:\n"+
 			      "\t\t"+"-e0     [error]"+"\t\t\t"+"Error rate                  (default: random)"+"\n"+
 			      "\t\t"+"-ets0   [error]"+"\t\t\t"+"Error rate at TSs           (default: random)"+"\n"+
 			      "\t\t"+"-e20    [error]"+"\t\t\t"+"Error rate 2nd error param. (default: random)"+"\n"+
 			      "\t\t"+"-pe0    [error]"+"\t\t\t"+"Error proportion            (default: random)"+"\n"+
+			      "\t\t"+"-mid0   [error]"+"\t\t\t"+"Mis-polarization            (default: random)"+"\n"+
 
-			      "\t\t"+"-r0     [cont]" +"\t\t\t"+"Contamination rate (default: random)"+"\n"+
-			      "\t\t"+"-tA0    [tauA]" +"\t\t\t"+"Tau ancient genome        (default: random)"+"\n"+
-			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau anchor    (default: random)"+"\n"+
-			      "\t\t"+"-aR0    [admR]" +"\t\t\t"+"Admixture time     (default: random)"+"\n"+
-			      "\t\t"+"-aT0    [admT]" +"\t\t\t"+"Admixture rate     (default: random)"+"\n"+
+			      "\t\t"+"-r0     [cont]" +"\t\t\t"+"Contamination rate          (default: random)"+"\n"+
+			      "\t\t"+"-tA0    [tauA]" +"\t\t\t"+"Tau ancient genome          (default: random)"+"\n"+
+			      "\t\t"+"-tC0    [tauC]" +"\t\t\t"+"Tau anchor                  (default: random)"+"\n"+
+			      "\t\t"+"-aR0    [admR]" +"\t\t\t"+"Admixture time              (default: random)"+"\n"+
+			      "\t\t"+"-aT0    [admT]" +"\t\t\t"+"Admixture rate              (default: random)"+"\n"+
                               
 			      "\n\tRange for parameter values:\n"+
 			      "\t\t"+"-e     el,eh"+"\t\t\t"+"Error rate range          (default: "+stringify(elower)         +","+stringify(eupper)+" )"+"\n"+
@@ -131,8 +134,8 @@ int main (int argc, char *argv[]) {
 			      "\n\tPopulation specific constants:\n"+
 			      "\t\t"+"-idy     [drift]" +"\t\t"+"Inner drift Y (default: "+stringify(innerdriftY)+")"+"\n"+
 			      "\t\t"+"-idz     [drift]" +"\t\t"+"Inner drift Z (default: "+stringify(innerdriftZ)+")"+"\n"+
-			      "\t\t"+"-nc      [num c]"   +"\t\t"+"Number nC (default: "+stringify(nC)+")"+"\n"+
-			      "\t\t"+"-nb      [num b]"   +"\t\t"+"Number nB (default: "+stringify(nB)+")"+"\n"+
+			      "\t\t"+"-nc      [num c]"   +"\t\t"+"Number nC   (default: "+stringify(nC)+")"+"\n"+
+			      "\t\t"+"-nb      [num b]"   +"\t\t"+"Number nB   (default: "+stringify(nB)+")"+"\n"+
 
 
                               "");
@@ -159,6 +162,11 @@ int main (int argc, char *argv[]) {
 
         if(string(argv[i]) == "-2e"  ){
 	    param2E = true;
+            continue;
+        }
+
+        if(string(argv[i]) == "-pol"  ){
+	    mispol = true;
             continue;
         }
 
@@ -270,6 +278,13 @@ int main (int argc, char *argv[]) {
             continue;
         }
 
+        if(string(argv[i]) == "-mid0"  ){
+	    mid_i = destringify<double>(argv[i+1]);
+	    mid_i_0=true;
+            i++;
+            continue;
+        }
+
         if(string(argv[i]) == "-e20"  ){
 	    e2_i   = destringify<double>(argv[i+1]);
 	    e2_i_0 = true;
@@ -347,7 +362,8 @@ int main (int argc, char *argv[]) {
     }
 
 
-    if(twoPopMode == false && threePopMode==false){
+    if(twoPopMode == false && 
+       threePopMode==false){
 	cerr<<"Either specify -2p or -3p "<<endl;
         return 1;
     }
@@ -487,6 +503,18 @@ int main (int argc, char *argv[]) {
        return 1;       
    }
 
+   if(mispol && hasTSInfo){
+       cerr << "Cannot specify both the mis-polarization mode and use ts/tv"<<endl;
+       return 1;       
+   }
+
+   if(mispol && param2E){
+       cerr << "Cannot specify both the mis-polarization mode and use the two error parameter mode"<<endl;
+       return 1;       
+   }
+
+
+
    //cout<<"done\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
    //return 1;
    if( twoPopMode  == threePopMode ){
@@ -503,10 +531,13 @@ int main (int argc, char *argv[]) {
        eTS_i     = randomLongDouble(elower,         eupper);
 
    if(!e2_i_0)
-       e2_i       = randomLongDouble(elower,        eupper);
+       e2_i      = randomLongDouble(elower,        eupper);
 
    if(!pe_i_0)
-       pe_i       = randomLongDouble(0.0,           1.0);
+       pe_i      = randomLongDouble(0.0,           1.0);
+
+   if(!mid_i_0)
+       mid_i     = randomLongDouble(0.0,           1.0);
 
 
    if(!r_i_0)
@@ -528,6 +559,7 @@ int main (int argc, char *argv[]) {
     long double eTS_i_1;
     long double e2_i_1;
     long double pe_i_1;
+    long double mid_i_1;
 
     long double r_i_1;
     long double tau_C_i_1;
@@ -551,17 +583,20 @@ int main (int argc, char *argv[]) {
 
    long double x_il;
    long double x_i_1l;
-
    if(twoPopMode){
-       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,                                                              has4Cols,hasTSInfo,eTS_i,e2_i_0,pe_i_0,param2E);
+       x_il = LogFinalTwoP(  dataToAdd,e_i,r_i,tau_C_i,tau_A_i,                                                              has4Cols,hasTSInfo,eTS_i,e2_i,pe_i,param2E,mid_i,mispol);
    }else{
-       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i,e2_i_0,pe_i_0,param2E);
+       x_il = LogFinalThreeP(dataToAdd,e_i,r_i,tau_C_i,tau_A_i,admixrate_i,admixtime_i,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i,e2_i,pe_i,param2E,mid_i,mispol);
    }
-   outLogFP<<"chain"<<"\tllik"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance";
+   outLogFP<<"chain"<<"\tlpos"<<"\terror"<<"\tContRate"<<"\ttau_C"<<"\ttau_A"<<"\tadmixrate"<<"\tadmixtime\tacceptance";
 
-
+   
    if(param2E){
        outLogFP<<"\terror2"<<"\tpe"<<"";
+   }
+
+   if(mispol){
+       outLogFP<<"\tmispol"<<"";
    }
 
    if(hasTSInfo){
@@ -598,6 +633,16 @@ int main (int argc, char *argv[]) {
        }
 
 
+
+       if(mispol){
+	   normal_distribution<long double> distribution_mid(mid_i,             (1.0)/partition  );
+	   mid_i_1      = distribution_mid(dre);
+
+	   if(mid_i_1 <= 0     ||  mid_i_1 >= 1.0     ){
+	       mid_i_1      = mid_i;
+	   }
+
+       }
 
        if(hasTSInfo){
 	   normal_distribution<long double> distribution_eTS(eTS_i,     (eupper-elower)/partition  );
@@ -672,6 +717,10 @@ int main (int argc, char *argv[]) {
 
 	   if(param2E){
 	       outLogFP<<"\t"<<e2_i<<"\t"<<pe_i;
+	   }
+
+	   if(mispol){
+	       outLogFP<<"\t"<<mid_i;
 	   }
 
 	   if(hasTSInfo){
@@ -751,15 +800,16 @@ int main (int argc, char *argv[]) {
        }
        //cout<<"it\t"<<has5Cols<<"\t"<<has6Cols<<"\t"<<twoPopMode<<"\t"<<threePopMode<<endl;
        if(twoPopMode){
-	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols,hasTSInfo,eTS_i_1,e2_i_1,pe_i_1,param2E );
+	   x_i_1l    = LogFinalTwoP(  dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,                                                                  has4Cols,hasTSInfo,eTS_i_1,e2_i_1,pe_i_1,param2E,mid_i_1,mispol );
        }else{
-	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i_1,e2_i_1,pe_i_1,param2E );
+	   x_i_1l    = LogFinalThreeP(dataToAdd,e_i_1,r_i_1,tau_C_i_1,tau_A_i_1,admixrate_i_1,admixtime_i_1,innerdriftY,innerdriftZ,nC,nB,cwdProg,has5Cols,hasTSInfo,eTS_i_1,e2_i_1,pe_i_1,param2E,mid_i_1,mispol );
        }
 
        long double acceptance = min( (long double)(1.0)  , expl(x_i_1l-x_il) );
 
-       //cout<< "new   "<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
-       //outLogFP<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<"\t"<<acceptance<<endl;
+//        cout<< "new   "<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance
+// <<"\t"<<e2_i_1<<"\t"<<pe_i_1<<endl;
+//        cout<< "ratio "<<std::setprecision(10)<<expl(x_i_1l-x_il)<<"\tnew "<<(x_i_1l)<<"\told "<<(x_il)<<"\t"<<(x_i_1l-x_il)<<"\t"<<acceptance<<endl;
 
        //outLogFP<<chain<<"p\t"<<std::setprecision(10)<<x_i_1l<<"\t"<<e_i_1<<"\t"<<r_i_1<<"\t"<<tau_C_i_1<<"\t"<<tau_A_i_1<<"\t"<<admixrate_i_1<<"\t"<<admixtime_i_1<<"\t"<<acceptance<<endl;
 
@@ -768,13 +818,14 @@ int main (int argc, char *argv[]) {
 	   eTS_i         =  eTS_i_1;
 	   e2_i          =  e2_i_1;
 	   pe_i          =  pe_i_1;
+	   mid_i         =  mid_i_1;
 	   
 	   r_i           =  r_i_1;
 	   tau_C_i       =  tau_C_i_1;
 	   tau_A_i       =  tau_A_i_1;	  
 	   admixrate_i   =  admixrate_i_1;
 	   admixtime_i   =  admixtime_i_1;
-	   x_il      = x_i_1l;
+	   x_il          =  x_i_1l;
 	   accept++;
 	   //outLogFP<<"new state"<<endl;
        }else{

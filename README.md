@@ -24,6 +24,13 @@ Python libraries:
 R libraries:
 - bbmle
 
+# Downloading
+
+Make sure you have git installed and type:
+
+    git clone  --depth=1 --recursive https://github.com/grenaud/dice.git
+
+
 # Compiling and installing
 
 NOTE: Make sure you are connected to the internet when you build the code. The compiler needs to be able to retrieve tabix from the samtools package.
