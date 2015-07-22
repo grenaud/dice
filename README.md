@@ -128,7 +128,7 @@ NOTES:
 
 To run DICE with the 2-pop method, type:
 
-./src/dice -2p [options]  [input file]
+    src/dice -2p [options]  [input file]
 
 Options:
 
@@ -187,7 +187,7 @@ NOTES:
 
 To run type DICE with the 3-pop method, type:
 
-./src/dice -3p [options]  [input file]
+    src/dice -3p [options]  [input file]
 
 Options:
 
