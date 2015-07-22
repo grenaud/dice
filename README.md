@@ -62,7 +62,7 @@ Description:
 [bam]        : Sorted and indexed BAM file
 
 [region]     : A list of regions that the program will produce data for. 
-	       We recommend using regionswith a high
+	       We recommend using regions with a high
                mapability score. Try to aim to have a least 1M defined sites.
 This file has the following format:
                
