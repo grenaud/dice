@@ -247,10 +247,6 @@ This would mean that there are 21 sites where the panel from the first populatio
 
 Rscript CalcDrifts.R test_calcdrifts_input.txt > test_calcdrifts_output.txt
 
-# DICE 3-Pop method: output
-
-TO DO
-
 # BAM file option
 
 You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode since we cannot combine sites together and read fragment needs to be computed independently. The advantage is that, in this mode, the error rate parameter is not estimated genome-wide, but is computed directly at each site, using mapping quality, base quality and deamination rates. 
