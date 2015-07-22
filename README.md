@@ -41,65 +41,6 @@ NOTE: Make sure you are connected to the internet when you build the code. The c
     make
     cd ..
 
-# BAM to DICE format conversion
-
-NOTE: if you already have data in DICE's native format, you can skip this section. Otherwise, continue reading.
-
-This section assumes that the starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted with respect to coordinates, and indexed. 
-
-There are two ways to run DICE:
-- Convert your BAM file to DICE's native format. This is recommended for first-time users.
-- Run DICE directly on the BAM and use deamination profiles and quality scores to infer the error rates at each position. This mode is a bit slower (see "BAM file option" below).
-
-DICE's native format is a simple text file that contains the derived/ancestral base counts and their frequencies in different panel populations (see "input data format" section). To convert your BAM file to DICE's native format, we have created a small program: src/BAM2DICE. This program takes the following arguments:
-
-    src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
-
-Description:
-
-[fasta file] : This is the fasta file you supplied the aligner
-
-[bam]        : Sorted and indexed BAM file
-
-[region]     : A list of regions that the program will produce data for. 
-	       We recommend using regions with a high
-               mapability score. Try to aim to have a least 1M defined sites.
-This file has the following format:
-               
-	       refID1:start-end
-	       
-	       refID2:start-end
-	       
-	       refID3:start-end
-	       
-	       ...
-
-For example:
-               
-	       chr1:304012-419131
-	       
-	       chr1:518593-712340
-
-
-[freq ..]    : A set of tab-separated files containing allele frequencies from panel 
-               population. Which will be used as contaminant, anchor or admixed 
-               need to be specified as options. These frequencies use the same 
-               used for a software package designed to import, store and 
-               process allele frequencies (grenaud.github.io/mistartools).
-
-For example: 
-
-	       chr	coord	REF,ALT	root	anc	IndividualA
-
-	       7	35190	G,T	0,1:0	0,1:0	122,1:0
-
-DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
-
-
-# Test data
-
-TODO
-
 
 # 2-Pop method: input data format
 
@@ -244,6 +185,57 @@ We provide an R script to calculate the drift times (inner drift Y and inner dri
 This would mean that there are 21 sites where the panel from the first population has 11 derived alleles out of 100 sampled alleles, and the panel from the second population has 78 derived alleles out of 100 sampled alleles. We provide an example input file for the R script in the testData folder, under the name "test_calcdrifts_input.txt". To calculate drifts on this file, one would need to run the following script:
 
 Rscript CalcDrifts.R test_calcdrifts_input.txt > test_calcdrifts_output.txt
+
+
+# BAM to DICE format conversion
+
+This section is for users whose starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted with respect to coordinates, and indexed. 
+
+If the user has a BAM file, there are two ways to run DICE with it:
+- Convert your BAM file to DICE's native format. This is recommended for first-time users.
+- Run DICE directly on the BAM and use deamination profiles and quality scores to infer the error rates at each position. This mode is a bit slower (see "BAM file option" below).
+
+DICE's native format is a simple text file that contains the derived/ancestral base counts and their frequencies in different panel populations (see "input data format" section). To convert your BAM file to DICE's native format, we have created a small program: src/BAM2DICE. This program takes the following arguments:
+
+    src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
+
+Description:
+
+[fasta file] : This is the fasta file you supplied the aligner
+
+[bam]        : Sorted and indexed BAM file
+
+[region]     : A list of regions that the program will produce data for. 
+	       We recommend using regions with a high
+               mapability score. Try to aim to have a least 1M defined sites.
+This file has the following format:
+               
+	       refID1:start-end
+	       
+	       refID2:start-end
+	       
+	       refID3:start-end
+	       
+	       ...
+
+For example:
+               
+	       chr1:304012-419131
+	       
+	       chr1:518593-712340
+
+
+[freq ..]    : A set of tab-separated files containing derived allele frequencies from different panel 
+               populations. The user must specify which panel should be used as the contaminant panel and the anchor panel.
+
+For example: 
+
+	       chr	coord	REF,ALT	root	anc	IndividualA
+
+	       7	35190	G,T	0,1:0	0,1:0	122,1:0
+
+DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
+
 
 # BAM file option
 
