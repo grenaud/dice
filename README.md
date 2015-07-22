@@ -4,9 +4,9 @@ DICE is a Bayesian method to jointly estimate error rates, demographic parameter
  
 # Contact
 
-Fernando Racimo fernandoracimo@gmail.com
+Fernando Racimo: fernandoracimo@gmail.com
 
-Gabriel Renaud    gabriel.reno@gmail.com
+Gabriel Renaud: gabriel.reno@gmail.com
 
 
 # Prerequisites
