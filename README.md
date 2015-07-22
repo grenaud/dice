@@ -46,7 +46,7 @@ NOTE: Make sure you are connected to the internet when you build the code. The c
 
 DICE has two main demographic inference methods: the 2-pop method and the 3-pop method. The former is faster, but the latter allows for the inference of admixture between a present-day human population and the population to which the aDNA sample belongs.
 
-The input data for the 2-pop method in DICE is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies, obtained from a panel of present-day human individuals (like the 1000 Genomes Project). An example row would be:
+The input data for the 2-pop method in DICE is a file that should have at least four columns. In the section "BAM to DICE format conversion", we provide a way to build this file starting from a BAM file, but the user can also do this with her/his own scripts. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies, obtained from a panel of present-day human individuals (like the 1000 Genomes Project). An example row would be:
 
 	       3	5	0.48	8
 
@@ -225,8 +225,8 @@ For example:
 	       chr1:518593-712340
 
 
-[freq ..]    : A set of tab-separated files containing derived allele frequencies from different panel 
-               populations. The user must specify which panel should be used as the contaminant panel and the anchor panel.
+[freq ..]    : A set of tab-separated files containing derived allele frequencies from different panel populations. The user must specify which panel should be used as the contaminant panel and the anchor panel. If the user is planning to run the 3-pop method, she/he should also specify which is the admixing anchor panel.
+
 
 For example: 
 
