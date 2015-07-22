@@ -160,9 +160,9 @@ Range for parameter values:
 
 -tC    tauCl,tauCh		Tau Anchor range     (default: 1e-06,1   )
 
-# DICE 2-Pop method: output
+# DICE: output
 
-TO DO
+The output of running  DICE is a set of columns, each containing the steps in the MCMC for a particular parameter. The first column denotes the number of the step in the chain, the second the log-posterior for that particular step, the third is the error rate, the fourth is the contamination rate, the fifth is the drift parameter for the anchor side of the tree ("tau C"), the sixth is the drift paramer for the ancient individual's side of the tree ("tau A"), the sixth and seventh columns are the admixture rate and time parameters (which are always zero in the two-pop method), and finally the eight column is the acceptance rate of the chain. We recommend plotting all the parameters to ensure convergence has been reached. As in any other MCMC, when estimating the posterior distribution, we recommend sampling after a certain burn-in period and every X number of steps.
 
 # DICE 3-Pop method: input data format
 
