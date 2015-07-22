@@ -241,8 +241,11 @@ For example:
 	       7	35190	G,T	0,1:0	0,1:0	122,1:0
 
 When specifying which panels are the anchor/contaminant, the name of the populations much be the same (case sensitive) as in the headers of the frequency files.
+
 --anch                Comma-separated list of anchor populations         (default: all)
+
 --cont                Comma-separated list of contaminant populations    (default: all)
+
 --admx                Comma-separated list of admixing anchor populations      (default: all)
 
 So you can have --anch YRI  --cont CEU,GBR --admix CEU,GBR and it will produce 1x2x2 = 4 files for each possible combination.
