@@ -28,30 +28,18 @@ R libraries:
 
 NOTE: Make sure you are connected to the internet when you build the code. The compiler needs to be able to retrieve tabix from the samtools package.
 
-cd bamtools/
-<<<<<<< HEAD
-mkdir build
-cd build
-=======
-
->>>>>>> d8fe0a509489cd64a635e7b0951ae4809fb2d4cb
-cmake ..
-
-make
-
-cd ../..
-
-cd libgab/
-
-make
-
-cd ..
-
-cd src/
-
-make
-
-cd ..
+    cd bamtools/
+    mkdir build
+    cd build
+    cmake ..
+    make
+    cd ../..
+    cd libgab/
+    make
+    cd ..
+    cd src/
+    make
+    cd ..
 
 # Before running DICE
 
@@ -65,7 +53,7 @@ The native format is a simple text file that contains the derived/ancestral base
 
 An intersection of the base count at each position in the BAM file and the derived allele frequency must be made. You can do this whichever way you want, but we have created a small program to do this: src/BAM2DICE. This program takes the following arguments:
 
-src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
+    src/BAM2DICE [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... 
 
 Description:
 
