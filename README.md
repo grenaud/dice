@@ -43,7 +43,7 @@ NOTE: Make sure you are connected to the internet when you build the code. The c
 
 # BAM to DICE format conversion
 
-NOTE: if you already have data in DICE's native format (see "input data format" section), you can skip this section. Otherwise, continue reading.
+NOTE: if you already have data in DICE's native format, you can skip this section. Otherwise, continue reading.
 
 This section assumes that the starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted with respect to coordinates, and indexed. 
 
