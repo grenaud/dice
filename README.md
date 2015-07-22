@@ -41,9 +41,11 @@ NOTE: Make sure you are connected to the internet when you build the code. The c
     make
     cd ..
 
-# Before running DICE
+# BAM to DICE format conversion
 
-The starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted (wrt coordinates) and indexed. 
+NOTE: if you already have data in DICE's native format (see section below), you can skip this section. Otherwise, continue reading.
+
+This section assumes that the starting data is raw aDNA fragments aligned to the nuclear genome in BAM format. We use the word "fragments" because, since aDNA molecules are small, we need the adapters trimmed and the overlapping portions of the reads to be merged (see http://grenaud.github.io/leehom for software to do this). This BAM file has to be sorted (wrt coordinates) and indexed. 
 
 There are two ways to run DICE:
 - Convert to native format (recommended)
@@ -101,13 +103,11 @@ DICE can handle gzipped text files so gzip whenever possible to save space.  By 
 TODO
 
 
-
-
 # DICE 2-Pop method: input data format
 
 DICE has two main demographic inference methods: the 2-pop method and the 3-pop method. The former is faster, but the latter allows for the inference of admixture between a present-day human population and the population to which the aDNA sample belongs.
 
-The input data for the 2-pop method in DICE is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies. An example row would be:
+The input data for the 2-pop method in DICE is a file that should have at least four columns. Each row in the file denotes a particular configuration of ancestral reads, derived read and anchor/contaminant allele frequencies, obtained from a panel of present-day human individuals (like the 1000 Genomes Project). An example row would be:
 
 	       3	5	0.48	8
 
