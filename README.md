@@ -8,6 +8,20 @@ Fernando Racimo: fernandoracimo@gmail.com
 
 Gabriel Renaud: gabriel.reno@gmail.com
 
+# Table of Contents
+
+- Prerequisites
+- Downloading
+- Compiling and installing
+- 2-Pop method: input data format
+- 2-Pop method: usage
+- Output
+- 3-Pop method: input data format
+- 3-Pop method: usage
+- 3-Pop method: calculating drifts specific to each anchor population
+- BAM to DICE format conversion
+- BAM file option
+- Alternative error models
 
 # Prerequisites
 
