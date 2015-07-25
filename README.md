@@ -258,7 +258,7 @@ DICE can handle gzipped text files so gzip whenever possible to save space.  By 
 
 # BAM file option
 
-You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode since we cannot combine sites together and read fragment needs to be computed independently. The advantage is that, in this mode, the error rate parameter is not estimated genome-wide, but is computed directly at each site, using mapping quality, base quality and deamination rates. 
+You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode. The advantage is that, in this mode, the error rate parameter is not estimated genome-wide, but is computed directly at each site, using mapping quality, base quality and predicted post-mortem damage rates. 
 
 - First, you need to compute a post-mortem DNA damage profile. This is a simple substitution matrix with the following tab-delimited format:
 
