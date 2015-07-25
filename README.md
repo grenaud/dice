@@ -235,7 +235,7 @@ For example:
 	       chr1:518593-712340
 
 
-[freq ..]    : A set of tab-separated files containing derived allele frequencies from different panel populations. This file should be in mistar format (https://github.com/grenaud/mistar).
+[freq ..]    : A set of 1 or more tab-separated files containing derived allele frequencies from different panel populations. These files should be in mistar format (https://github.com/grenaud/mistar).
 
 For example: 
 
@@ -243,7 +243,7 @@ For example:
 
 	       7	35190	G,T	0,1:0	0,1:0	122,1:0
 
-The user must specify which panel should be used as the contaminant panel and the anchor panel. If the user is planning to run the 3-pop method, she/he should also specify which is the admixing anchor panel. The name of the populations much be the same (case sensitive) as in the headers of the frequency files.
+A pre-made list of panels for the 1000 Genomes data is available here: https://bioinf.eva.mpg.de/dice/. The user must specify which panel should be used as the contaminant panel and the anchor panel. If the user is planning to run the 3-pop method, she/he should also specify which is the admixing anchor panel. The name of the populations much be the same (case sensitive) as in the headers of the frequency files.
 
 --anch                Comma-separated list of anchor populations         (default: all)
 
@@ -251,7 +251,7 @@ The user must specify which panel should be used as the contaminant panel and th
 
 --admx                Comma-separated list of admixing anchor populations      (default: all)
 
-So you can have --anch YRI  --cont CEU,GBR --admix CEU,GBR and it will produce 1x2x2 = 4 files for each possible combination of anchor, contaminant and admixing panels.
+So if the user types --anch YRI  --cont CEU,GBR --admix CEU,GBR as options, the program will produce 1x2x2 = 4 files for each possible combination of anchor, contaminant and admixing panels.
 
 DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
 
