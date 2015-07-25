@@ -260,7 +260,7 @@ DICE can handle gzipped text files so gzip whenever possible to save space.  By 
 
 You can also run DICE directly on the BAM file. This mode however is a bit slower than the normal mode since we cannot combine sites together and read fragment needs to be computed independently. The advantage is that, in this mode, the error rate parameter is not estimated genome-wide, but is computed directly at each site, using mapping quality, base quality and deamination rates. 
 
-- First, you need to compute a post-mortem deamination profile. This is a simple substitution matrix with the following tab-delimited format:
+- First, you need to compute a post-mortem DNA damage profile. This is a simple substitution matrix with the following tab-delimited format:
 
 	       A>C  A>G  A>T  C>A  C>G  C>T        G>A  G>C  G>T  T>A  T>C  T>G
 
@@ -291,4 +291,4 @@ By default, DICE uses a single error parameter for the entire dataset. However, 
 - a model with two separate error parameters, one for transitions and one for transversions. This mode will be triggered automatically if the input data was  previously flagged by BAM2DICE using the "-t" option. 
 - a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option when running DICE.
 - a probabilistic ancestral state misidentification model, where we have an error rate parameter and a mispolarization parameter. This mode can be triggered using the "-pol" option when running DICE.
-- a site-specific error rate model, based on base and mapping qualities, and a deamination profile matrix. This mode is implemented in diceBAM (see "BAM file option").
+- a site-specific error rate model, based on base and mapping qualities, and a post-mortem DNA damage matrix. This mode is implemented in diceBAM (see "BAM file option").
