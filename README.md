@@ -93,18 +93,19 @@ To run DICE with the 2-pop method, type:
 
     src/dice -2p [options]  [input file]
 
-Options:
-
+General options:
 
 -o     [output log]		Output log (default: stdout)
 
-- Computation options:
+
+Computation options:
 
 -s     [step]			MCMC interval space step (default: 1000)
 
 -c     [#chains]		Max. number of Markov chains (default: 100000)
 
-- Starting values:
+
+Starting values:
 
 -e0     [error]			Error rate         (default: random)
 
@@ -114,7 +115,8 @@ Options:
 
 -tC0    [tauC]			Tau Anchor    (default: random)
 
-- Range for parameter values:
+
+Range for parameter values:
 
 -e     el,eh			Error rate range          (default: 1e-05,0.1 )
 
@@ -153,18 +155,20 @@ To run type DICE with the 3-pop method, type:
 
     src/dice -3p [options]  [input file]
 
-Options:
 
+General options:
 
 -o     [output log]		Output log (default: stdout)
 
-- Computation options:
+
+Computation options:
 
 -s     [step]			MCMC interval space step (default: 1000)
 
 -c     [#chains]		Max. number of Markov chains (default: 100000)
 
-- Starting values:
+
+Starting values:
 
 -e0     [error]			Error rate         (default: random)
 
@@ -178,7 +182,8 @@ Options:
 
 -aT0    [admT]			Admixture rate     (default: random)
 
-- Range for parameter values:
+
+Range for parameter values:
 
 -e     el,eh			Error rate range          (default: 1e-05,0.1 )
 
@@ -192,7 +197,8 @@ Options:
 
 -aT    admTl,admTh		Admixture rate range      (default: 0.05,0.11 )
 
-- Population specific constants:
+
+Population specific constants:
 
 -idy     [drift]		Drift specific to admixing panel (default: 0.16)
 
