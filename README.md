@@ -273,7 +273,7 @@ A pre-made list of panels for the 1000 Genomes data is available here: https://b
 
 --admx                Comma-separated list of admixing anchor populations      (default: all)
 
-So if the user types --anch YRI  --cont CEU,GBR --admix CEU,GBR as options, the program will produce 1x2x2 = 4 files for each possible combination of anchor, contaminant and admixing panels.
+So, for example, if the user types -anch YRI,LWK -cont CEU,CHB, the program will generate 2x2 = 4 files for each possible combination of anchor and contaminant panels, and these files will be valid input for the 2-pop method. Instead, if the user types --anch YRI,LWK  --cont CEU,GBR --admix CEU,GBR as options, the program will produce 2x2x2 = 8 files for each possible combination of anchor, contaminant and admixing panels, and these files will be valid input for the 3-pop method.
 
 DICE can handle gzipped text files so gzip whenever possible to save space.  By default, we discard CpG islands but they can be added back in using the -wcpg. Also, you can flag transitions and transversions using the "-t" option.
 
