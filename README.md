@@ -22,6 +22,8 @@ Gabriel Renaud: gabriel.reno@gmail.com
 - BAM to DICE format conversion
 - BAM file option
 - Alternative error models
+- How do I get my allele frequencies for my anchor/contaminant/admixing populations?
+- Example of running DICE from a raw BAM file
 
 # Prerequisites
 
@@ -265,7 +267,13 @@ For example:
 
 	       7	35190	G,T	0,1:0	0,1:0	122,1:0
 
-A pre-made list of panels for the 1000 Genomes data is available here: https://bioinf.eva.mpg.de/dice/. The user must specify which panel should be used as the contaminant panel and the anchor panel. If the user is planning to run the 3-pop method, she/he should also specify which is the admixing anchor panel. The name of the populations much be the same (case sensitive) as in the headers of the frequency files.
+A pre-made list of panels for the 1000 Genomes data is available here: https://bioinf.eva.mpg.de/dice/. These can be downloaded automatically by typing  : 
+
+    make allelefreq
+
+Also, refer to section called "How do I get my allele frequencies for my anchor/contaminant/admixing populations?" in this README.
+
+The user must specify which panel should be used as the contaminant panel and the anchor panel. If the user is planning to run the 3-pop method, she/he should also specify which is the admixing anchor panel. The name of the populations much be the same (case sensitive) as in the headers of the frequency files.
 
 --anch                Comma-separated list of anchor populations         (default: all)
 
@@ -314,3 +322,59 @@ By default, DICE uses a single error parameter for the entire dataset. However, 
 - a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option when running DICE.
 - a probabilistic ancestral state misidentification model, where we have an error rate parameter and a mispolarization parameter. This mode can be triggered using the "-pol" option when running DICE.
 - a site-specific error rate model, based on base and mapping qualities, and a post-mortem DNA damage matrix. This mode is implemented in diceBAM (see "BAM file option").
+
+
+# How do I get my allele frequencies for my anchor/contaminant/admixing populations?
+
+You can either do it on your own using a large panel of individuals from the same population. You need to polarize which allele is the ancestral one.
+
+We provide pre-parsed 1000 Genomes Phase III data in mistar format (https://github.com/grenaud/mistar) which counts the number of alleles as well as ancestral/chimp allele information from the Primate EPO alignments (http://www.ensembl.org/info/genome/compara/analyses.html). To obtain this data, make sure you are connected to the internet and type:
+
+    cd src/   
+    make allelefreq
+    cd ..
+
+This will use "wget" to retrieve pre-parsed allele information to be used by DICE2BAM (or diceBAM). The codes for the population are found here:  http://www.1000genomes.org/category/frequently-asked-questions/population
+
+
+
+# Example of running DICE from a raw BAM file
+
+This section provides an example of running DICE from a raw BAM file. First, make sure you are connected to the internet and download simulated test data using:
+
+    cd src/
+    make testdatasimulated
+    cd ..
+
+Then, transform the BAM file (all.bam) into native DICE format:
+    
+    src/BAM2DICE -o testData/simulated/input.dice  -2p testData/simulated/all.ref.fa testData/simulated/all.bam  testData/simulated/all.med.regions testData/simulated/all.mst.gz
+    
+the following file should be created:
+
+    testData/simulated/input.dice_Cont_Anch_contHuman.dice
+
+This data had about 5% contamination and tauA and tauC were both equal to 0.5. We will try to predict both parameters:
+
+     src/dice -2p -o testData/simulated/input.dice_Cont_Anch_contHuman.dice.out testData/simulated/input.dice_Cont_Anch_contHuman.dice
+
+This should produce a file called:
+     
+     testData/simulated/input.dice_Cont_Anch_contHuman.dice.out 
+
+Then plot the posteriors using the following command: 
+
+    src/log2plots.R  testData/simulated/input.dice_Cont_Anch_contHuman.dice.out testData/simulated/input.dice_Cont_Anch_contHuman.dice.out.pdf
+
+This will create the following files:
+
+    testData/simulated/input.dice_Cont_Anch_contHuman.dice.out.e.pdf	 for the error
+    testData/simulated/input.dice_Cont_Anch_contHuman.dice.out.it.pdf	 for the log of the post. prob 
+    testData/simulated/input.dice_Cont_Anch_contHuman.dice.out.r.pdf	 contamination rate
+    testData/simulated/input.dice_Cont_Anch_contHuman.dice.out.tauA.pdf  for tauA
+    testData/simulated/input.dice_Cont_Anch_contHuman.dice.out.tauC.pdf  for tauC
+
+
+
+
+    

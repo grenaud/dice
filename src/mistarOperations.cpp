@@ -247,7 +247,7 @@ bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
 
 		if(chimpSet){
 		    if(chimp != vecAlleleRecords[i]->vectorAlleles->at(0)){
-			cerr<<"Disprency in chimp info between "<<(* vecAlleleRecords[i])<<" and "<<(chimp)<<endl;
+			cerr<<"Discrepancy in chimp info between "<<(* vecAlleleRecords[i])<<" and "<<(chimp)<<endl;
 			if(force)
 			    return false;
 			else

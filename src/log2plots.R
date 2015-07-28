@@ -10,7 +10,7 @@ if(length(args)==3){
   burnins<-args[3];
 }
 
-data <- read.table(args[1]);
+data <- read.table(args[1],header=T);
 
 
 pdf(paste(args[2],".it.pdf",sep=""));

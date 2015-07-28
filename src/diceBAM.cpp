@@ -893,7 +893,7 @@ int main (int argc, char *argv[]) {
 
     // Set upper boundaries for optimization algorithm
     // long double eupper         = 0.1;
-    long double rupper         = 0.5;
+    long double rupper         = 0.99;
     long double tau_Cupper     = 1.0;
     long double tau_Aupper     = 1.0;
     long double admixrateupper = 0.5;
