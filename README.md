@@ -260,7 +260,7 @@ For example:
 	       chr1:518593-712340
 
 
-[freq ..]    : A set of 1 or more tab-separated files containing derived allele frequencies from different panel populations. These files should be in mistar format (https://github.com/grenaud/mistar).
+[freq ..]    : A set of 1 or more tab-separated files containing derived allele frequencies from different panel populations. These files should be in mistar format (http://grenaud.github.io/mistartools/).
 
 For example: 
 
@@ -329,7 +329,7 @@ By default, DICE uses a single error parameter for the entire dataset. However, 
 
 You can either do it on your own using a large panel of individuals from the same population. You need to polarize which allele is the ancestral one.
 
-We provide pre-parsed 1000 Genomes Phase III data in mistar format (https://github.com/grenaud/mistar) which counts the number of alleles as well as ancestral/chimp allele information from the Primate EPO alignments (http://www.ensembl.org/info/genome/compara/analyses.html). To obtain this data, make sure you are connected to the internet and type:
+We provide pre-parsed 1000 Genomes Phase III data in mistar format (http://grenaud.github.io/mistartools/) which counts the number of alleles as well as ancestral/chimp allele information from the Primate EPO alignments (http://www.ensembl.org/info/genome/compara/analyses.html). To obtain this data, make sure you are connected to the internet and type:
 
     cd src/   
     make allelefreq
