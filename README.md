@@ -24,6 +24,7 @@ Gabriel Renaud: gabriel.reno@gmail.com
 - Alternative error models
 - How do I get my allele frequencies for my anchor/contaminant/admixing populations?
 - Example of running DICE from a raw BAM file
+- Which genomic regions to take?
 
 # Prerequisites
 
@@ -377,8 +378,8 @@ This will create the following files:
 
 # Which genomic regions to take?
 
-You should take some regions that are highly likely to have been mapped at the correct location to avoid wasting time with mismapped fragments. You can find examples of highly mappable regions in:
+You should take some regions that are highly likely to have been mapped at the correct location to avoid wasting time with mismapped fragments. You can find examples of tracks of highly mappable regions at:
     https://bioinf.eva.mpg.de/dice/mapabilityTracks/
 
-
+The .bed.gz are in BED format and the regions.gz are the ones used by BAM2DICE or diceBAM.
     
