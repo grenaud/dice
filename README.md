@@ -375,6 +375,10 @@ This will create the following files:
     testData/simulated/input.dice_Cont_Anch_contHuman.dice.out.tauC.pdf  for tauC
 
 
+# Which genomic regions to take?
+
+You should take some regions that are highly likely to have been mapped at the correct location to avoid wasting time with mismapped fragments. You can find examples of highly mappable regions in:
+    https://bioinf.eva.mpg.de/dice/mapabilityTracks/
 
 
     
