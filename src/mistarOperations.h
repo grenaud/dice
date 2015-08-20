@@ -29,7 +29,7 @@ typedef struct{
 /* 		    vector<chrinfo> & chrFound, */
 /* 		    uint64_t & genomeLength); */
 
-void initFiles(vector<MistarParser * > & vectorOfMP,
+bool initFiles(vector<MistarParser * > & vectorOfMP,
 	       //bool & atLeastOneHasData,
 	       vector<bool> & hasData,
 	       vector<int> & popSizePerFile,

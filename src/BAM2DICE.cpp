@@ -372,9 +372,11 @@ public:
 		  unsigned int coordLast,
 		  const bool ignoreMQ,
 		  vector<singleSite> * dataSitesVec,
-		  bool useCpG
+		  bool useCpG,
 		  // const long double contaminationPrior,
 		  //const bool singleCont
+		  bool * wasDataFound
+
 		  )
     : PileupVisitor()
       // , m_references(references)
@@ -390,14 +392,15 @@ public:
   { 
      
       //      cout<<"constr size="<<vectorOfMP.size()<<endl;
-      initFiles(vectorOfMP,
-		// atLeastOneHasData,
-		hasData,
-		popSizePerFile,
-		vecAlleleRecords,
-		chr1,
-		coordFirst,
-		false);
+      *wasDataFound=initFiles(vectorOfMP,
+			      // atLeastOneHasData,
+			      hasData,
+			      popSizePerFile,
+			      vecAlleleRecords,
+			      chr1,
+			      coordFirst,
+			      false);
+      
       //cout<<"constr"<<endl;
     hasCoordinate = vector<bool>(m_vectorOfMP.size(),true);//dummy value
 
@@ -1703,8 +1706,17 @@ int main (int argc, char *argv[]) {
     // vector<int> admxVecIDX;
     // vector<int> contVecIDX;
 
-
-
+    // for(unsigned int n=0;n<namesForPops.size();n++){
+    // 	cout<<n<<"\t"<<namesForPops[n]<<endl;
+    // }
+    // for(unsigned int indexCont=0;indexCont<contVecIDX.size();indexCont++){
+    // 	for(unsigned int indexAnchor=0;indexAnchor<anchVecIDX.size();indexAnchor++){
+    // 	    for(unsigned int indexAdmix=0;indexAdmix<admxVecIDX.size();indexAdmix++){
+    // 		cout<<contVecIDX[indexCont]<<"\t"<<anchVecIDX[indexAnchor]<<"\t"<<admxVecIDX[indexAdmix]<<endl;
+    // 	    }
+    // 	}
+    // }
+    // return 1;
 
 
     Fasta fastaReference;
@@ -1734,10 +1746,17 @@ int main (int argc, char *argv[]) {
 	}
 	//cerr<<"fine3 id "<<id<<endl;
 	
-	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec , useCpG );
+	bool wasDataFound=true;
+
+	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec , useCpG, &wasDataFound);
 	//cerr<<"fine4 id "<<id<<endl;
 	PileupEngine pileup;
 	pileup.AddVisitor(cv);
+	if(!wasDataFound){
+	    cerr<<"No data was found in the frequency files"<<endl;
+	    continue;
+	}
+
 
 	//cerr<<"fine5 id "<<id<<endl;
 	BamAlignment al;
@@ -1778,7 +1797,7 @@ int main (int argc, char *argv[]) {
 	for(unsigned int indexCont=0;indexCont<contVecIDX.size();indexCont++){
 	    for(unsigned int indexAnchor=0;indexAnchor<anchVecIDX.size();indexAnchor++){
 
-		if(indexCont == indexAnchor){	       
+		if(contVecIDX[indexCont] == anchVecIDX[indexAnchor]){	       
 
 		    map<string,int> stringToPrint2Count;
 		    for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){		
@@ -1786,7 +1805,7 @@ int main (int argc, char *argv[]) {
 			string tmpString = 
 			    stringify(dataSitesVec->at(sitesIdx).sitesBAMa.size())+"\t"+
 			    stringify(dataSitesVec->at(sitesIdx).sitesBAMd.size())+"\t"+
-			    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexCont]);
+			    stringify(dataSitesVec->at(sitesIdx).freqDerived[ contVecIDX[indexCont] ]);
 			
 			if(flagTSTV){
 			    tmpString+="\t"+stringify(isPotentialTransition(dataSitesVec->at(sitesIdx).ancAllele,dataSitesVec->at(sitesIdx).derAllele));
@@ -1797,7 +1816,7 @@ int main (int argc, char *argv[]) {
 		    }
 
 
-		    string filenameTab=outTabPrefix+"_Cont_Anch_"+namesForPops[indexCont]+".dice";
+		    string filenameTab=outTabPrefix+"_Cont_Anch_"+namesForPops[ contVecIDX[indexCont] ]+".dice";
 		    ofstream outTabFP;
 		    
 		    outTabFP.open(filenameTab.c_str());
@@ -1841,8 +1860,8 @@ int main (int argc, char *argv[]) {
 			string tmpString = 
 			    stringify(dataSitesVec->at(sitesIdx).sitesBAMa.size())+"\t"+
 			    stringify(dataSitesVec->at(sitesIdx).sitesBAMd.size())+"\t"+
-			    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexAnchor])+"\t"+ 
-			    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexCont]);
+			    stringify(dataSitesVec->at(sitesIdx).freqDerived[ anchVecIDX[indexAnchor] ])+"\t"+ 
+			    stringify(dataSitesVec->at(sitesIdx).freqDerived[ contVecIDX[indexCont]   ]);
 
 			if(flagTSTV){
 			    tmpString+="\t"+stringify(isPotentialTransition(dataSitesVec->at(sitesIdx).ancAllele,dataSitesVec->at(sitesIdx).derAllele));
@@ -1853,7 +1872,7 @@ int main (int argc, char *argv[]) {
 		    }
 
 
-		    string filenameTab=outTabPrefix+"_Cont_"+namesForPops[indexCont]+"_Anch_"+namesForPops[indexAnchor]+".dice";
+		    string filenameTab=outTabPrefix+"_Cont_"+namesForPops[ contVecIDX[indexCont] ]+"_Anch_"+namesForPops[ anchVecIDX[indexAnchor] ]+".dice";
 		    ofstream outTabFP;
 		    
 		    outTabFP.open(filenameTab.c_str());
@@ -1901,7 +1920,7 @@ int main (int argc, char *argv[]) {
 
 	    for(unsigned int indexCont=0;indexCont<contVecIDX.size();indexCont++){
 		for(unsigned int indexAnchor=0;indexAnchor<anchVecIDX.size();indexAnchor++){
-		    for(unsigned int indexAdmix=0;indexAdmix<anchVecIDX.size();indexAdmix++){
+		   for(unsigned int indexAdmix=0;indexAdmix<admxVecIDX.size();indexAdmix++){
 			
 			
 			if(indexCont == indexAdmix){	       
@@ -1910,8 +1929,8 @@ int main (int argc, char *argv[]) {
 				string tmpString = 
 				    stringify(dataSitesVec->at(sitesIdx).sitesBAMa.size())+"\t"+
 				    stringify(dataSitesVec->at(sitesIdx).sitesBAMd.size())+"\t"+
-				    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexCont])+"\t"+ 
-				    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexAnchor]);
+				    stringify(dataSitesVec->at(sitesIdx).freqDerived[  contVecIDX[indexCont]   ])+"\t"+ 
+				    stringify(dataSitesVec->at(sitesIdx).freqDerived[  anchVecIDX[indexAnchor] ]);
 				if(flagTSTV){
 				    tmpString+="\t"+stringify(isPotentialTransition(dataSitesVec->at(sitesIdx).ancAllele,dataSitesVec->at(sitesIdx).derAllele));
 				}
@@ -1921,7 +1940,7 @@ int main (int argc, char *argv[]) {
 			    }
 			    
 			    
-			    string filenameTab=outTabPrefix+"_ContAdmx_"+namesForPops[indexCont]+"_Anch_"+namesForPops[indexAnchor]+".dice";
+			    string filenameTab=outTabPrefix+"_ContAdmx_"+namesForPops[ contVecIDX[indexCont] ]+"_Anch_"+namesForPops[ anchVecIDX[indexAnchor] ]+".dice";
 			    ofstream outTabFP;
 		    
 			    outTabFP.open(filenameTab.c_str());
@@ -1965,9 +1984,9 @@ int main (int argc, char *argv[]) {
 				string tmpString = 
 				    stringify(dataSitesVec->at(sitesIdx).sitesBAMa.size())+"\t"+
 				    stringify(dataSitesVec->at(sitesIdx).sitesBAMd.size())+"\t"+
-				    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexAdmix])+"\t"+ 
-				    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexAnchor])+"\t"+ 
-				    stringify(dataSitesVec->at(sitesIdx).freqDerived[indexCont]);
+				    stringify(dataSitesVec->at(sitesIdx).freqDerived[ admxVecIDX[indexAdmix]  ])+"\t"+ 
+				    stringify(dataSitesVec->at(sitesIdx).freqDerived[ anchVecIDX[indexAnchor] ])+"\t"+ 
+				    stringify(dataSitesVec->at(sitesIdx).freqDerived[ contVecIDX[indexCont]   ]);
 
 				if(flagTSTV){
 				    tmpString+="\t"+stringify(isPotentialTransition(dataSitesVec->at(sitesIdx).ancAllele,dataSitesVec->at(sitesIdx).derAllele));
@@ -1977,7 +1996,7 @@ int main (int argc, char *argv[]) {
 				//"1"<<endl;
 			    }
 
-			    string filenameTab=outTabPrefix+"_Admx_"+namesForPops[indexAdmix]+"_Anch_"+namesForPops[indexAnchor]+"_Cont_"+namesForPops[indexCont]+".dice";
+			    string filenameTab=outTabPrefix+"_Admx_"+namesForPops[ admxVecIDX[indexAdmix] ]+"_Anch_"+namesForPops[ anchVecIDX[indexAnchor] ]+"_Cont_"+namesForPops[ contVecIDX[indexCont] ]+".dice";
 			    ofstream outTabFP;
 		    
 			    outTabFP.open(filenameTab.c_str());

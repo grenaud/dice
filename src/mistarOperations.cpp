@@ -39,7 +39,7 @@
 
 // }
 
-void initFiles(vector<MistarParser * > & vectorOfMP,
+bool initFiles(vector<MistarParser * > & vectorOfMP,
 	       //bool & atLeastOneHasData,
 	       vector<bool> & hasData,
 	       vector<int> & popSizePerFile,
@@ -57,13 +57,13 @@ void initFiles(vector<MistarParser * > & vectorOfMP,
     for(unsigned int i=0;i<vectorOfMP.size();i++){ 
 	hasData[i] = vectorOfMP[i]->hasData()  ;
 	if(!hasData[i]){
-	    cerr<<"File #"<<(i+1)<<" does not have any data, exiting"<<endl;
-	    exit(1);    
+	    // cerr<<"File #"<<(i+1)<<" does not have any data, exiting"<<endl;
+	    // exit(1);    
+	    return false;
 	}// else{
 	//     //atLeastOneHasData=true;
 	// }
     }
-
 
     for(unsigned int i=0;i<vectorOfMP.size();i++){ 
 	unsigned int nonPop = vectorOfMP[i]->getPopulationsNames()->size();
@@ -99,6 +99,7 @@ void initFiles(vector<MistarParser * > & vectorOfMP,
 	    coordCurrent  = min(coordCurrent,vecAlleleRecords[i]->coordinate);
 	}	
     }
+    return true;
 
 }
 
