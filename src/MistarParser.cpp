@@ -307,7 +307,15 @@ bool MistarParser::getNextLine(){
     }
 
     if(textMode){
-	return getline ( *myFilezipped,currentline);
+	//seems clonky but avoids compilation problems
+	//on certain versions of C++ 
+	// that do not handle implicit conversion to bool
+	//but let if() get away with it
+	if(getline ( *myFilezipped,currentline) ){
+	    return true;
+	}else{
+	    return false;
+	}
     }
 
     if(stringMode){

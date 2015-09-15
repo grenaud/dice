@@ -59,7 +59,7 @@ First, go to the folder where you downloaded the dice folder, and then type the 
     mkdir build
     cd build
     cmake ..
-    make
+    make 
     cd ../..
     cd libgab/
     make
