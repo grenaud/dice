@@ -88,7 +88,7 @@ This row means there are 8 sites where the ancient genome has 3 ancestral reads 
 NOTES:
 - We recommend using large panels for determining the anchor and contaminant frequencies, and rounding the frequencies to 2 decimals, to prevent the list of configurations from becoming too large.
 - The allele frequencies for the anchor population should be larger than 0 and smaller than 1. This is not required for the contaminant population, if different from the anchor.
-- When comparing multiple candidate contaminant populations, it is best to use only sites that are segregating in all populations that are tested as contaminants, so that the likelihood is composed of the same number of sites in each case.
+- When comparing multiple candidate contaminant populations, it is best to use the same anchor panel, so that the likelihood is composed of the same number of sites in each case. In other words, you should ony use sites that are segregating in that particular anchor panel (regardless of whether they are fixed or segregating in any of your candidate contaminant panels).
 
 # 2-Pop method: usage
 
