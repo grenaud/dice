@@ -383,5 +383,5 @@ You should take some regions that are highly likely to have been mapped at the c
 
 The .bed.gz are in BED format and the regions.gz are the ones used by BAM2DICE or diceBAM.
 
-It is also good to filter out regions of your mapped genome that are in the extremes of the coverage distribution. A good rule of thumb is to remove the sites that fall in the 2.5% lowest quantile and the 97.5% highest quantile of the coverage distribution.
+It is also good to remove CpG sites and to filter out regions of your mapped genome that are in the extremes of the coverage distribution. A good rule of thumb is to remove the sites that fall in the 2.5% lowest quantile and the 97.5% highest quantile of the coverage distribution.
     
