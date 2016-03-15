@@ -966,7 +966,7 @@ int main (int argc, char *argv[]) {
     int contPopIDX;
 
 
-    const string usage=string("\nThis program takes an aligned BAM file for a mitonchondria and calls a\nconsensus for the endogenous material\n\n\t"+
+    const string usage=string("\nThis program takes an aligned BAM file to the nuclear genome and estimates\npresent-day human contamination\n\n\t"+
 			      string(argv[0])+			      
 			      " [options] [fasta file] [bam file] [region or file with regions to use] [freq for pop1] [freq for pop2] ... "+"\n\n"+
 			      
@@ -1042,7 +1042,7 @@ int main (int argc, char *argv[]) {
 			      // "\t\t"+"--locc"+  "\t\t\t\t"+"Location for lognormal dist for the contaminant sequences (default none)"+"\n"+
 			      // "\t\t"+"--scalec"+"\t\t\t"+"Scale for lognormal dist for the contaminant sequences (default none)"+"\n"+
 
-			      "\n\tComputation options:\n"+	
+			      "\n\tQuality scores options:\n"+	
 			      // "\t\t"+"-nomq" +"\t\t\t\t"+"Ignore mapping quality (default: "+booleanAsString(ignoreMQ)+")"+"\n"+
 			      // "\t\t"+"-err" +"\t\t\t\t"+"Illumina error profile (default: "+errFile+")"+"\n"+
 			      "\t\t"+"--phred64" +"\t\t\t"+"Use PHRED 64 as the offset for QC scores (default : PHRED33)"+"\n"+
