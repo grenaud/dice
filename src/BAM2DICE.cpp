@@ -1,11 +1,3 @@
-/*
- * endoCaller
- * Date: Mar-26-2014 
- * Author : Gabriel Renaud gabriel.reno [at sign here ] gmail.com
- *
- */
-
-
 #if defined(__CYGWIN__) 
 #define atanl(X) atan(X)
 #define logl(X) log(X)
@@ -375,8 +367,9 @@ public:
 		  bool useCpG,
 		  // const long double contaminationPrior,
 		  //const bool singleCont
-		  bool * wasDataFound
-
+		  bool * wasDataFound,
+		  const int anchIDX,
+		  const int admxIDX
 		  )
     : PileupVisitor()
       // , m_references(references)
@@ -387,6 +380,8 @@ public:
     , ignoreMQ(ignoreMQ)
     , m_dataSitesVec(dataSitesVec)
     , m_useCpG(useCpG)
+    , m_anchIDX(anchIDX)
+    , m_admxIDX(admxIDX)
     // , contaminationPrior(contaminationPrior)
     // , singleCont(singleCont)
   { 
@@ -678,10 +673,24 @@ public:
 	    return ;
 
 
-	for(unsigned int df=0;df<derFreq.size();df++){
-	    if(derFreq[df] <= 0 || derFreq[df] >= 1.0)//skip sites with fixed bases
-	    	return ;
+	if(m_admxIDX == -1){//2pop
+	    if( derFreq[m_anchIDX] <= 0 || derFreq[m_anchIDX] >= 1.0)//skip sites with fixed bases for the anchor
+	     	return ;
+	}else{//3pop
+	    double derFreqSum = ( (derFreq[m_anchIDX]+derFreq[m_admxIDX])/2.0 );
+	    
+	    if( derFreqSum <= 0 || derFreqSum >= 1.0)//skip sites with fixed bases for the combination of the anchor and admixed
+	     	return ;
+
 	}
+	
+	// for(unsigned int df=0;df<derFreq.size();df++){	    
+	//     if(  m_anchIDX !=  int(df) )  //this index is the anchor, forego the polymorphic requirement
+	// 	continue;
+
+	//     if(derFreq[df] <= 0 || derFreq[df] >= 1.0)//skip sites with fixed bases
+	//     	return ;
+	// }
 
 #ifdef DEBUGERRORP
 	cout<<"samepos "<<chr1<<":"<<posAlign<<" derFreq "<<vectorToString(derFreq)<<"\td="<<derAllele<<"\ta="<<ancAllele<<endl;
@@ -1125,7 +1134,7 @@ private:
     RefVector m_references;
     Fasta * m_fastaReference;
     vector<MistarParser * >  m_vectorOfMP;
-    vector<singleSite> *  m_dataSitesVec;
+    vector<singleSite> *     m_dataSitesVec;
     // vector<singlePosInfo> * m_infoPPos;
     // int sizeGenome;
     bool ignoreMQ;
@@ -1133,6 +1142,9 @@ private:
     // bool singleCont;
     bool m_useCpG;    
     //        ostream*  m_out;
+    int m_anchIDX;
+    int m_admxIDX;
+
 };
 
 
@@ -1307,13 +1319,19 @@ int main (int argc, char *argv[]) {
     // bool singleStrand           = false;
     // bool doubleStrand           = false;
 
-    vector<string> anchVec;
-    vector<string> admxVec;
+    // vector<string> anchVec;
+    string anchPop;
+    //vector<string> admxVec;
+    string admxPop;
     vector<string> contVec;
+    
 
     vector<int> anchVecIDX;
+    int         anchIDX=-1;
     vector<int> admxVecIDX;
+    int         admxIDX=-1;
     vector<int> contVecIDX;
+
     bool flagTSTV=false;
     bool useCpG=false;
 
@@ -1338,9 +1356,9 @@ int main (int argc, char *argv[]) {
 
 			      "\n\tPopulation options:\n"+ 
 			      "\tThe name of the populations much be the same (case sensitive) in the frequency files\n"+
-			      "\t\t"+"--anch"+  "\t\t\t\t"+"Comma-separated list of anchor populations         (default: all)"+"\n"+
+			      "\t\t"+"--anch"+  "\t\t\t\t"+"Population to use as anchor                        (default: none)"+"\n"+
 			      "\t\t"+"--cont"+  "\t\t\t\t"+"Comma-separated list of contaminant populations    (default: all)"+"\n"+
-			      "\t\t"+"--admx"+  "\t\t\t\t"+"Comma-separated list of admixing  populations      (default: all)"+"\n"+
+			      "\t\t"+"--admx"+  "\t\t\t\t"+"Population to use as admixing population           (default: none)"+"\n"+
 			      
 			      "");
 			      
@@ -1395,7 +1413,7 @@ int main (int argc, char *argv[]) {
 
 
 	if( string(argv[i]) == "--anch"  ){
-	    anchVec=allTokens( string(argv[i+1]) ,',');
+	    anchPop= string(argv[i+1]) ;
             i++;
             continue;
         }
@@ -1407,7 +1425,8 @@ int main (int argc, char *argv[]) {
         }
 
 	if( string(argv[i]) == "--admx"  ){
-	    admxVec=allTokens( string(argv[i+1]) ,',');
+	    //admxVec=allTokens( string(argv[i+1]) ,',');
+	    admxPop = string(argv[i+1]);
             i++;
             continue;
         }
@@ -1440,10 +1459,10 @@ int main (int argc, char *argv[]) {
     // }
 
     vector<string>  filesAlFreq;
-    string fastaFile    = string(argv[lastOpt]);//fasta file
-    string bamfiletopen = string(argv[lastOpt+1]);//bam file
+    string fastaFile       = string(argv[lastOpt]);   //fasta file
+    string bamfiletopen    = string(argv[lastOpt+1]); //bam file
     //string fastaFile    = string(argv[argc-2]);//fasta file
-    string regionStr       = string(argv[lastOpt+2]);//fasta file
+    string regionStr       = string(argv[lastOpt+2]); //fasta file
 
 
     cout<<lastOpt<<endl;
@@ -1490,8 +1509,23 @@ int main (int argc, char *argv[]) {
 
     if(twoPopMode
        &&
-       !admxVec.empty() ){
+       !admxPop.empty() ){
+       //!admxVec.empty() ){
 	cerr<<"Cannot specify --admx with -2p"<<endl;
+        return 1;
+    }
+
+    if(threePopMode
+       &&
+       admxPop.empty() ){
+       //!admxVec.empty() ){
+	cerr<<"Must specify --admx with -3p"<<endl;
+        return 1;
+    }
+
+
+    if( anchPop.empty() ){
+	cerr<<"Must specify the anchor population with --anch"<<endl;
         return 1;
     }
 
@@ -1566,13 +1600,13 @@ int main (int argc, char *argv[]) {
 		region toadd; 
 		vector<string> tokens  = allTokens(line,':');
 		if(tokens.size() != 2){
-		    cerr << "Invalid format for line:  " <<line<< endl;
+		    cerr << "Invalid format for line:  " <<line<< ", the line has "<<tokens.size()<<" tokens if split wrt to ':' in region file:"<<regionStr<<endl;
 		    exit(1);
 		}
 
 		vector<string> tokens2 = allTokens(tokens[1],'-');
 		if(tokens2.size() != 2){
-		    cerr << "Invalid format for line:  " <<line<< endl;
+		    cerr << "Invalid format for line:  " <<line<< ", the line has "<<tokens2.size()<<" tokens if split wrt to '-' in region file:"<<regionStr<<endl;
 		    exit(1);
 		}
 
@@ -1593,13 +1627,14 @@ int main (int argc, char *argv[]) {
 	region toadd; 
 	vector<string> tokens  = allTokens(regionStr,':');
 	if(tokens.size() != 2){
-	    cerr << "Invalid format for region:  " <<regionStr<< endl;
+	    cerr << "Invalid format for line:  " <<regionStr<< ", the line has "<<tokens.size()<<" tokens if split wrt to ':' in region string"<<endl;
 	    exit(1);
 	}
 
 	vector<string> tokens2 = allTokens(tokens[1],'-');
 	if(tokens2.size() != 2){
-	    cerr << "Invalid format for region:  " <<regionStr<< endl;
+	    
+	    cerr << "Invalid format for line:  " <<regionStr<< ", the line has "<<tokens2.size()<<" tokens if split wrt to '-' in region string"<<endl;
 	    exit(1);
 	}
 
@@ -1650,12 +1685,13 @@ int main (int argc, char *argv[]) {
     // 	vectorOfMP[i]->repositionIterator(tokens[0], destringify<int>(tokens2[0]) ,  destringify<int>(tokens2[1]));
     // }
 
-    
-    if(anchVec.empty()){
-	for(unsigned int n=0;n<namesForPops.size();n++){
-	    anchVec.push_back(namesForPops[n]);
-	}
-    }
+
+    //should not be empty
+    // if(anchVec.empty()){
+    // 	for(unsigned int n=0;n<namesForPops.size();n++){
+    // 	    anchVec.push_back(namesForPops[n]);
+    // 	}
+    // }
 
     if(contVec.empty()){
 	for(unsigned int n=0;n<namesForPops.size();n++){
@@ -1664,20 +1700,28 @@ int main (int argc, char *argv[]) {
     }
 
 
-    if(admxVec.empty()){
-	for(unsigned int n=0;n<namesForPops.size();n++){
-	    admxVec.push_back(namesForPops[n]);
-	}
-    }
+    //should not be empty if 3p
+    // if(admxVec.empty()){
+    // 	for(unsigned int n=0;n<namesForPops.size();n++){
+    // 	    admxVec.push_back(namesForPops[n]);
+    // 	}
+    // }
 
 
-    for(unsigned int i1=0;i1<namesForPops.size();i1++){
-	for(unsigned int i2=0;i2<anchVec.size();i2++){
-	    if(namesForPops[i1] == anchVec[i2]){
-		anchVecIDX.push_back(i1);
-	    }
-	}       
+
+   for(unsigned int i1=0;i1<namesForPops.size();i1++){
+       //for(unsigned int i2=0;i2<anchVec.size();i2++){
+       if(namesForPops[i1] == anchPop){
+	   anchIDX            = i1;
+	   anchVecIDX.push_back(i1);
+       }       
+       //}       
     }
+
+   if(anchIDX == -1){
+       cerr<<"Cannot find specified anchor population: "<<anchPop<<" among the populations"<<endl;
+       return 1;
+   }
 
     for(unsigned int i1=0;i1<namesForPops.size();i1++){
 	for(unsigned int i2=0;i2<contVec.size();i2++){
@@ -1688,12 +1732,23 @@ int main (int argc, char *argv[]) {
     }
 
     for(unsigned int i1=0;i1<namesForPops.size();i1++){
-	for(unsigned int i2=0;i2<admxVec.size();i2++){
-	    if(namesForPops[i1] == admxVec[i2]){
-		admxVecIDX.push_back(i1);
-	    }
-	}       
+	//for(unsigned int i2=0;i2<admxVec.size();i2++){
+	//if(namesForPops[i1] == admxVec[i2]){
+	//	admxVecIDX.push_back(i1);
+	//   }
+	//}
+
+	if(namesForPops[i1] == admxPop){
+	    admxIDX            = i1;
+	    admxVecIDX.push_back(i1);
+	}
     }
+
+    if(threePopMode)
+	if(admxIDX == -1){
+	    cerr<<"Cannot find specified admixed population: "<<admxIDX<<" among the populations"<<endl;
+	    return 1;
+	}
 
 
     // cout<<vectorToString(anchVecIDX)<<endl;
@@ -1748,7 +1803,7 @@ int main (int argc, char *argv[]) {
 	
 	bool wasDataFound=true;
 
-	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec , useCpG, &wasDataFound);
+	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec , useCpG, &wasDataFound,anchIDX,admxIDX);
 	//cerr<<"fine4 id "<<id<<endl;
 	PileupEngine pileup;
 	pileup.AddVisitor(cv);
@@ -1796,6 +1851,7 @@ int main (int argc, char *argv[]) {
 
 	for(unsigned int indexCont=0;indexCont<contVecIDX.size();indexCont++){
 	    for(unsigned int indexAnchor=0;indexAnchor<anchVecIDX.size();indexAnchor++){
+	    //for(int indexAnchor=anchIDX;indexAnchor<=anchIDX;indexAnchor++){
 
 		if(contVecIDX[indexCont] == anchVecIDX[indexAnchor]){	       
 
@@ -1920,10 +1976,13 @@ int main (int argc, char *argv[]) {
 
 	    for(unsigned int indexCont=0;indexCont<contVecIDX.size();indexCont++){
 		for(unsigned int indexAnchor=0;indexAnchor<anchVecIDX.size();indexAnchor++){
+		    //for(int indexAnchor=anchIDX;indexAnchor<=anchIDX;indexAnchor++){
 		   for(unsigned int indexAdmix=0;indexAdmix<admxVecIDX.size();indexAdmix++){
 			
-			
-			if(indexCont == indexAdmix){	       
+		       
+		       //if(indexCont == indexAdmix){
+		       if(contVecIDX[indexCont] == admxVecIDX[indexAdmix]){
+
 			    map<string,int> stringToPrint2Count;
 			    for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){		
 				string tmpString = 
@@ -1977,7 +2036,7 @@ int main (int argc, char *argv[]) {
 
 			    outTabFP.close();
 			    
-			}else{
+			}else{//if contaminant not is the admixed pop
 			 
 			    map<string,int> stringToPrint2Count;
 			    for(unsigned int sitesIdx=0;sitesIdx<dataSitesVec->size();sitesIdx++){		
@@ -2007,7 +2066,7 @@ int main (int argc, char *argv[]) {
 			    }
 
 			    //cout<<"C "<<namesForPops[indexCont]<<"\tA "<<namesForPops[indexAnchor]<<endl;
-			    outTabFP<<"Anc\tDer\tContAdmxFreq\tAnchFreq\tNum";
+			    outTabFP<<"Anc\tDer\tAdmxFreq\tAnchFreq\tContFreq\tNum";
 			    if(flagTSTV)
 				outTabFP<<"\tTs";				
 			    outTabFP<<endl;

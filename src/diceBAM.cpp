@@ -208,7 +208,10 @@ public:
 		  unsigned int coordFirst,
 		  unsigned int coordLast,
 		  const bool ignoreMQ,
-		  vector<singleSite> * dataSitesVec
+		  vector<singleSite> * dataSitesVec,
+		  const int anchIDX,
+		  const int admxIDX
+
 		  // const long double contaminationPrior,
 		  //const bool singleCont
 		  )
@@ -220,6 +223,9 @@ public:
     , m_coordLast(coordLast)
     , ignoreMQ(ignoreMQ)
     , m_dataSitesVec(dataSitesVec)
+    , m_anchIDX(anchIDX)
+    , m_admxIDX(anchIDX)
+
     // , contaminationPrior(contaminationPrior)
     // , singleCont(singleCont)
   { 
@@ -499,11 +505,23 @@ public:
 	    ancAllele=='N' )
 	    return ;
 
-
-	for(unsigned int df=0;df<derFreq.size();df++){
-	    if(derFreq[df] <= 0 || derFreq[df] >= 1.0)//skip sites with fixed bases
-	    	return ;
+	if(m_admxIDX == -1){//2pop
+	     if( derFreq[m_anchIDX] <= 0 || derFreq[m_anchIDX] >= 1.0)//skip sites with fixed bases for the anchor
+	     	return ;
+	}else{
+	    double derFreqSum = ( (derFreq[m_anchIDX]+derFreq[m_admxIDX])/2.0 );
+	    
+	    if( derFreqSum <= 0 || derFreqSum >= 1.0)//skip sites with fixed bases for the combination of the anchor and admixed
+	     	return ;
 	}
+
+	// for(unsigned int df=0;df<derFreq.size();df++){
+	//     if(  m_anchIDX ==  int(df) )  //this index is the anchor, forego the polymorphic requirement
+        //         continue;
+
+	//     if(derFreq[df] <= 0 || derFreq[df] >= 1.0)//skip sites with fixed bases
+	//     	return ;
+	// }
 
 #ifdef DEBUGERRORP
 	cout<<"samepos "<<chr1<<":"<<posAlign<<" derFreq "<<vectorToString(derFreq)<<"\td="<<derAllele<<"\ta="<<ancAllele<<endl;
@@ -777,7 +795,9 @@ private:
     bool ignoreMQ;
     // long double contaminationPrior;
     // bool singleCont;
-    
+    int m_anchIDX;
+    int m_admxIDX;
+
     //        ostream*  m_out;
 };
 
@@ -961,6 +981,7 @@ int main (int argc, char *argv[]) {
     string admxPop;
     string contPop;
 
+
     int anchPopIDX;
     int admxPopIDX;
     int contPopIDX;
@@ -1018,9 +1039,10 @@ int main (int argc, char *argv[]) {
 
 			      "\n\tPopulation options:\n"+ 
 			      "\tThe name of the populations much be the same (case sensitive) in the frequency files\n"+
-			      "\t\t"+"--anch"+  "\t\t\t\t"+"Anchor population         (default: all)"+"\n"+
-			      "\t\t"+"--cont"+  "\t\t\t\t"+"Contaminant population    (default: all)"+"\n"+
-			      "\t\t"+"--admx"+  "\t\t\t\t"+"Admixing populations      (default: all)"+"\n"+
+			      //"\t\t"+"--anch"+  "\t\t\t\t"+"Anchor population         (default: all)"+"\n"+
+			      "\t\t"+"--anch"+  "\t\t\t\t"+"Population to use as anchor  (default: none)"+"\n"+
+			      "\t\t"+"--cont"+  "\t\t\t\t"+"Contaminant population       (default: all)"+"\n"+
+			      "\t\t"+"--admx"+  "\t\t\t\t"+"Admixing populations         (default: all)"+"\n"+
 			      
 			      // "\t\t"+"-deamread" +"\t\t\t"+"Set a prior on reads according to their deamination pattern (default: "+ booleanAsString(deamread) +")"+"\n"+
 			      // "\t\t"+"-cont    [cont prior]"+"\t\t"+"If the -deamread option is specified, this is the contamination prior (default: "+ stringify(contaminationPrior) +")"+"\n"+
@@ -1565,12 +1587,29 @@ int main (int argc, char *argv[]) {
 
 
 
-    if(!anchPop.empty()){
-	for(unsigned int n=0;n<namesCont.size();n++){
-	    if(anchPop==namesCont[n])
-		anchPopIDX=int(n);
-	}
+    if(anchPop.empty()){
+	cerr<<"Error: the anchor population has to be defined"<<endl;
+	return 1;	
+    }else{
+
+    	for(unsigned int n=0;n<namesCont.size();n++){
+    	    if(anchPop==namesCont[n])
+    		anchPopIDX=int(n);
+    	}
+
     }
+
+    if(anchPopIDX == -1){
+	cerr<<"Cannot find specified anchor population: "<<anchPopIDX<<" among the populations"<<endl;
+	return 1;
+    }
+
+    // if(!anchPop.empty()){
+    // 	for(unsigned int n=0;n<namesCont.size();n++){
+    // 	    if(anchPop==namesCont[n])
+    // 		anchPopIDX=int(n);
+    // 	}
+    // }
 
     if(!contPop.empty()){
 	for(unsigned int n=0;n<namesCont.size();n++){
@@ -1579,6 +1618,11 @@ int main (int argc, char *argv[]) {
 	}
     }
 
+    if(contPopIDX == -1){
+	cerr<<"Cannot find specified contaminant population: "<<contPopIDX<<" among the populations"<<endl;
+	return 1;
+    }
+    
 
     if(!admxPop.empty()){
 	for(unsigned int n=0;n<namesCont.size();n++){
@@ -1586,6 +1630,13 @@ int main (int argc, char *argv[]) {
 		admxPopIDX=int(n);
 	}
     }
+
+    if(threePopMode)
+	if(admxPopIDX == -1){
+	    cerr<<"Cannot find specified admixed population: "<<admxPopIDX<<" among the populations"<<endl;
+	    return 1;
+	}
+
     // for(unsigned int i=0;i<vectorOfMP.size();i++){ 
     // 	vectorOfMP[i]->repositionIterator(tokens[0], destringify<int>(tokens2[0]) ,  destringify<int>(tokens2[1]));
     // }
@@ -1620,7 +1671,7 @@ int main (int argc, char *argv[]) {
 	}
 	// cout<<"fine3 id "<<id<<endl;
 	
-	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec);
+	MyPileupVisitor* cv = new MyPileupVisitor(references,&fastaReference,vectorOfMP, regionVec[regionIdx].leftCoord ,regionVec[regionIdx].rightCoord,  ignoreMQ,dataSitesVec,anchPopIDX,admxPopIDX);
 	// cout<<"fine4 id "<<id<<endl;
 	PileupEngine pileup;
 	pileup.AddVisitor(cv);
