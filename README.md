@@ -349,7 +349,7 @@ This section provides an example of running DICE from a raw BAM file. First, mak
 
 Then, transform the BAM file (all.bam) into native DICE format:
     
-    src/BAM2DICE -o testData/simulated/input.dice  -2p testData/simulated/all.ref.fa testData/simulated/all.bam  testData/simulated/all.med.regions testData/simulated/all.mst.gz
+    src/BAM2DICE --anch contHuman -o testData/simulated/input.dice  -2p testData/simulated/all.ref.fa testData/simulated/all.bam  testData/simulated/all.med.regions testData/simulated/all.mst.gz
     
 the following file should be created:
 
