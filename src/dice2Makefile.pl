@@ -49,6 +49,7 @@ my $outputprefix  = "diceout";
 my $mappability   = "/home/gabriel/projects/dice/mapability/all.1kregions.gz";
 my $alleleFreqNuc = "/home/gabriel/projects/dice/alleleFreqNuc/";
 my $contpop       = "ASW,BEB,CDX,CEU,CHB,CHS,CLM,FIN,GBR,IBS,JPT,MXL,PJL,PUR,TSI,YRI";
+my $tauRange      = "1e-06,1";
 
 sub usage
 {
@@ -76,13 +77,15 @@ sub usage
   "\t--alfr\t[directory]\t\tDirectory containing the allele frequencies (Default: ".$alleleFreqNuc.")\n".
   "\t--cont\t[pop1,pop2]\t\tShorthand for the populations to use as contaminant, comma separated\n".
     "\t\t\t\t\t(Default: ".$contpop.")\n".
+  "\t--tau\t[tauLow,tauHigh]\tRange for tauA and tauC (Default: ".$tauRange.")\n".
+    "\n\n".
     "";
   exit;
 }
 
 
 
-if ( @ARGV < 1 or ! GetOptions('help|?' => \$help, 'anch=s' => \$anchorPop,'out=s' => \$outputprefix,'reg=s' => \$mappability,'alfr=s' => \$alleleFreqNuc,'cont=s' => \$contpop) or defined $help ){
+if ( @ARGV < 1 or ! GetOptions('help|?' => \$help, 'tau=s' => \$tauRange, 'anch=s' => \$anchorPop,'out=s' => \$outputprefix,'reg=s' => \$mappability,'alfr=s' => \$alleleFreqNuc,'cont=s' => \$contpop) or defined $help ){
   usage();
 }
 
@@ -149,9 +152,9 @@ foreach my $fifr (split(",",$contpop)){
     $targetp = $outputprefix."_Cont_Anch_".$fifr.".dice.pdf";
     $target  = $outputprefix."_Cont_Anch_".$fifr.".dice";
   }else{
-    $targetd = $outputprefix."_Cont_".$anchorPop."_Anch_".$fifr.".dice.out.gz";
-    $targetp = $outputprefix."_Cont_".$anchorPop."_Anch_".$fifr.".dice.pdf";
-    $target  = $outputprefix."_Cont_".$anchorPop."_Anch_".$fifr.".dice";
+    $targetd = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.out.gz";
+    $targetp = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.pdf";
+    $target  = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice";
 
   }
   push(@arrayTargets,$targetd);
@@ -180,13 +183,13 @@ foreach my $fifr (split(",",$contpop)){
     $targetp = $outputprefix."_Cont_Anch_".$fifr.".dice.pdf";
     $target  = $outputprefix."_Cont_Anch_".$fifr.".dice";
   }else{
-    $targetd = $outputprefix."_Cont_".$anchorPop."_Anch_".$fifr.".dice.out.gz";
-    $targetp = $outputprefix."_Cont_".$anchorPop."_Anch_".$fifr.".dice.pdf";
-    $target  = $outputprefix."_Cont_".$anchorPop."_Anch_".$fifr.".dice";
+    $targetd = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.out.gz";
+    $targetp = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.pdf";
+    $target  = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice";
 
   }
 
-  print $targetd.": ".$targetd2b."\n\t".$dice." -2p ".$target." |gzip > ".$targetd."\n\n";
+  print $targetd.": ".$targetd2b."\n\t".$dice."  -tA ".$tauRange." -tC ".$tauRange." -2p ".$target." |gzip > ".$targetd."\n\n";
   print $targetp.": ".$targetd.  "\n\t".$log2plot." ".$targetd."        ".$targetp."\n\n";
 
   push(@arraydiceout,$targetd);
