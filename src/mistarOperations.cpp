@@ -53,11 +53,12 @@ bool initFiles(vector<MistarParser * > & vectorOfMP,
     //   atLeastOneHasData=false;
    hasData = vector<bool>(vectorOfMP.size(),false);
 
-
+   //   cerr<<"initFiles " <<endl;
     for(unsigned int i=0;i<vectorOfMP.size();i++){ 
 	hasData[i] = vectorOfMP[i]->hasData()  ;
+	//	cerr<<i<<"\t"<<hasData[i]<<endl;
 	if(!hasData[i]){
-	    // cerr<<"File #"<<(i+1)<<" does not have any data, exiting"<<endl;
+	    cerr<<"File #"<<(i+1)<<" does not have any data, exiting"<<endl;
 	    // exit(1);    
 	    return false;
 	}// else{
@@ -113,10 +114,12 @@ bool sanityCheck(vector<MistarParser * > & vectorOfMP,
 		 char & refAllele,
 		 bool force  ){
   
-	    
-    for(unsigned int i=0;i<vectorOfMP.size();i++){ 
 
+
+    for(unsigned int i=0;i<vectorOfMP.size();i++){ 
+	//	cerr<<i<<" "<<hasData[i]<<" "<<hasCoordinate[i]<<endl;
 	if(hasData[i] && hasCoordinate[i]){
+
 	    if(refAllele == '\0'){
 		chrcheck   = vecAlleleRecords[i]->chr;
 		refAllele  = vecAlleleRecords[i]->ref;
@@ -141,7 +144,6 @@ bool sanityCheck(vector<MistarParser * > & vectorOfMP,
 	    }
 	}
     }
-
 
     if(refAllele == '\0'){
 	cerr<<"The reference allele could not be determined at coordinate "<<coordCurrent<<endl;	
@@ -204,6 +206,7 @@ bool populateFreqVec(vector<MistarParser * > & vectorOfMP,
     //sanity checks
     string chrcheck = "";  //= vecAlleleRecords[0]->chr;
     char refAllele  = '\0'; // = vecAlleleRecords[0]->ref;
+    //cerr<<"populateFreqVec"<<endl;
     bool isSane=sanityCheck(vectorOfMP,hasData,hasCoordinate,vecAlleleRecords,chr1,coordCurrent,chrcheck,refAllele,force);
     if(!isSane)
 	return false;

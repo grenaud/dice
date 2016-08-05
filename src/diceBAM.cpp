@@ -13,7 +13,7 @@
 #endif
   
 
- // #define DEBUGMST
+//#define DEBUGMST
 // #define DEBUGERRORP
 // #define DEBUGFREQ
 
@@ -230,8 +230,8 @@ public:
     // , singleCont(singleCont)
   { 
      
-      //      cout<<"constr size="<<vectorOfMP.size()<<endl;
-      initFiles(vectorOfMP,
+      //cout<<"constr size="<<vectorOfMP.size()<<endl;
+      m_hasData=initFiles(vectorOfMP,
 		// atLeastOneHasData,
 		hasData,
 		popSizePerFile,
@@ -250,6 +250,8 @@ public:
 public:
     
   void Visit(const PileupPosition& pileupData) {
+      if(!m_hasData)
+	  return ;
       // for(unsigned int i=0;i<pileupData.PileupAlignments.size();i++){				
       // 	  cout<<"visit "<<i<<"\t"<<pileupData.PileupAlignments.size()<<endl;
       // }
@@ -291,7 +293,9 @@ public:
 	bool allHaveCoordinate=true;
 
 	for(unsigned int i=0;i<m_vectorOfMP.size();i++){ 
-	    //cout<<"hasData["<<i<<"]"<<hasData[i]<<endl;
+#ifdef DEBUGMST
+	    cout<<"hasData ["<<i<<"]"<<hasData[i]<<endl;
+#endif
 	    if(hasData[i]){		
 		if(posAlign  != vecAlleleRecords[i]->coordinate){
 		    allHaveCoordinate=false;
@@ -797,7 +801,7 @@ private:
     // bool singleCont;
     int m_anchIDX;
     int m_admxIDX;
-
+    bool m_hasData;
     //        ostream*  m_out;
 };
 
