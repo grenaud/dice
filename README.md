@@ -319,7 +319,7 @@ Ideally, you should have two separate deamination profiles, one for the 5' end a
 By default, DICE uses a single error parameter for the entire dataset. However, in ancient DNA datasets, transitions tend to have a greater error rate due to deamination, and there is also a chance the alleles were mis-polarized. Hence we have the following alternative error rate models:
 
 - a single error parameter model (default)
-- a model with two separate error parameters, one for transitions and one for transversions. This mode will be triggered automatically if the input data was  previously flagged by BAM2DICE using the "-t" option. 
+- a model with two separate error parameters, one for transitions and one for transversions. This mode will be triggered automatically if the input data was  previously flagged by BAM2DICE using the "-t" option. In this case, the original error column will now refer to the transversion error, and the additional output error column will refer to the transition error.
 - a probabilistic two-error rate model, with two different error parameters and a third parameter (pe) that determines what proportion of the genome is affected by the first error parameter, as opposed to the second (see Fu et al. 2014). This mode can be triggered using the "-2e" option when running DICE.
 - a probabilistic ancestral state misidentification model, where we have an error rate parameter and a mispolarization parameter. This mode can be triggered using the "-pol" option when running DICE.
 - a site-specific error rate model, based on base and mapping qualities, and a post-mortem DNA damage matrix. This mode is implemented in diceBAM (see "BAM file option").
