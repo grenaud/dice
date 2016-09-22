@@ -8,9 +8,11 @@ burnins<-10000;
 
 maxFound<- -1.0*Inf;
 maxFoundF<-"none";
+write("",file="/dev/stdout",append = FALSE);
+
 
 for(i in 1:length(args)){
-  write(paste("file:",args[i],sep=" "),file="/dev/stdout");
+  write(paste("file:",args[i],sep=" "),file="/dev/stdout",append = TRUE);
   data <- read.table(args[i],header=T);
   m<-max(data$lpos);
   if(m>maxFound){
@@ -28,14 +30,14 @@ for(i in 1:length(args)){
   tC<-HPDinterval(as.mcmc(data$tau_C), prob=0.95);
   tA<-HPDinterval(as.mcmc(data$tau_A), prob=0.95);
 
-write(paste("error:",e[1],e[2],sep=" "),file="/dev/stdout");
-write(paste("contamination:",c[1],c[2],sep=" "),file="/dev/stdout");
-write(paste("tauC:",tC[1],tC[2],sep=" "),file="/dev/stdout");
-write(paste("tauA:",tA[1],tA[2],sep=" "),file="/dev/stdout");
+  write(paste("error:",e[1],e[2],sep=" "),file="/dev/stdout",append = TRUE);
+  write(paste("contamination:",c[1],c[2],sep=" "),file="/dev/stdout",append = TRUE);
+  write(paste("tauC:",tC[1],tC[2],sep=" "),file="/dev/stdout",append = TRUE);
+  write(paste("tauA:",tA[1],tA[2],sep=" "),file="/dev/stdout",append = TRUE);
 
 }
 
-write(paste("max found with ",maxFoundF,sep=""),file="/dev/stdout");
+write(paste("max found with ",maxFoundF,sep=""),file="/dev/stdout",append = TRUE);
 data <- read.table(maxFoundF,header=T);
 
 data<-data[-c(1:burnins),];
@@ -45,10 +47,10 @@ c<-HPDinterval(as.mcmc(data$ContRate), prob=0.95);
 tC<-HPDinterval(as.mcmc(data$tau_C), prob=0.95);
 tA<-HPDinterval(as.mcmc(data$tau_A), prob=0.95);
 
-write(paste("error:",e[1],e[2],sep=" "),file="/dev/stdout");
-write(paste("contamination:",c[1],c[2],sep=" "),file="/dev/stdout");
-write(paste("tauC:",tC[1],tC[2],sep=" "),file="/dev/stdout");
-write(paste("tauA:",tA[1],tA[2],sep=" "),file="/dev/stdout");
+write(paste("error:",e[1],e[2],sep=" "),file="/dev/stdout",append = TRUE);
+write(paste("contamination:",c[1],c[2],sep=" "),file="/dev/stdout",append = TRUE);
+write(paste("tauC:",tC[1],tC[2],sep=" "),file="/dev/stdout",append = TRUE);
+write(paste("tauA:",tA[1],tA[2],sep=" "),file="/dev/stdout",append = TRUE);
 
                                         #
 #

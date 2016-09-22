@@ -115,9 +115,9 @@ bool sanityCheck(vector<MistarParser * > & vectorOfMP,
 		 bool force  ){
   
 
-
+    cerr<<"size =  "<<vectorOfMP.size()<<"\tref="<<refAllele<<endl;
     for(unsigned int i=0;i<vectorOfMP.size();i++){ 
-	//	cerr<<i<<" "<<hasData[i]<<" "<<hasCoordinate[i]<<endl;
+	cerr<<i<<" "<<hasData[i]<<" "<<hasCoordinate[i]<<"\ "<<vecAlleleRecords[i]->ref<<endl;
 	if(hasData[i] && hasCoordinate[i]){
 
 	    if(refAllele == '\0'){
@@ -145,6 +145,7 @@ bool sanityCheck(vector<MistarParser * > & vectorOfMP,
 	}
     }
 
+    cerr<<"size =  "<<vectorOfMP.size()<<"\tref="<<refAllele<<endl;
     if(refAllele == '\0'){
 	cerr<<"The reference allele could not be determined at coordinate "<<coordCurrent<<endl;	
 	exit(1);  

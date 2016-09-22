@@ -3,6 +3,7 @@
 
 use strict;
 use warnings;
+use Data::Dumper;
 use Cwd 'abs_path';
 use Getopt::Long;
 
@@ -46,8 +47,8 @@ my $help;
 
 my $anchorPop     = "YRI";
 my $outputprefix  = "diceout";
-my $mappability   = "/home/gabriel/projects/dice/mapability/all.1kregions.gz";
-my $alleleFreqNuc = "/home/gabriel/projects/dice/alleleFreqNuc/";
+my $mappability   = $pathdir."/../mapability/all.1kregions.gz";
+my $alleleFreqNuc = $pathdir."/../alleleFreqNuc/";
 my $contpop       = "ASW,BEB,CDX,CEU,CHB,CHS,CLM,FIN,GBR,IBS,JPT,MXL,PJL,PUR,TSI,YRI";
 my $tauRange      = "1e-06,1";
 
@@ -59,7 +60,7 @@ sub usage
  a BAM file in native dice format and runs it on the different files.
 
 
-\n\n usage:\t".$0." <options>  [reference FASTA] [BAM file] > dice.make
+\n\n usage:\t".$0." <options>  [reference FASTA] [BAM file 1] [BAM file 2] ... > dice.make
 
  The BAM file should be sorted and indexed. The reference fasta
  should be have an index from faidx. This reference fasta has to be
@@ -89,9 +90,27 @@ if ( @ARGV < 1 or ! GetOptions('help|?' => \$help, 'tau=s' => \$tauRange, 'anch=
   usage();
 }
 
+my @arrayBAMfiles;
+my $fastaf;
+my $ar=$#ARGV;
+while($ar!=-1){
 
-my $bamf   = $ARGV[ $#ARGV   ];
-my $fastaf = $ARGV[ $#ARGV-1 ];
+  if( ($ARGV[ $ar   ] =~ /fa$/ ) ||
+      ($ARGV[ $ar   ] =~ /fasta$/ ) ){
+    $fastaf = $ARGV[ $ar   ];
+    last;
+  }else{
+    push(@arrayBAMfiles, $ARGV[ $ar ]);
+    my $bamf = $ARGV[ $ar ];
+    fileExists($bamf);
+    fileExists($bamf.".bai");
+    warn "Found bam:\t".$bamf."\n";
+  }
+  $ar-=1;
+}
+
+#my $bamf   = $ARGV[ $#ARGV   ];
+
 
 exfileExists($bam2dice);
 exfileExists($dice);
@@ -104,11 +123,11 @@ warn "Found program:\t".$dice."\n";
 warn "Found program:\t".$log2plot."\n";
 warn "Found program:\t".$logs2text."\n";
 
-fileExists($bamf);
+
 fileExists($fastaf);
-warn "Found bam:\t".$bamf."\n";
+
 warn "Found fasta:\t".$fastaf."\n";
-fileExists($bamf.".bai");
+
 fileExists($fastaf.".fai");
 fileExists($mappability);
 warn "Found regions:\t".$mappability."\n";
@@ -128,76 +147,108 @@ foreach my $fifr (split(",",$contpop)){
 
 my @arrayTargets;
 my @arrayFiles;
+my $stringToPrint="";
 
-my $b2dc=$bam2dice." --anch  ".$anchorPop." -o ".$outputprefix." -2p ".$fastaf."  ".$bamf." ".$mappability." ";
-
-foreach my $fifr (split(",",$contpop)){
-  $b2dc = $b2dc ." ". $alleleFreqNuc."/".$fifr.".mst.gz";
-}
-
-my $targetd2b;
-if($contp1 eq $anchorPop){
-  $targetd2b = $outputprefix."_Cont_Anch_".$contp1.".dice";
-}else{
-  $targetd2b = $outputprefix."_Cont_".$anchorPop."_Anch_".$contp1.".dice";
-}
-push(@arrayTargets,$targetd2b);
-
-foreach my $fifr (split(",",$contpop)){
-  my $targetd;
-  my $targetp;
-  my $target;
-  if($fifr eq $anchorPop){
-    $targetd = $outputprefix."_Cont_Anch_".$fifr.".dice.out.gz";
-    $targetp = $outputprefix."_Cont_Anch_".$fifr.".dice.pdf";
-    $target  = $outputprefix."_Cont_Anch_".$fifr.".dice";
+my %hashbamkey;
+foreach my $bamf (@arrayBAMfiles) {
+  my $bamkey = substr($bamf,0,-4);
+  my @bamkeya = split("/",$bamkey);
+  $bamkey = $bamkeya[ $#bamkeya ];
+  warn "key ".$bamkey."\n";
+  if(exists $hashbamkey{ $bamkey }){
+    die "Problem, 2 BAM files have the same prefix/suffixes ".$bamkey."\n";
   }else{
-    $targetd = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.out.gz";
-    $targetp = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.pdf";
-    $target  = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice";
-
+    $hashbamkey{ $bamkey } = 1;
   }
-  push(@arrayTargets,$targetd);
-  push(@arrayTargets,$targetp);
 
-  push(@arrayFiles,$targetd);
-  push(@arrayFiles,$targetp);
-  push(@arrayFiles,$target);
+  my $b2dc=$bam2dice." --anch  ".$anchorPop." -o ".$outputprefix."_".$bamkey." -2p ".$fastaf."  ".$bamf." ".$mappability." ";
 
-}
+  foreach my $fifr (split(",",$contpop)) {
+    $b2dc = $b2dc ." ". $alleleFreqNuc."/".$fifr.".mst.gz";
+  }
 
-push(@arrayTargets,$outputprefix.".dice.txt");
-push(@arrayFiles,  $outputprefix.".dice.txt");
+  my $targetd2b;
+  if ($contp1 eq $anchorPop) {
+    $targetd2b = $outputprefix."_".$bamkey."_Cont_Anch_".$contp1.".dice";
+  } else {
+    $targetd2b = $outputprefix."_".$bamkey."_Cont_".$anchorPop."_Anch_".$contp1.".dice";
+  }
+  push(@arrayTargets,$targetd2b);
 
-print "SHELL := /bin/bash\n\nall:\t".join(" ",@arrayTargets)."\n\nclean:\n\trm -vf ".join(" ",@arrayFiles)."\n\n";
+  foreach my $fifr (split(",",$contpop)) {
+    my $targetd;
+    my $targetp;
+    my $target;
+    if ($fifr eq $anchorPop) {
+      $targetd = $outputprefix."_".$bamkey."_Cont_Anch_".$fifr.".dice.out.gz";
+      $targetp = $outputprefix."_".$bamkey."_Cont_Anch_".$fifr.".dice.pdf";
+      $target  = $outputprefix."_".$bamkey."_Cont_Anch_".$fifr.".dice";
+    } else {
+      $targetd = $outputprefix."_".$bamkey."_Cont_".$fifr."_Anch_".$anchorPop.".dice.out.gz";
+      $targetp = $outputprefix."_".$bamkey."_Cont_".$fifr."_Anch_".$anchorPop.".dice.pdf";
+      $target  = $outputprefix."_".$bamkey."_Cont_".$fifr."_Anch_".$anchorPop.".dice";
+    }
 
-print $targetd2b.":\n\t".$b2dc."\n\n";
+    push(@arrayTargets,$targetd);
+    push(@arrayTargets,$targetp);
 
-my @arraydiceout;
-foreach my $fifr (split(",",$contpop)){
-  my $targetd;
-  my $targetp;
-  my $target;
-  if($fifr eq $anchorPop){
-    $targetd = $outputprefix."_Cont_Anch_".$fifr.".dice.out.gz";
-    $targetp = $outputprefix."_Cont_Anch_".$fifr.".dice.pdf";
-    $target  = $outputprefix."_Cont_Anch_".$fifr.".dice";
-  }else{
-    $targetd = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.out.gz";
-    $targetp = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice.pdf";
-    $target  = $outputprefix."_Cont_".$fifr."_Anch_".$anchorPop.".dice";
+    push(@arrayFiles,$targetd);
+    push(@arrayFiles,$targetp);
+    push(@arrayFiles,$target);
 
   }
 
-  print $targetd.": ".$targetd2b."\n\t".$dice."  -tA ".$tauRange." -tC ".$tauRange." -2p ".$target." |gzip > ".$targetd."\n\n";
-  print $targetp.": ".$targetd.  "\n\t".$log2plot." ".$targetd."        ".$targetp."\n\n";
+  push(@arrayTargets,$outputprefix."_".$bamkey.".dice.txt");
+  push(@arrayFiles,  $outputprefix."_".$bamkey.".dice.txt");
 
-  push(@arraydiceout,$targetd);
-  #."\n\n";
-  #  ~/projects/dice/src/dice -2p -o diceout_Cont_Anch_CEU.dice.out diceout_Cont_Anch_CEU.dice  &
-  #~/projects/dice/src/dice -2p -o diceout_Cont_CHB_Anch_CEU.dice.out diceout_Cont_CHB_Anch_CEU.dice &
+
+
+
+
+
+  my @arraydiceout;
+  my @arraydiceToZip;
+  $stringToPrint.= $targetd2b.":\n\t".$b2dc."\n\n";
+  foreach my $fifr (split(",",$contpop)){
+    my $targetd;
+    my $targetp;
+    my $target;
+    if($fifr eq $anchorPop){
+      $targetd = $outputprefix."_".$bamkey."_Cont_Anch_".$fifr.".dice.out.gz";
+      $targetp = $outputprefix."_".$bamkey."_Cont_Anch_".$fifr.".dice.pdf";
+      $target  = $outputprefix."_".$bamkey."_Cont_Anch_".$fifr.".dice";
+    }else{
+      $targetd = $outputprefix."_".$bamkey."_Cont_".$fifr."_Anch_".$anchorPop.".dice.out.gz";
+      $targetp = $outputprefix."_".$bamkey."_Cont_".$fifr."_Anch_".$anchorPop.".dice.pdf";
+      $target  = $outputprefix."_".$bamkey."_Cont_".$fifr."_Anch_".$anchorPop.".dice";
+    }
+
+    $stringToPrint.= $targetd.": ".$targetd2b."\n\t".$dice."  -tA ".$tauRange." -tC ".$tauRange." -2p ".$target." |gzip > ".$targetd."\n\n";
+    $stringToPrint.= $targetp.": ".$targetd.  "\n\t".$log2plot." ".$targetd."        ".$targetp."\n\n";
+
+    push(@arraydiceout,  $targetd);
+    push(@arraydiceToZip,$target );
+
+    #."\n\n";
+    #  ~/projects/dice/src/dice -2p -o diceout_Cont_Anch_CEU.dice.out diceout_Cont_Anch_CEU.dice  &
+    #~/projects/dice/src/dice -2p -o diceout_Cont_CHB_Anch_CEU.dice.out diceout_Cont_CHB_Anch_CEU.dice &
+  }
+
+  $stringToPrint.=  $outputprefix."_".$bamkey.".dice.txt: ".join(" ",@arraydiceout)."\n\t".$logs2text." ".join(" ",@arraydiceout). " > ".$outputprefix."_".$bamkey.".dice.txt\n";
+
+  foreach my $fidice (@arraydiceToZip){
+    $stringToPrint.= "\n".$fidice.".gz: ".$outputprefix."_".$bamkey.".dice.txt\n\t"."gzip ".$fidice."\n";
+    push(@arrayTargets,$fidice.".gz");
+    push(@arrayFiles,  $fidice.".gz");
+  }
+
+  #warn Dumper(@arrayTargets);
+  #warn Dumper(@arrayFiles);
+
 }
 
+#todo for each bam a log2plot and log2text for each file independently
+#zippe .dice files
+print "SHELL := /bin/bash\n\nall:\t".join(" ",@arrayTargets)."\n\nclean:\n\trm -vf ".join(" ",@arrayFiles)."\n\n".$stringToPrint."\n\n";
 
-print $outputprefix.".dice.txt: ".join(" ",@arraydiceout)."\n\t".$logs2text." ".join(" ",@arraydiceout). " > ".$outputprefix.".dice.txt";
 
