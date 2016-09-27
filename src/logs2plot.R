@@ -50,6 +50,8 @@ llikMax<- -1.0*Inf
 
 
 
+outputprefix<-"";
+anch<-"";
 
 for(i in 1:length(args)){
   write(paste("file:",args[i],sep=" "),file="/dev/stderr");
@@ -71,17 +73,27 @@ for(i in 1:length(args)){
 
   }else{
     if(length(fields) == 5){
-
-      fields2<-strsplit(fields[5],".",fixed=TRUE)[[1]];    
-      if(outputprefix != fields[1]){
-        write(paste("The file ",args[i],"does not match the expected prefix",sep=" "),file="/dev/stderr");
-        quit();
-      }
-      write(paste("using contam:",  fields[3],sep=" "),        file="/dev/stderr");
-
-      if( anch != fields2[1] ){
-        write(paste("The file ",args[i],"does not match the expected prefix",sep=" "),file="/dev/stderr");
-        quit();
+      
+      if(length(outputprefix)==1){
+        outputprefix <- fields[1];
+        fields2<-strsplit(fields[5],".",fixed=TRUE)[[1]];    
+        anch         <- fields2[1];
+        write(paste("using output prefix:",outputprefix,sep=" "),        file="/dev/stderr");
+        write(paste("using anchor:",       anch,        sep=" "),        file="/dev/stderr");
+        write(paste("using contam:",       fields[3],   sep=" "),        file="/dev/stderr");
+    
+      }else{
+        fields2<-strsplit(fields[5],".",fixed=TRUE)[[1]];    
+        if(outputprefix != fields[1]){
+          write(paste("The file ",args[i],"does not match the expected prefix=",outputprefix,sep=" "),file="/dev/stderr");
+          quit();
+        }
+        write(paste("using contam:",  fields[3],sep=" "),        file="/dev/stderr");
+        
+        if( anch != fields2[1] ){
+          write(paste("The file ",args[i],"does not match the expected anchor=",anch,sep=" "),file="/dev/stderr");
+          quit();
+        }
       }
       nameCont<-append(nameCont,fields[3]);
       
@@ -180,7 +192,7 @@ ds$nameCont <- factor(ds$nameCont, levels = ds$nameCont);
 
 pdf(paste(outputprefix,"_e.pdf",sep=""));
 ewiggle<-erangemax/20
-ggplot(ds, aes( x=nameCont,y=e )) + coord_cartesian(ylim = c(max(erangemin-ewiggle,0),erangemax+ewiggle))+geom_bar(position= position_dodge(width = 0.9), stat="identity",fill="cyan") +geom_errorbar( aes(ymax = eMax, ymin= eMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("estimated error\n") +  ggtitle("Estimated error for each contaminant population\n")
+ggplot(ds, aes( x=nameCont,y=e )) + coord_cartesian(ylim = c(max(erangemin-ewiggle,0),erangemax+ewiggle))+geom_bar(position= position_dodge(width = 0.9), stat="identity",fill="cyan") +geom_errorbar( aes(ymax = eMax, ymin= eMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("estimated error\n") +  ggtitle("Estimated error for each contaminant population\n") + theme(axis.text.x = element_text(angle = 90, hjust = 1));
 dev.off();
 
 
@@ -188,7 +200,7 @@ pdf(paste(outputprefix,"_c.pdf",sep=""));
 
 cwiggle<-crangemax/10
 
-ggplot(ds, aes( x=nameCont,y=c )) + coord_cartesian(ylim = c(max(crangemin-cwiggle,0),crangemax+cwiggle))+geom_bar(position=position_dodge(width = 0.9), stat="identity",fill="brown1") +geom_errorbar( aes(ymax = cMax, ymin= cMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("Contamination rate\n") +  ggtitle("Estimated present-day contamination\nfor each contaminant population\n");
+ggplot(ds, aes( x=nameCont,y=c )) + coord_cartesian(ylim = c(max(crangemin-cwiggle,0),crangemax+cwiggle))+geom_bar(position=position_dodge(width = 0.9), stat="identity",fill="brown1") +geom_errorbar( aes(ymax = cMax, ymin= cMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("Contamination rate\n") +  ggtitle("Estimated present-day contamination\nfor each contaminant population\n") + theme(axis.text.x = element_text(angle = 90, hjust = 1));
 
 dev.off();
 
@@ -197,15 +209,14 @@ pdf(paste(outputprefix,"_tauC.pdf",sep=""));
 
 tauCwiggle<-tauCrangemax/10
 
-ggplot(ds, aes( x=nameCont,y=tauC )) + coord_cartesian(ylim = c(max(tauCrangemin-tauCwiggle,0),tauCrangemax+tauCwiggle))+geom_bar(position=position_dodge(width = 0.9), stat="identity",fill="chartreuse") +geom_errorbar( aes(ymax = tauCMax, ymin= tauCMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("Drift time for the contaminant\n") +  ggtitle("Estimated drift time for the contamination\npopulation for each contaminant population\n");
-
+ggplot(ds, aes( x=nameCont,y=tauC )) + coord_cartesian(ylim = c(max(tauCrangemin-tauCwiggle,0),tauCrangemax+tauCwiggle))+geom_bar(position=position_dodge(width = 0.9), stat="identity",fill="chartreuse") +geom_errorbar( aes(ymax = tauCMax, ymin= tauCMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("Drift time for the contaminant\n") +  ggtitle("Estimated drift time for the contamination\npopulation for each contaminant population\n") + theme(axis.text.x = element_text(angle = 90, hjust = 1));
 dev.off();
 
 pdf(paste(outputprefix,"_tauA.pdf",sep=""));
 
 tauAwiggle<-tauArangemax/20
 
-ggplot(ds, aes( x=nameCont,y=tauA )) + coord_cartesian(ylim = c(max(tauArangemin-tauAwiggle,0),tauArangemax+tauAwiggle))+geom_bar(position=position_dodge(width = 0.9), stat="identity",fill="yellow2") +geom_errorbar( aes(ymax = tauAMax, ymin= tauAMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("Drift time for the archaic sample\n") +  ggtitle("Estimated drift time for the archaic\npopulation for each contaminant population\n");
+ggplot(ds, aes( x=nameCont,y=tauA )) + coord_cartesian(ylim = c(max(tauArangemin-tauAwiggle,0),tauArangemax+tauAwiggle))+geom_bar(position=position_dodge(width = 0.9), stat="identity",fill="yellow2") +geom_errorbar( aes(ymax = tauAMax, ymin= tauAMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("Drift time for the archaic sample\n") +  ggtitle("Estimated drift time for the archaic\npopulation for each contaminant population\n") + theme(axis.text.x = element_text(angle = 90, hjust = 1));
 
 dev.off();
 
