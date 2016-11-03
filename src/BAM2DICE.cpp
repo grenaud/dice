@@ -1465,7 +1465,7 @@ int main (int argc, char *argv[]) {
     string regionStr       = string(argv[lastOpt+2]); //fasta file
 
 
-    cout<<lastOpt<<endl;
+    //cout<<lastOpt<<endl;
     cout<<fastaFile<<endl;
     cout<<bamfiletopen<<endl;
     cout<<regionStr<<endl;
