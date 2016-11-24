@@ -41,6 +41,7 @@ sub dirExists{
 my $bam2dice  = $pathdir."/BAM2DICE";
 my $dice      = $pathdir."/dice";
 my $log2plot  = $pathdir."/log2plots.R";
+my $logs2plot  = $pathdir."/logs2plot.R";
 my $logs2text = $pathdir."/logs2text.R";
 
 my $help;
@@ -116,11 +117,13 @@ exfileExists($bam2dice);
 exfileExists($dice);
 exfileExists($logs2text);
 exfileExists($log2plot);
+exfileExists($logs2plot);
 
 
 warn "Found program:\t".$bam2dice."\n";
 warn "Found program:\t".$dice."\n";
 warn "Found program:\t".$log2plot."\n";
+warn "Found program:\t".$logs2plot."\n";
 warn "Found program:\t".$logs2text."\n";
 
 
@@ -200,6 +203,8 @@ foreach my $bamf (@arrayBAMfiles) {
 
   push(@arrayTargets,$outputprefix."_".$bamkey.".dice.txt");
   push(@arrayFiles,  $outputprefix."_".$bamkey.".dice.txt");
+  push(@arrayTargets,$outputprefix."_".$bamkey."_c.pdf");
+  push(@arrayFiles,  $outputprefix."_".$bamkey."_c.pdf");
 
 
 
@@ -235,6 +240,8 @@ foreach my $bamf (@arrayBAMfiles) {
   }
 
   $stringToPrint.=  $outputprefix."_".$bamkey.".dice.txt: ".join(" ",@arraydiceout)."\n\t".$logs2text." ".join(" ",@arraydiceout). " > ".$outputprefix."_".$bamkey.".dice.txt\n";
+
+$stringToPrint.=  $outputprefix."_".$bamkey."_c.pdf: ".join(" ",@arraydiceout)."\n\t".$logs2plot." ".$outputprefix."_".$bamkey." ".join(" ",@arraydiceout). "\n";
 
   foreach my $fidice (@arraydiceToZip){
     $stringToPrint.= "\n".$fidice.".gz: ".$outputprefix."_".$bamkey.".dice.txt\n\t"."gzip ".$fidice."\n";

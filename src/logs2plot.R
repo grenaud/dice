@@ -5,6 +5,25 @@ require(ggplot2)
 
 args=(commandArgs(TRUE))
 
+#usage: logs2plot.R outputprefix
+
+
+if(length(args)<3){
+  print("Use the log2plot, this script is for multiple files");
+  quit();
+}
+
+#http://stackoverflow.com/questions/28273716/r-implementation-for-finding-the-longest-common-starting-substrings-in-a-set-of
+comsub<-function(x) {
+    # sort the vector
+    x<-sort(x)
+    # split the first and last element by character
+    d_x<-strsplit(x[c(1,length(x))],"")
+    # search for the first not common element and so, get the last matching one
+    der_com<-match(FALSE,do.call("==",d_x))-1
+    # if there is no matching element, return an empty vector, else return the common part
+    ifelse(der_com==0,return(character(0)),return(substr(x[1],1,der_com)))
+}
 
 burnins<-10000;
 
@@ -24,7 +43,7 @@ tauCrangemax<-0;
 tauArangemin<-10;
 tauArangemax<-0;
 
-outputprefix<-"outlog";
+outputprefix<-args[1];
 anch<-"ANCH";
 
 nameCont<-list();
@@ -53,12 +72,36 @@ llikMax<- -1.0*Inf
 outputprefix<-"";
 anch<-"";
 
-for(i in 1:length(args)){
-  write(paste("file:",args[i],sep=" "),file="/dev/stderr");
+arrayOfNames<-args[2:length(args)];
+commonsubstr<-comsub(arrayOfNames);
+#print(commonsubstr);
+fieldscommon<-strsplit(commonsubstr,"_")[[1]];
+if(fieldscommon[length(fieldscommon)]=="Cont"){
+  fieldscommon<-paste( fieldscommon[1:(length(fieldscommon)-1)], collapse="_");
+}else{
+  fieldscommon<-paste( fieldscommon[1:(length(fieldscommon))], collapse="_");
+}
+fieldscommon<-paste(fieldscommon,"_",sep="");
+#print(fieldscommon);
+#print(nchar(fieldscommon));
+#quit();
+for(i in 1:length(arrayOfNames)){
+#  print(arrayOfNames[i]);
+  arrayOfNames[i] <- substring(arrayOfNames[i],nchar(fieldscommon),nchar(arrayOfNames[i]));
+ #   print(arrayOfNames[i]);
+}
+#print(arrayOfNames);
+#quit();
+
+
+for(i in 2:length(args)){
+  write(paste("parsing file:",args[i],sep=" "),file="/dev/stderr");
   data <- read.table(args[i],header=T);
-  fields<-strsplit(args[i],"_")[[1]];
-  #write(  str(length(strsplit(args[i],"_")[[1]])) ,file="/dev/stdout");
   
+  fields<-strsplit(arrayOfNames[i-1],"_")[[1]];
+  
+  #write(  str(length(strsplit(args[i],"_")[[1]])) ,file="/dev/stdout");
+#  print(fields);
   if(length(fields) == 4){
 
     outputprefix<-fields[1];
@@ -68,7 +111,9 @@ for(i in 1:length(args)){
     write(paste("using output prefix:",outputprefix,sep=" "),file="/dev/stderr");
     write(paste("using anchor:",       anch,sep=" "),        file="/dev/stderr");
     write(paste("using contam:",       anch,sep=" "),        file="/dev/stderr");
-    
+
+#    print("case4");
+#    print(fields2);
     nameCont<-append(nameCont,fields2[1]);
 
   }else{
@@ -95,6 +140,9 @@ for(i in 1:length(args)){
           quit();
         }
       }
+#      print("case5");
+#      print(fields[3]);
+      
       nameCont<-append(nameCont,fields[3]);
       
     }
@@ -182,19 +230,32 @@ llik <- unlist( llik );
 #llikMin <- unlist( llikMin );
 #llikMax <- unlist( llikMax );
 
-d<-data.frame(nameCont,eMe,eMin,eMax,cMe,cMin,cMax,tauC,tauCMin,tauCMax,tauA,tauAMin,tauAMax , llik   );
-colnames(d)<-c( 'nameCont','e','eMin','eMax', 'c','cMin','cMax', 'tauC','tauCMin','tauCMax', 'tauA' ,'tauAMin','tauAMax', 'llik' );
+#print("begin");
+#print(   nameCont);
+#print( eMe );
+#print(eMin );
+#print(eMax );
+#print(cMe, cMin , cMax );
+#print(tauC , tauCMin , tauCMax );
+#print(tauA , tauAMin , tauAMax );
+#print(llik  );
+
+d<-data.frame(   nameCont , eMe, eMin , eMax , cMe, cMin , cMax ,  tauC , tauCMin , tauCMax ,  tauA , tauAMin , tauAMax ,  llik  );
+colnames(d)<-c( 'nameCont', 'e','eMin','eMax', 'c','cMin','cMax', 'tauC','tauCMin','tauCMax', 'tauA','tauAMin','tauAMax', 'llik' );
 
 ds <- d[order(-d$llik) ,];
 ds$nameCont <- factor(ds$nameCont, levels = ds$nameCont);
 
-
+outputprefix<-args[1];
+write(paste("writing to:", paste(outputprefix,"_e.pdf",sep="") ,sep=" "),file="/dev/stderr");
 
 pdf(paste(outputprefix,"_e.pdf",sep=""));
 ewiggle<-erangemax/20
 ggplot(ds, aes( x=nameCont,y=e )) + coord_cartesian(ylim = c(max(erangemin-ewiggle,0),erangemax+ewiggle))+geom_bar(position= position_dodge(width = 0.9), stat="identity",fill="cyan") +geom_errorbar( aes(ymax = eMax, ymin= eMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("estimated error\n") +  ggtitle("Estimated error for each contaminant population\n") + theme(axis.text.x = element_text(angle = 90, hjust = 1));
 dev.off();
 
+
+write(paste("writing to:", paste(outputprefix,"_c.pdf",sep="") ,sep=" "),file="/dev/stderr");
 
 pdf(paste(outputprefix,"_c.pdf",sep=""));
 
@@ -204,6 +265,7 @@ ggplot(ds, aes( x=nameCont,y=c )) + coord_cartesian(ylim = c(max(crangemin-cwigg
 
 dev.off();
 
+write(paste("writing to:", paste(outputprefix,"_tauC.pdf",sep="") ,sep=" "),file="/dev/stderr");
 
 pdf(paste(outputprefix,"_tauC.pdf",sep=""));
 
@@ -212,6 +274,8 @@ tauCwiggle<-tauCrangemax/10
 ggplot(ds, aes( x=nameCont,y=tauC )) + coord_cartesian(ylim = c(max(tauCrangemin-tauCwiggle,0),tauCrangemax+tauCwiggle))+geom_bar(position=position_dodge(width = 0.9), stat="identity",fill="chartreuse") +geom_errorbar( aes(ymax = tauCMax, ymin= tauCMin), position= position_dodge(width = 0.9), lwd=0.7,width=0.4) + theme_bw() + xlab("\nPopulation code for the contaminant source") + ylab("Drift time for the contaminant\n") +  ggtitle("Estimated drift time for the contamination\npopulation for each contaminant population\n") + theme(axis.text.x = element_text(angle = 90, hjust = 1));
 dev.off();
 
+
+write(paste("writing to:", paste(outputprefix,"_tauA.pdf",sep="") ,sep=" "),file="/dev/stderr");
 pdf(paste(outputprefix,"_tauA.pdf",sep=""));
 
 tauAwiggle<-tauArangemax/20
