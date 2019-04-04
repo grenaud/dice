@@ -1,12 +1,14 @@
 CXX      = g++ -g 
 
 
-BAMTOOLS= ../bamtools/
-LIBGAB=  ../libgab/
+
+BAMTOOLS= $(realpath ../bamtools/)
+LIBGAB= $(realpath ../libgab/)
+
 #LIBTABIX = $(realpath tabix/)
 
-CXXFLAGS = -Wall -lm -O3 -lz -std=c++0x -I${LIBGAB} -I${LIBGAB}/gzstream/  -I${BAMTOOLS}/include/ -Itabix -I${BAMTOOLS}/src/  -c
-LDFLAGS  = tabix/libtabix.a ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/lib/libbamtools.a  -lpthread -lm -lz
+CXXFLAGS = -Wall -lm -O3 -lz -std=c++0x -I${LIBGAB} -I${LIBGAB}/gzstream/  -I${BAMTOOLS}/src/ -Itabix -I${BAMTOOLS}/src/  -c
+LDFLAGS  = tabix/libtabix.a  ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/build/src/api/libbamtools.a ${LIBGAB}/utils.o  -lpthread -lm -lz
 
 
 
@@ -19,25 +21,6 @@ tabix/tabix.h:
 
 tabix/libtabix.a: tabix/tabix.h
 	make -C tabix
-
-${LIBGAB}/gzstream/libgzstream.a: ${LIBGAB}/utils.o
-
-${LIBGAB}/utils.h:
-	rm -rf ${LIBGAB}/
-	git clone --recursive https://github.com/grenaud/libgab.git ${LIBGAB}
-
-
-${LIBGAB}/utils.o: ${BAMTOOLS}/lib/libbamtools.a  ${LIBGAB}/utils.h
-	make -C ${LIBGAB}
-
-${BAMTOOLS}/src/api/BamAlignment.h:
-	rm -rf ${BAMTOOLS}/
-	git clone --recursive https://github.com/pezmaster31/bamtools.git ${BAMTOOLS}/
-
-
-${BAMTOOLS}/lib/libbamtools.a: ${BAMTOOLS}/src/api/BamAlignment.h
-	cd ${BAMTOOLS}/ && mkdir -p build/  && cd build/ && cmake .. && make && cd ../..
-
 
 miscfunc.o:	${LIBGAB}/utils.o miscfunc.cpp
 	${CXX} ${CXXFLAGS} miscfunc.cpp
@@ -63,7 +46,7 @@ libnuc.o:	libnuc.cpp  ${LIBGAB}/utils.o ${LIBGAB}/gzstream/libgzstream.a
 dice.o:	dice.cpp libnuc.o
 	${CXX} ${CXXFLAGS} dice.cpp
 
-dice:	dice.o tabix/libtabix.a ${BAMTOOLS}/lib/libbamtools.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+dice:	dice.o tabix/libtabix.a  ${BAMTOOLS}/build/src/api/libbamtools.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :

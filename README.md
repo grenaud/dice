@@ -29,7 +29,7 @@ Gabriel Renaud: gabriel.reno [ at sign ] gmail.com
 # Prerequisites
 
 C++ libraries:
-- cmake
+- cmake, version 3 or above
 - zlib
 - git 
 
@@ -45,7 +45,7 @@ R libraries:
 
 Make sure you have git installed and type:
 
-    git clone  --depth=1 --recursive https://github.com/grenaud/dice.git
+    git clone  --depth=1 https://github.com/grenaud/dice.git
 
 
 # Compiling and installing
@@ -55,18 +55,9 @@ Make sure you are connected to the internet when you build the code. The compile
 First, go to the folder where you downloaded the dice folder, and then type the following commands:
 
 
-    cd bamtools/
-    mkdir build
-    cd build
-    cmake ..
-    make 
-    cd ../..
-    cd libgab/
+
     make
-    cd ..
-    cd src/
-    make
-    cd ..
+
 
 
 # 2-Pop method: input data format
