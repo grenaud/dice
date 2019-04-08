@@ -7,7 +7,7 @@ LIBGAB= $(realpath ../libgab/)
 
 #LIBTABIX = $(realpath tabix/)
 
-CXXFLAGS = -Wall -lm -O3 -lz -std=c++0x -I${LIBGAB} -I${LIBGAB}/gzstream/  -I${BAMTOOLS}/src/ -Itabix -I${BAMTOOLS}/src/  -c
+CXXFLAGS = -Wall -lm -O3 -lz -std=c++11 -I${LIBGAB} -I${LIBGAB}/gzstream/  -I${BAMTOOLS}/src/ -Itabix -I${BAMTOOLS}/src/  -c
 LDFLAGS  = tabix/libtabix.a  ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/build/src/api/libbamtools.a ${LIBGAB}/utils.o  -lpthread -lm -lz
 LDFLAGSNBT  = tabix/libtabix.a ${LIBGAB}/utils.o  -lpthread -lm -lz
 
