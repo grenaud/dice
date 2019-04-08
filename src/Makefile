@@ -9,6 +9,7 @@ LIBGAB= $(realpath ../libgab/)
 
 CXXFLAGS = -Wall -lm -O3 -lz -std=c++0x -I${LIBGAB} -I${LIBGAB}/gzstream/  -I${BAMTOOLS}/src/ -Itabix -I${BAMTOOLS}/src/  -c
 LDFLAGS  = tabix/libtabix.a  ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/build/src/api/libbamtools.a ${LIBGAB}/utils.o  -lpthread -lm -lz
+LDFLAGSNBT  = tabix/libtabix.a ${LIBGAB}/utils.o  -lpthread -lm -lz
 
 
 
@@ -46,8 +47,8 @@ libnuc.o:	libnuc.cpp  ${LIBGAB}/utils.o ${LIBGAB}/gzstream/libgzstream.a
 dice.o:	dice.cpp libnuc.o
 	${CXX} ${CXXFLAGS} dice.cpp
 
-dice:	dice.o tabix/libtabix.a  ${BAMTOOLS}/build/src/api/libbamtools.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
-	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
+dice:	dice.o tabix/libtabix.a  ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGSNBT)
 
 clean :
 	rm -f *.o dice  diceBAM BAM2DICE
