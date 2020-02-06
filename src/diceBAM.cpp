@@ -49,6 +49,7 @@
 #include <limits>
 #include <math.h>
 #include <limits>
+#include <random>
 
 #include "utils.h"
 #include "miscfunc.h"
