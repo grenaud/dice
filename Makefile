@@ -19,7 +19,7 @@ bamtools/src/api/BamAlignment.h:
 
 
 bamtools/build/src/api/libbamtools.a: bamtools/src/api/BamAlignment.h
-	cd bamtools/ && mkdir -p build/  && cd build/ && cmake .. && make && cd ../..
+	cd bamtools/ && mkdir -p build/  && cd build/ && if cmake ..; then echo ""; else if cmake3 ..; then echo ""; else echo "cmake failed, please install cmake v3"; fi  fi && make && cd ../..
 
 clean:
 	make -C libgab clean
