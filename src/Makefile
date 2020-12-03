@@ -8,8 +8,8 @@ LIBGAB= $(realpath ../libgab/)
 #LIBTABIX = $(realpath tabix/)
 
 CXXFLAGS = -Wall -lm -O3 -lz -std=c++11 -I${LIBGAB} -I${LIBGAB}/gzstream/  -I${BAMTOOLS}/src/ -Itabix -I${BAMTOOLS}/src/  -c
-LDFLAGS  = tabix/libtabix.a  ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/build/src/api/libbamtools.a ${LIBGAB}/utils.o  -lpthread -lm -lz
-LDFLAGSNBT  = tabix/libtabix.a ${LIBGAB}/utils.o  -lpthread -lm -lz
+LDFLAGS  = tabix/libtabix.a  ${BAMTOOLS}/build/src/utils/CMakeFiles/BamTools-utils.dir/*cpp.o  ${BAMTOOLS}/build/src/api/libbamtools.a ${LIBGAB}/libgab.a  -lpthread -lm -lz
+LDFLAGSNBT  = tabix/libtabix.a ${LIBGAB}/libgab.a  -lpthread -lm -lz
 
 
 
@@ -23,7 +23,7 @@ tabix/tabix.h:
 tabix/libtabix.a: tabix/tabix.h
 	make -C tabix
 
-miscfunc.o:	${LIBGAB}/utils.o miscfunc.cpp
+miscfunc.o:	${LIBGAB}/libgab.a miscfunc.cpp
 	${CXX} ${CXXFLAGS} miscfunc.cpp
 
 
@@ -31,23 +31,23 @@ diceBAM.o:	diceBAM.cpp
 	${CXX} ${CXXFLAGS} diceBAM.cpp
 
 
-diceBAM:	diceBAM.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+diceBAM:	diceBAM.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/libgab.a  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 BAM2DICE.o:     BAM2DICE.cpp 
 	${CXX} ${CXXFLAGS} BAM2DICE.cpp
 
-BAM2DICE:       BAM2DICE.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+BAM2DICE:       BAM2DICE.o miscfunc.o libnuc.o MistarParser.o  AlleleRecords.o ReadTabix.o SingleAllele.o mistarOperations.o tabix/libtabix.a ${LIBGAB}/libgab.a  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-libnuc.o:	libnuc.cpp  ${LIBGAB}/utils.o ${LIBGAB}/gzstream/libgzstream.a
+libnuc.o:	libnuc.cpp  ${LIBGAB}/libgab.a ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} ${CXXFLAGS} libnuc.cpp
 
 
 dice.o:	dice.cpp libnuc.o
 	${CXX} ${CXXFLAGS} dice.cpp
 
-dice:	dice.o tabix/libtabix.a  ${LIBGAB}/utils.o  ${LIBGAB}/gzstream/libgzstream.a
+dice:	dice.o tabix/libtabix.a  ${LIBGAB}/libgab.a  ${LIBGAB}/gzstream/libgzstream.a
 	${CXX} -o $@ $^ $(LDLIBS) $(LDFLAGSNBT)
 
 clean :

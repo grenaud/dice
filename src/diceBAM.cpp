@@ -51,7 +51,7 @@
 #include <limits>
 #include <random>
 
-#include "utils.h"
+#include "libgab.h"
 #include "miscfunc.h"
 #include "libnuc.h"
 

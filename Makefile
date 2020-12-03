@@ -3,14 +3,14 @@ SHELL := /bin/bash
 
 all: 	src/dice
 
-src/dice: libgab/utils.o bamtools/build/src/api/libbamtools.a
+src/dice: libgab/libgab.a bamtools/build/src/api/libbamtools.a
 	make -C src
 
-libgab/utils.h:
+libgab/libgab.h:
 	rm -rf libgab/
 	git clone --recursive https://github.com/grenaud/libgab.git
 
-libgab/utils.o: bamtools/build/src/api/libbamtools.a  libgab/utils.h
+libgab/libgab.a: bamtools/build/src/api/libbamtools.a  libgab/libgab.h
 	make -C libgab
 
 bamtools/src/api/BamAlignment.h:

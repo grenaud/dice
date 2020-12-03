@@ -12,7 +12,7 @@
 #include <iomanip>      // std::setprecision
 #include <random>
 
-#include "utils.h"
+#include "libgab.h"
 #include "libnuc.h"
 
 using namespace std;

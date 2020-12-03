@@ -11,7 +11,7 @@
 #include <gzstream.h>
 #include <sys/time.h> //for srand
 
-#include "utils.h"
+#include "libgab.h"
 #include "SingleAllele.h"
 #include "AlleleRecords.h"
 #include "ReadTabix.h"
